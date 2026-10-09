@@ -15,7 +15,7 @@ Cache identity is the cached function plus its arguments: language, ids, key lis
 | `listDepartments`, `getDepartment` | `hours` | `rcs:catalog` | always |
 | `listPriceGroups`, `getPriceGroup` | `hours` | `rcs:catalog` | always |
 | `listServicePoints`, `getServicePoint` | `hours` | `rcs:catalog` | always; active filtering happens after the read |
-| `listOffers`, `getOffer` | `hours` | `rcs:catalog` | no pickup date, return date, promo code, `onlyAvailable`, or `longTermQuote` |
+| `listOffers`, `getOffer` | `hours` | `rcs:catalog` | no pickup date, return date, promo code, `onlyAvailable`, `onlyAvailableAtLocation`, or `longTermQuote` |
 | `listAddons`, `getAddon`, `listAccessories`, `getAccessory` | `hours` | `rcs:catalog` | no dates, promo code, or client ids |
 
 `listAllOffers` is not itself cached. Each catalog page it requests is cached through `listOffers`.

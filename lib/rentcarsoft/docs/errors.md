@@ -6,7 +6,7 @@
 | --- | --- |
 | `config` | `RCS_URL` or `RCS_KEY` is missing or blank. No request is sent. |
 | `unauthorized` | HTTP 401. |
-| `invalid_request` | HTTP 400. |
+| `invalid_request` | HTTP 400, or a local rejection before the request: `onlyAvailable` without both dates, or `onlyAvailableAtLocation` without service points and both dates. |
 | `not_found` | HTTP 404, including an empty 404 body. |
 | `api` | HTTP 5xx, other non-OK statuses, or an offer walk that passes 20 full pages. |
 | `timeout` | The abort signal fires (`TimeoutError` or `AbortError`). |

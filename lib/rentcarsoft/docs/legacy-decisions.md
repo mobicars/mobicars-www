@@ -5,7 +5,7 @@ Source of the old client: `mobicars-pl/lib/rentcarsoft`. It is migration referen
 ## Kept
 
 - Bearer auth from `RCS_URL` and `RCS_KEY`.
-- `mileageLimit` is a boolean and is sent only when the caller sets it. The API default is `false`. The old client defaulted calculate to `1` and set the flag on create only for long-term bookings. That split is not carried over.
+- `mileageLimit` is a boolean and is sent only when the caller sets it, on both calculate and create. The API default is `false`. The old client defaulted calculate to `1` and set the flag on create only for long-term bookings. That split is not carried over. Equivalence of `true` and `1` is still UNVERIFIED.
 - Active service points only, by status value `6` (`Aktywny` on the live key dictionary).
 - Popular cars: offer key `71`, value `81`.
 - Local `YYYY-MM-DD HH:mm` pickup strings.
@@ -27,7 +27,7 @@ Source of the old client: `mobicars-pl/lib/rentcarsoft`. It is migration referen
 ## Replaced
 
 - Addon long-term filter is `loadLongTerm`, including the addon list. The old addon client sent `longTerm`.
-- Accessory lines use `quantity`.
+- Accessory lines use the domain field `quantity`. Calculate sends that number as `ilosc`, because a live quote ignored `quantity` and priced `ilosc`. Create still sends `quantity`. See `quirks.md`.
 - Sort is `order=default`, which matched `pozycja` and also matched an unknown sort token on the live list. `pozycja` is not sent.
 - Long-term calculate sends `longTerm=1`. A boolean `true` on a short rental window stayed on the short response shape during the live check.
 

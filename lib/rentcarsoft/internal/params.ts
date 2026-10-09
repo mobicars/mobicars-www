@@ -1,10 +1,11 @@
-import type { QueryValue } from "./query";
+import { RentCarSoftError } from "./errors";
 import {
   DEFAULT_CLIENT_KEY_IDS,
   DEFAULT_LONG_TERM_OFFER_KEY_IDS,
   DEFAULT_OFFER_KEY_IDS,
   DEFAULT_SERVICE_POINT_KEY_IDS,
 } from "./labels";
+import type { QueryValue } from "./query";
 
 export type QueryParams = Record<string, QueryValue>;
 
@@ -28,11 +29,14 @@ export type OfferListInput = {
   returnDate?: string;
   promoCode?: string;
   onlyAvailable?: boolean;
+  /**
+   * Passed through as `onlyAvailableAtLocation`.
+   * Requires `servicePointIds`, `pickUpDate`, and `returnDate`.
+   * Omitted availability stays company-wide.
+   */
+  onlyAvailableAtLocation?: boolean;
   order?: OfferSort;
-  longTermQuote?: {
-    months: number;
-    monthlyKmLimit: number;
-  };
+  longTermQuote?: LongTermRental;
 };
 
 export function defaultOfferKeyIds(term: "short" | "long"): number[] {
@@ -41,8 +45,23 @@ export function defaultOfferKeyIds(term: "short" | "long"): number[] {
     : DEFAULT_OFFER_KEY_IDS;
 }
 
+export type LongTermRental = {
+  months: number;
+  monthlyKmLimit: number;
+};
+
 export function buildOfferQuery(input: OfferListInput): QueryParams {
-  const term = input.term ?? "short";
+  if (input.onlyAvailable && (!input.pickUpDate || !input.returnDate)) {
+    throw new RentCarSoftError("invalid_request");
+  }
+  if (
+    input.onlyAvailableAtLocation &&
+    (!input.servicePointIds?.length || !input.pickUpDate || !input.returnDate)
+  ) {
+    throw new RentCarSoftError("invalid_request");
+  }
+
+  const term = input.longTermQuote ? "long" : (input.term ?? "short");
   const query: QueryParams = {
     lang: input.lang ?? "pl",
     page: input.page ?? 0,
@@ -78,6 +97,9 @@ export function buildOfferQuery(input: OfferListInput): QueryParams {
   if (input.onlyAvailable) {
     query.onlyAvailable = true;
   }
+  if (input.onlyAvailableAtLocation) {
+    query.onlyAvailableAtLocation = true;
+  }
   if (input.longTermQuote) {
     query.longTerm = true;
     query.longTermKalukator = true;
@@ -94,6 +116,7 @@ export function isCatalogOfferQuery(input: OfferListInput): boolean {
     !input.returnDate &&
     !input.promoCode &&
     !input.onlyAvailable &&
+    !input.onlyAvailableAtLocation &&
     !input.longTermQuote
   );
 }
@@ -110,11 +133,8 @@ export type CalculateReservationInput = {
   promoCode?: string;
   clientId?: number;
   addonIds?: number[];
-  accessories?: { id: number; quantity: number }[];
-  longTerm?: {
-    months: number;
-    monthlyKmLimit: number;
-  };
+  accessories?: ReservationAccessory[];
+  longTerm?: LongTermRental;
 };
 
 export function buildCalculateQuery(
@@ -143,7 +163,11 @@ export function buildCalculateQuery(
     query.addons = input.addonIds;
   }
   if (input.accessories?.length) {
-    query.accessories = input.accessories;
+    // Live calculate prices `ilosc` and leaves `quantity` at a zero line.
+    query.accessories = input.accessories.map((item) => ({
+      id: item.id,
+      ilosc: item.quantity,
+    }));
   }
   if (input.longTerm) {
     query.longTerm = 1;
@@ -177,6 +201,11 @@ export type CreateReservationInput = {
   clientPassword?: string;
   promoCode?: string;
   addonIds?: number[];
+  /**
+   * Domain quantity. The create body still uses OpenAPI `quantity`.
+   * Calculate uses `ilosc`, which is the key the live quote prices.
+   * Those wire names are intentionally not unified until a create is tested.
+   */
   accessories?: ReservationAccessory[];
   flightNumber?: string;
   /** Optional. The library does not default this to 1 ("Nie podano"). */
@@ -185,9 +214,7 @@ export type CreateReservationInput = {
   /** Passed through as `mileageLimit`. Omitted leaves the API default (`false`). */
   mileageLimit?: boolean;
   language?: string;
-  longTerm?: {
-    months?: number;
-    monthlyKmLimit?: number;
+  longTerm?: LongTermRental & {
     calculate?: boolean;
   };
   /**

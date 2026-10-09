@@ -61,6 +61,7 @@ export type {
   CalculateReservationInput,
   CreateReservationInput,
   ExtrasQueryInput,
+  LongTermRental,
   OfferListInput,
   OfferSort,
   ReservationAccessory,

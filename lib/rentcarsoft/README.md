@@ -47,7 +47,9 @@ await calculateReservation({
 });
 ```
 
-`mileageLimit` is optional on both the quote and the reservation. Omit it and the API default applies: no mileage limit (`false`). Pass `true` or `false` when the booking screen has chosen. The bridge does not default the flag. The same rule applies to `calculateReservation` and `createReservation`.
+`mileageLimit` is optional on both the quote and the reservation. Omit it and the API default applies: no mileage limit (`false`). Pass `true` or `false` when the booking screen has chosen. The bridge does not default the flag. The same rule applies to `calculateReservation` and `createReservation`. A live check could not tell `true` from `1` or from `false`, because the tested cars had the same price with and without a kilometre limit.
+
+`ReservationQuote.mileageLimit` is a different field. It is the kilometre allowance from `vehicle.mileageLimit`. `price`, `priceDiscounted`, `priceWithoutDiscount`, and `mileageLimitFee` come from that same vehicle object. They are `null` when the response omits them.
 
 A long-term quote:
 
@@ -83,7 +85,7 @@ Realtime, never cached:
 - `loginClient`, `getClient`
 - `startPasswordRecovery`, `getPasswordRecoveryToken`, `completePasswordRecovery`
 
-`listOffers` and the extras list switch to the uncached path when the input includes dates, a promo code, `onlyAvailable`, a long-term quote, or client ids.
+`listOffers` and the extras list switch to the uncached path when the input includes dates, a promo code, `onlyAvailable`, `onlyAvailableAtLocation`, a long-term quote, or client ids.
 
 ## Errors
 
@@ -98,11 +100,12 @@ Mutations are not retried.
 ## Business rules in the bridge
 
 - Offer lists sort with `order=default`. `order=pozycja` is not sent.
-- Long-term offer search can send `longTermKalukator`, `okresLongTerm`, and `limitLongTerm` through `longTermQuote`. That path is not cached.
+- Long-term offer search can send `longTermKalukator`, `okresLongTerm`, and `limitLongTerm` through `longTermQuote`. That path is not cached. `longTermQuote` selects the long-term list and does not also send `shortTerm`.
+- `onlyAvailable` requires both dates. `onlyAvailableAtLocation` requires service points and both dates. The bridge throws `invalid_request` and does not call the API when those inputs are missing. Without the location flag, availability stays company-wide.
 - Service points are active when custom field 2 equals `6` (`Aktywny`). `listServicePoints` returns those points unless `includeInactive` is set.
 - Offer field 71 with value `81` sets `Offer.isPopular`.
 - Addon and accessory long-term catalogs use `loadLongTerm`.
-- Reservation accessories are `{ id, quantity }`.
+- Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `ilosc`. Create sends `quantity`. The create key is UNVERIFIED. Do not match a selected accessory by `QuoteLine.id`: on the live short quote that id equalled the line price.
 - `createReservation` does not set `paymentMethod` or `statusRez` unless the caller passes `paymentMethodId` or `forcedStatusId`.
 - Login, password-recovery start, and password replacement use a JSON body. The recovery token read uses a query string.
 - `GET /client/{id}` accepts one object or an array of exactly one object. Any other shape is `malformed_response`. The successful live shape is still UNVERIFIED.

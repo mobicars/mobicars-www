@@ -130,6 +130,8 @@ export type ServicePoint = {
   airport: boolean;
   minDays: number | null;
   maxDays: number | null;
+  /** Point allows a customer pickup or return address. */
+  customAddresses: boolean;
   addressRequired: boolean;
   attributes: Record<string, FieldAttribute>;
 };
@@ -167,6 +169,7 @@ export function parseServicePoint(
     airport: asBoolean(record.isAirport) ?? false,
     minDays: asId(record.minDays),
     maxDays: asId(record.maxDays),
+    customAddresses: asBoolean(record.customAddresses) ?? false,
     addressRequired: asBoolean(record.addressRequired) ?? false,
     attributes,
   };
@@ -360,7 +363,15 @@ export type ReservationQuote = {
   imageFile: string | null;
   imageWebpFile: string | null;
   deposit: number | null;
+  /** `vehicle.isAvailable`. Not the top-level calculate `available` value. */
   available: boolean | null;
+  /** `vehicle.price`. */
+  price: number | null;
+  priceDiscounted: number | null;
+  priceWithoutDiscount: number | null;
+  /** Kilometres from `vehicle.mileageLimit`, not the request flag. */
+  mileageLimit: number | null;
+  mileageLimitFee: number | null;
   total: number | null;
   pickUpPrice: number | null;
   returnPrice: number | null;
@@ -414,6 +425,11 @@ export function parseReservationQuote(value: unknown): ReservationQuote {
     imageWebpFile: asString(vehicle.imageWebp),
     deposit: asNumber(vehicle.deposit),
     available: asBoolean(vehicle.isAvailable),
+    price: asNumber(vehicle.price),
+    priceDiscounted: asNumber(vehicle.priceDiscounted),
+    priceWithoutDiscount: asNumber(vehicle.priceWithoutDiscount),
+    mileageLimit: asNumber(vehicle.mileageLimit),
+    mileageLimitFee: asNumber(vehicle.mileageLimitFee),
     total: asNumber(prices.total),
     pickUpPrice: asNumber(prices.pickUp),
     returnPrice: asNumber(prices.return),

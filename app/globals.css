@@ -10,6 +10,17 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --color-blue-dark: #083052;
+  --color-blue-medium: #0e5595;
+  --color-blue-light: #d5e4f2;
+  --color-green-dark: #32510d;
+  --color-green-medium: #5b9318;
+  --color-green-light: #dcebc8;
+  --color-muted-dark: #5c6166;
+  --color-muted: #d4d6da;
+  --color-muted-light: #e8e9eb;
+  --text-xxs: 0.625rem;
+  --text-xxs--line-height: 0.875rem;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,3 +35,75 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+@keyframes modal-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modal-fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-pop-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+.pickup-overlay[data-entering] {
+  animation: modal-fade 200ms ease-out;
+}
+
+.pickup-overlay[data-exiting] {
+  animation: modal-fade-out 180ms ease-in both;
+}
+
+.pickup-modal[data-entering] {
+  animation: modal-pop 220ms ease-out;
+  transform-origin: center;
+}
+
+.pickup-modal[data-exiting] {
+  animation: modal-pop-out 180ms ease-in both;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pickup-overlay[data-entering],
+  .pickup-overlay[data-exiting],
+  .pickup-modal[data-entering],
+  .pickup-modal[data-exiting] {
+    animation: none;
+  }
+}
+

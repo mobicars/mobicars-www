@@ -20,6 +20,7 @@ import {
   buildOfferQuery,
   buildPasswordRecoveryBody,
   buildReservationBody,
+  isCatalogOfferQuery,
 } from "./internal/params";
 import { normalizeClient, normalizePromoCode } from "./internal/parse";
 import { serializeQuery } from "./internal/query";
@@ -76,9 +77,70 @@ describe("offer and reservation parameters", () => {
       longTermQuote: { months: 12, monthlyKmLimit: 1000 },
     });
     assert.equal(query.longTerm, true);
+    assert.equal("shortTerm" in query, false);
     assert.equal(query.longTermKalukator, true);
     assert.equal(query.okresLongTerm, 12);
     assert.equal(query.limitLongTerm, 1000);
+  });
+
+  it("does not send shortTerm together with a long-term quote", () => {
+    for (const term of [undefined, "short" as const]) {
+      const query = buildOfferQuery({
+        term,
+        longTermQuote: { months: 6, monthlyKmLimit: 1500 },
+      });
+      assert.equal(query.longTerm, true);
+      assert.equal("shortTerm" in query, false);
+      assert.equal(query.longTermKalukator, true);
+      assert.equal(query.okresLongTerm, 6);
+      assert.equal(query.limitLongTerm, 1500);
+      assert.equal(
+        isCatalogOfferQuery({
+          term,
+          longTermQuote: { months: 6, monthlyKmLimit: 1500 },
+        }),
+        false,
+      );
+    }
+  });
+
+  it("rejects availability filters that the spec requires dates for", () => {
+    assert.throws(
+      () => buildOfferQuery({ onlyAvailable: true }),
+      (error: unknown) => {
+        assert.ok(error instanceof RentCarSoftError);
+        assert.equal(error.code, "invalid_request");
+        return true;
+      },
+    );
+    assert.throws(
+      () => buildOfferQuery({ onlyAvailableAtLocation: true, servicePointIds: [4] }),
+      (error: unknown) => {
+        assert.ok(error instanceof RentCarSoftError);
+        assert.equal(error.code, "invalid_request");
+        return true;
+      },
+    );
+
+    const query = buildOfferQuery({
+      onlyAvailable: true,
+      onlyAvailableAtLocation: true,
+      servicePointIds: [4],
+      pickUpDate: "2026-11-16 10:00",
+      returnDate: "2026-11-23 10:00",
+    });
+    assert.equal(query.onlyAvailable, true);
+    assert.equal(query.onlyAvailableAtLocation, true);
+    assert.deepEqual(query.servicePoints, [4]);
+    assert.equal(
+      isCatalogOfferQuery({
+        onlyAvailableAtLocation: true,
+        servicePointIds: [4],
+        pickUpDate: "2026-11-16 10:00",
+        returnDate: "2026-11-23 10:00",
+      }),
+      false,
+    );
   });
 
   it("sends longTerm=1 for a long-term quote", () => {
@@ -94,6 +156,38 @@ describe("offer and reservation parameters", () => {
     assert.equal(query.iloscMiesiecy, 12);
     assert.equal(query.limitKmMiesieczny, 1500);
     assert.equal("mileageLimit" in query, false);
+  });
+
+  it("sends accessory quantity as ilosc on calculate and as quantity on create", () => {
+    const accessories = [{ id: 8, quantity: 2 }];
+    const calculate = buildCalculateQuery({
+      offerId: 1,
+      pickUpPointId: 2,
+      returnPointId: 3,
+      pickUpDate: "2026-11-16 10:00",
+      returnDate: "2026-11-23 10:00",
+      accessories,
+    });
+    assert.deepEqual(calculate.accessories, [{ id: 8, ilosc: 2 }]);
+    const encoded = serializeQuery(calculate);
+    assert.match(encoded, /ilosc/);
+    assert.equal(encoded.includes("quantity"), false);
+
+    const body = buildReservationBody({
+      offerId: 1,
+      pickUpPointId: 2,
+      returnPointId: 3,
+      pickUpDate: "2026-11-16 10:00",
+      returnDate: "2026-11-23 10:00",
+      clientKeys: [{ id: 1, value: "Ada" }],
+      accessories,
+      longTerm: { months: 12, monthlyKmLimit: 1500 },
+    });
+    assert.deepEqual(body.accessories, [{ id: 8, quantity: 2 }]);
+    assert.equal(JSON.stringify(body.accessories).includes("ilosc"), false);
+    assert.equal(body.iloscMiesiecy, 12);
+    assert.equal(body.ustalonyLimitKm, 1500);
+    assert.equal(body.longTerm, true);
   });
 
   it("sends mileageLimit only when the caller sets it", () => {
@@ -182,9 +276,15 @@ describe("normalization", () => {
     const point = parseServicePoint({
       id: 4,
       name: "Office",
+      customAddresses: true,
       keys: [{ id: 2, value: ACTIVE_SERVICE_POINT_STATUS_VALUE }],
     });
     assert.equal(point.active, true);
+    assert.equal(point.customAddresses, true);
+    assert.equal(
+      parseServicePoint({ id: 7, name: "Desk" }).customAddresses,
+      false,
+    );
     const labeled = parseServicePoint(
       {
         id: 6,
@@ -240,6 +340,11 @@ describe("normalization", () => {
     assert.equal(quote.monthlyWithExtras, 25);
     assert.equal(quote.days, 365);
     assert.equal(quote.deposit, 100.5);
+    assert.equal(quote.price, null);
+    assert.equal(quote.priceDiscounted, null);
+    assert.equal(quote.priceWithoutDiscount, null);
+    assert.equal(quote.mileageLimit, null);
+    assert.equal(quote.mileageLimitFee, null);
     assert.deepEqual(quote.addons, [
       {
         id: 3,
@@ -253,6 +358,30 @@ describe("normalization", () => {
     ]);
     assert.deepEqual(quote.accessories, []);
     assert.equal("itemPriceMoi" in quote.addons[0], false);
+
+    const priced = parseReservationQuote({
+      release: { name: "A", data: "2026-11-16 10:00" },
+      return: { name: "B", data: "2026-11-23 10:00" },
+      vehicle: {
+        id: "8",
+        name: "Car",
+        deposit: "0.00",
+        isAvailable: true,
+        price: "833.00000000",
+        priceDiscounted: "700.50",
+        priceWithoutDiscount: "833.00",
+        mileageLimit: "400",
+        mileageLimitFee: "0.50",
+      },
+      prices: { total: 700.5, rent: 700.5, days: "7", addons: [], accessories: [] },
+    });
+    assert.equal(priced.term, "short");
+    assert.equal(priced.price, 833);
+    assert.equal(priced.priceDiscounted, 700.5);
+    assert.equal(priced.priceWithoutDiscount, 833);
+    assert.equal(priced.mileageLimit, 400);
+    assert.equal(priced.mileageLimitFee, 0.5);
+    assert.equal(priced.available, true);
 
     const created = parseCreatedReservation({
       id: 3,

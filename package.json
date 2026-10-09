@@ -10,8 +10,10 @@
     "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts"
   },
   "dependencies": {
+    "lucide-react": "^1.53.0",
     "next": "16.4.0",
     "react": "19.3.0",
+    "react-aria-components": "^1.22.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1"
   },

@@ -40,6 +40,10 @@ Optional pass-through:
 
 No default is applied for payment method, forced status, or `mileageLimit`. Omit `mileageLimit` and the API default (`false`) applies on both calculate and create. Pass `true` or `false` from the booking screen when that screen has chosen.
 
+`longTerm`, when set, requires `months` and `monthlyKmLimit` on both calculate and create. Calculate sends `longTerm=1`, `iloscMiesiecy`, and `limitKmMiesieczny`. Create sends `longTerm=true`, `iloscMiesiecy`, and `ustalonyLimitKm`.
+
+Accessory `quantity` is sent as `ilosc` on calculate and as `quantity` on create.
+
 ## Offers
 
 `listOffers` returns one page. `page` starts at 0. `perPage` defaults to 100.
@@ -48,7 +52,9 @@ No default is applied for payment method, forced status, or `mileageLimit`. Omit
 
 `order` defaults to `default`. Callers can pass `price_asc`, `price_desc`, `name_asc`, or `name_desc`.
 
-`longTermQuote` turns on `longTermKalukator`, `okresLongTerm`, and `limitLongTerm`, and forces the long-term flag. That combination changes prices and can return an empty page. It is not cached.
+`longTermQuote` turns on `longTermKalukator`, `okresLongTerm`, and `limitLongTerm`, and forces the long-term flag. It does not send `shortTerm`, including when `term` is omitted or `"short"`. When `offerKeyIds` is omitted, that also selects the long-term key set. The combination changes prices and can return an empty page. It is not cached.
+
+`onlyAvailableAtLocation` limits list availability to the department of `servicePointIds`. It is omitted unless the caller sets it, and then only together with both dates.
 
 ## Extras
 
