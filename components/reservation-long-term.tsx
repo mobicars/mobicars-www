@@ -369,7 +369,7 @@ function StartDateBody({
   );
 }
 
-function MonthLabel({ offsetMonths }: { offsetMonths: number }) {
+function MonthLabel({ offsetMonths = 0 }: { offsetMonths?: number }) {
   const state = useContext(CalendarStateContext);
   if (!state) {
     return null;
