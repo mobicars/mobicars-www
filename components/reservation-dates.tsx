@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useId, useRef, useState } from "react";
+import { useContext, useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import {
   Button,
   CalendarCell,
@@ -16,21 +16,19 @@ import {
   RangeCalendarStateContext,
 } from "react-aria-components";
 import {
+  Time,
   getDayOfWeek,
   isSameMonth,
   now,
+  toCalendarDateTime,
+  toZoned,
   today,
   type CalendarDate,
 } from "@internationalized/date";
 import { ChevronLeft, ChevronRight, Timer, TimerReset, X, type LucideIcon } from "lucide-react";
+import { reservationConfig } from "@/components/reservation-config";
 
-const ZONE = "Europe/Warsaw";
-const MINUTES = [0, 30] as const;
-const MOBILE_MONTHS = 5;
-const DESKTOP_MONTHS = 2;
-const SLOTS: ClockTime[] = Array.from({ length: 24 }, (_, hour) =>
-  MINUTES.map((minute) => ({ hour, minute })),
-).flat();
+const SLOTS: ClockTime[] = buildSlots(reservationConfig.slotMinutes);
 
 export type ClockTime = {
   hour: number;
@@ -80,8 +78,8 @@ export function formatSchedulePoint(date: CalendarDate, time: ClockTime): string
     day: "2-digit",
     month: "short",
     year: "numeric",
-    timeZone: ZONE,
-  }).format(date.toDate(ZONE));
+    timeZone: reservationConfig.timeZone,
+  }).format(date.toDate(reservationConfig.timeZone));
   return `${formatted.replace(".", "")}, ${formatClock(time)}`;
 }
 
@@ -95,13 +93,11 @@ function DatesDialogBody({
   const [range, setRange] = useState<{ start: CalendarDate; end: CalendarDate } | null>(
     schedule ? { start: schedule.start, end: schedule.end } : null,
   );
-  const [pickup, setPickup] = useState<ClockTime | null>(
-    schedule?.pickup ? normalizeSlot(schedule.pickup) : null,
-  );
-  const [dropoff, setDropoff] = useState<ClockTime | null>(
-    schedule?.dropoff ? normalizeSlot(schedule.dropoff) : null,
-  );
-  const monthCount = wide ? DESKTOP_MONTHS : MOBILE_MONTHS;
+  const [pickup, setPickup] = useState<ClockTime | null>(() => openedTimes(schedule).pickup);
+  const [dropoff, setDropoff] = useState<ClockTime | null>(() => openedTimes(schedule).dropoff);
+  const monthCount = wide
+    ? reservationConfig.shortTermCalendarMonths.desktop
+    : reservationConfig.shortTermCalendarMonths.mobile;
 
   useEffect(() => {
     const query = window.matchMedia("(min-width: 768px)");
@@ -110,26 +106,6 @@ function DatesDialogBody({
     query.addEventListener("change", update);
     return () => query.removeEventListener("change", update);
   }, []);
-
-  useEffect(() => {
-    if (!range?.start || !pickup) {
-      return;
-    }
-    if (!isSlotPast(range.start, pickup)) {
-      return;
-    }
-    setPickup(nextOpenSlot(range.start));
-  }, [range?.start, pickup]);
-
-  useEffect(() => {
-    if (!range?.start || !range.end || !pickup || !dropoff) {
-      return;
-    }
-    if (!isDropoffTooEarly(range.start, range.end, pickup, dropoff)) {
-      return;
-    }
-    setDropoff(nextSlotAfter(range.end, pickup, range.start));
-  }, [range, pickup, dropoff]);
 
   const canAccept = Boolean(
     range?.start &&
@@ -157,9 +133,26 @@ function DatesDialogBody({
         </div>
         <RangeCalendar
           aria-label="Zakres wynajmu"
-          minValue={today(ZONE)}
+          minValue={today(reservationConfig.timeZone)}
           value={range}
-          onChange={setRange}
+          onChange={(next) => {
+            setRange(next);
+            if (!next) {
+              return;
+            }
+            const nextPickup =
+              pickup && isSlotPast(next.start, pickup) ? nextOpenSlot(next.start) : pickup;
+            if (nextPickup !== pickup) {
+              setPickup(nextPickup);
+            }
+            if (
+              nextPickup &&
+              dropoff &&
+              isDropoffTooEarly(next.start, next.end, nextPickup, dropoff)
+            ) {
+              setDropoff(nextSlotAfter(next.end, nextPickup, next.start));
+            }
+          }}
           visibleDuration={{ months: monthCount }}
           className="mx-auto flex min-h-0 w-full max-w-4xl flex-col overflow-hidden outline-none"
         >
@@ -197,10 +190,16 @@ function DatesDialogBody({
               value={pickup}
               onChange={(slot) => {
                 setPickup(slot);
-                if (dropoff || !range?.start || !range.end) {
+                if (!range?.start || !range.end) {
                   return;
                 }
-                setDropoff(suggestedDropoff(range.start, range.end, slot));
+                if (!dropoff) {
+                  setDropoff(suggestedDropoff(range.start, range.end, slot));
+                  return;
+                }
+                if (isDropoffTooEarly(range.start, range.end, slot, dropoff)) {
+                  setDropoff(nextSlotAfter(range.end, slot, range.start));
+                }
               }}
               isBlocked={(slot) => (range?.start ? isSlotPast(range.start, slot) : false)}
             />
@@ -247,9 +246,10 @@ function MonthLabel({ offsetMonths }: { offsetMonths: number }) {
     return null;
   }
   const date = state.visibleRange.start.add({ months: offsetMonths });
-  const name = new Intl.DateTimeFormat("pl-PL", { month: "long", timeZone: ZONE }).format(
-    date.toDate(ZONE),
-  );
+  const name = new Intl.DateTimeFormat("pl-PL", {
+    month: "long",
+    timeZone: reservationConfig.timeZone,
+  }).format(date.toDate(reservationConfig.timeZone));
   return <h3 className="mb-2 text-lg font-semibold capitalize">{name}</h3>;
 }
 
@@ -443,14 +443,50 @@ export function TimeField({
   );
 }
 
+function buildSlots(step: number): ClockTime[] {
+  if (step <= 0) {
+    return [];
+  }
+  const slots: ClockTime[] = [];
+  for (let minuteOfDay = 0; minuteOfDay < 24 * 60; minuteOfDay += step) {
+    slots.push({
+      hour: Math.floor(minuteOfDay / 60),
+      minute: minuteOfDay % 60,
+    });
+  }
+  return slots;
+}
+
+function openedTimes(schedule: ReservationSchedule | null): {
+  pickup: ClockTime | null;
+  dropoff: ClockTime | null;
+} {
+  if (!schedule) {
+    return { pickup: null, dropoff: null };
+  }
+  let pickup: ClockTime | null = normalizeSlot(schedule.pickup);
+  if (isSlotPast(schedule.start, pickup)) {
+    pickup = nextOpenSlot(schedule.start);
+  }
+  let dropoff: ClockTime | null = normalizeSlot(schedule.dropoff);
+  if (pickup && isDropoffTooEarly(schedule.start, schedule.end, pickup, dropoff)) {
+    dropoff = nextSlotAfter(schedule.end, pickup, schedule.start);
+  }
+  return { pickup, dropoff };
+}
+
 function normalizeSlot(slot: ClockTime): ClockTime {
-  if (slot.minute === 0 || slot.minute === 30) {
+  const step = reservationConfig.slotMinutes;
+  if (step <= 0) {
     return slot;
   }
-  if (slot.minute < 30) {
-    return { hour: slot.hour, minute: 30 };
+  const total = slot.hour * 60 + slot.minute;
+  const snapped = Math.ceil(total / step) * step;
+  if (snapped >= 24 * 60) {
+    const last = 24 * 60 - step;
+    return { hour: Math.floor(last / 60), minute: last % 60 };
   }
-  return slot.hour < 23 ? { hour: slot.hour + 1, minute: 0 } : { hour: 23, minute: 30 };
+  return { hour: Math.floor(snapped / 60), minute: snapped % 60 };
 }
 
 function formatClock(time: ClockTime): string {
@@ -458,22 +494,17 @@ function formatClock(time: ClockTime): string {
 }
 
 export function isSlotPast(date: CalendarDate, slot: ClockTime): boolean {
-  const current = now(ZONE);
-  const todayDate = today(ZONE);
-  const compared = date.compare(todayDate);
-  if (compared > 0) {
-    return false;
-  }
-  if (compared < 0) {
-    return true;
-  }
-  if (slot.hour < current.hour) {
-    return true;
-  }
-  if (slot.hour > current.hour) {
-    return false;
-  }
-  return slot.minute <= current.minute;
+  const earliest = now(reservationConfig.timeZone).add({
+    minutes: reservationConfig.pickupLeadMinutes,
+  });
+  return zonedSlot(date, slot).compare(earliest) <= 0;
+}
+
+function zonedSlot(date: CalendarDate, slot: ClockTime) {
+  return toZoned(
+    toCalendarDateTime(date, new Time(slot.hour, slot.minute)),
+    reservationConfig.timeZone,
+  );
 }
 
 export function nextOpenSlot(date: CalendarDate): ClockTime | null {
@@ -483,6 +514,72 @@ export function nextOpenSlot(date: CalendarDate): ClockTime | null {
     }
   }
   return null;
+}
+
+const noopSubscribe = () => () => {};
+
+/**
+ * Runs `compute` once on the client after hydration. On the server the value is always null.
+ */
+export function useClientOnlyValue<T>(compute: () => T | null): T | null {
+  const cache = useRef<{ ready: boolean; value: T | null }>({ ready: false, value: null });
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => {
+      if (!cache.current.ready) {
+        cache.current = { ready: true, value: compute() };
+      }
+      return cache.current.value;
+    },
+    () => null,
+  );
+}
+
+export function defaultPickupPoint(): { date: CalendarDate; time: ClockTime } | null {
+  if (!reservationConfig.prefillDates) {
+    return null;
+  }
+  let date = today(reservationConfig.timeZone);
+  const limit = Math.max(2, Math.ceil(reservationConfig.pickupLeadMinutes / (24 * 60)) + 2);
+  for (let day = 0; day < limit; day += 1) {
+    const time = nextOpenSlot(date);
+    if (time) {
+      return { date, time };
+    }
+    date = date.add({ days: 1 });
+  }
+  return null;
+}
+
+export function defaultShortTermSchedule(): ReservationSchedule | null {
+  const pickup = defaultPickupPoint();
+  if (!pickup) {
+    return null;
+  }
+  const days = reservationConfig.defaultRentalDays;
+  if (days > 0) {
+    return {
+      start: pickup.date,
+      end: pickup.date.add({ days }),
+      pickup: pickup.time,
+      dropoff: pickup.time,
+    };
+  }
+  const sameDayDropoff = nextSlotAfter(pickup.date, pickup.time, pickup.date);
+  if (sameDayDropoff) {
+    return {
+      start: pickup.date,
+      end: pickup.date,
+      pickup: pickup.time,
+      dropoff: sameDayDropoff,
+    };
+  }
+  return {
+    start: pickup.date,
+    end: pickup.date.add({ days: 1 }),
+    pickup: pickup.time,
+    dropoff: pickup.time,
+  };
 }
 
 function isDropoffTooEarly(

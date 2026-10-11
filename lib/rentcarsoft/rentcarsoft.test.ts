@@ -305,6 +305,60 @@ describe("normalization", () => {
     );
   });
 
+  it("reads service-point place text and yes/no selects", () => {
+    const point = parseServicePoint({
+      id: 8,
+      name: "Station",
+      isAirport: false,
+      keys: [
+        { id: 3, value: "  Wrocław " },
+        { id: 4, value: "  " },
+        { id: 21, value: "9" },
+        { id: 22, value: "12" },
+      ],
+    });
+    assert.equal(point.city, "Wrocław");
+    assert.equal(point.address, null);
+    assert.equal(point.trainStation, true);
+    assert.equal(point.office, false);
+    assert.equal(point.airport, false);
+
+    const labeled = parseServicePoint(
+      {
+        id: 9,
+        name: "Desk",
+        isAirport: true,
+        keys: [
+          { id: 22, value: "13" },
+          { id: 21, value: "8" },
+        ],
+      },
+      [
+        {
+          id: 22,
+          name: "Biuro",
+          values: [
+            { id: 12, name: "Nie" },
+            { id: 13, name: "Tak" },
+          ],
+        },
+        {
+          id: 21,
+          name: "Dworzec PKP",
+          values: [
+            { id: 8, name: "Nie" },
+            { id: 9, name: "Tak" },
+          ],
+        },
+      ],
+    );
+    assert.equal(labeled.office, true);
+    assert.equal(labeled.trainStation, false);
+    assert.equal(labeled.airport, true);
+    assert.equal(labeled.city, null);
+    assert.equal(labeled.attributes.isOffice?.value, "Tak");
+  });
+
   it("reads verified long-term quote fields and does not invent a payment url on create", () => {
     const quote = parseReservationQuote({
       iloscMiesiecy: 12,

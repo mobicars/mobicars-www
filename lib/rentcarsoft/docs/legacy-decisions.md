@@ -7,6 +7,7 @@ Source of the old client: `mobicars-pl/lib/rentcarsoft`. It is migration referen
 - Bearer auth from `RCS_URL` and `RCS_KEY`.
 - `mileageLimit` is a boolean and is sent only when the caller sets it, on both calculate and create. The API default is `false`. The old client defaulted calculate to `1` and set the flag on create only for long-term bookings. That split is not carried over. Equivalence of `true` and `1` is still UNVERIFIED.
 - Active service points only, by status value `6` (`Aktywny` on the live key dictionary).
+- Train station and office stay select fields. Key `21` value `9` and key `22` value `13` are `Tak`. The bridge exposes them as `trainStation` and `office`. `isAirport` stays a boolean.
 - Popular cars: offer key `71`, value `81`.
 - Local `YYYY-MM-DD HH:mm` pickup strings.
 - Long-term offer parameters `longTermKalukator`, `okresLongTerm`, `limitLongTerm`.

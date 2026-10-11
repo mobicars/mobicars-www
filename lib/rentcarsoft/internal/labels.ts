@@ -82,6 +82,11 @@ export const SERVICE_POINT_KEY_LABELS: Record<number, string> = {
 export const ACTIVE_SERVICE_POINT_STATUS_VALUE = "6";
 export const SERVICE_POINT_STATUS_KEY_ID = 2;
 
+/** Live dictionary: service-point key 21, select value 9, label "Tak". */
+export const TRAIN_STATION_YES_VALUE = "9";
+/** Live dictionary: service-point key 22, select value 13, label "Tak". */
+export const OFFICE_YES_VALUE = "13";
+
 export const DEFAULT_SERVICE_POINT_KEY_IDS = [2, 3, 4, 14, 21, 22];
 
 export const CLIENT_KEY_LABELS: Record<number, string> = {

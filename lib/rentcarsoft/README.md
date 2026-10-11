@@ -103,6 +103,8 @@ Mutations are not retried.
 - Long-term offer search can send `longTermKalukator`, `okresLongTerm`, and `limitLongTerm` through `longTermQuote`. That path is not cached. `longTermQuote` selects the long-term list and does not also send `shortTerm`.
 - `onlyAvailable` requires both dates. `onlyAvailableAtLocation` requires service points and both dates. The bridge throws `invalid_request` and does not call the API when those inputs are missing. Without the location flag, availability stays company-wide.
 - Service points are active when custom field 2 equals `6` (`Aktywny`). `listServicePoints` returns those points unless `includeInactive` is set.
+- `ServicePoint.city` and `ServicePoint.address` are trimmed custom fields 3 and 4. An empty value is `null`.
+- `ServicePoint.office` is custom field 22 with value `13` (`Tak`). `ServicePoint.trainStation` is custom field 21 with value `9` (`Tak`). `airport` stays the API boolean `isAirport`.
 - Offer field 71 with value `81` sets `Offer.isPopular`.
 - Addon and accessory long-term catalogs use `loadLongTerm`.
 - Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `ilosc`. Create sends `quantity`. The create key is UNVERIFIED. Do not match a selected accessory by `QuoteLine.id`: on the live short quote that id equalled the line price.

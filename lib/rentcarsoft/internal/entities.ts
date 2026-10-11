@@ -1,11 +1,13 @@
 import { RentCarSoftError } from "./errors";
 import {
   ACTIVE_SERVICE_POINT_STATUS_VALUE,
+  OFFICE_YES_VALUE,
   OFFER_KEY_LABELS,
   POPULAR_OFFER_VALUE,
   PRICE_GROUP_KEY_LABELS,
   SERVICE_POINT_KEY_LABELS,
   SERVICE_POINT_STATUS_KEY_ID,
+  TRAIN_STATION_YES_VALUE,
 } from "./labels";
 import {
   asBoolean,
@@ -128,6 +130,12 @@ export type ServicePoint = {
   longitude: number | null;
   departmentId: number | null;
   airport: boolean;
+  /** Custom field 22. True when the live dictionary says "Tak" (value 13). */
+  office: boolean;
+  /** Custom field 21. True when the live dictionary says "Tak" (value 9). */
+  trainStation: boolean;
+  city: string | null;
+  address: string | null;
   minDays: number | null;
   maxDays: number | null;
   /** Point allows a customer pickup or return address. */
@@ -167,6 +175,10 @@ export function parseServicePoint(
     longitude: asNumber(record.longitude),
     departmentId: asId(record.department),
     airport: asBoolean(record.isAirport) ?? false,
+    office: isAffirmative(attributes.isOffice, OFFICE_YES_VALUE),
+    trainStation: isAffirmative(attributes.isTrainStation, TRAIN_STATION_YES_VALUE),
+    city: textAttribute(attributes.city),
+    address: textAttribute(attributes.address),
     minDays: asId(record.minDays),
     maxDays: asId(record.maxDays),
     customAddresses: asBoolean(record.customAddresses) ?? false,
@@ -177,6 +189,25 @@ export function parseServicePoint(
 
 function rawStatus(keys: unknown): string | null {
   return findRawKey(keys, SERVICE_POINT_STATUS_KEY_ID)?.toString() ?? null;
+}
+
+function textAttribute(attribute: FieldAttribute | undefined): string | null {
+  const value = attribute?.value.trim();
+  return value ? value : null;
+}
+
+function isAffirmative(
+  attribute: FieldAttribute | undefined,
+  yesValue: string,
+): boolean {
+  if (!attribute) {
+    return false;
+  }
+  if (attribute.valueId === asId(yesValue) || attribute.value === yesValue) {
+    return true;
+  }
+  const value = attribute.value.trim().toLocaleLowerCase("pl");
+  return value === "tak" || value === "yes";
 }
 
 export function isActiveServicePoint(point: ServicePoint): boolean {

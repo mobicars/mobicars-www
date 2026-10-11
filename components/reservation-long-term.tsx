@@ -16,19 +16,28 @@ import {
   ModalOverlay,
 } from "react-aria-components";
 import { today, type CalendarDate } from "@internationalized/date";
-import { CalendarCheck2, CalendarRange, ChevronLeft, ChevronRight, Gauge, Search, Timer, X, type LucideIcon } from "lucide-react";
+import { reservationConfig } from "@/components/reservation-config";
+import {
+  CalendarCheck2,
+  CalendarRange,
+  ChevronLeft,
+  ChevronRight,
+  Gauge,
+  Search,
+  Timer,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { PlaceFields, type PickupPlace } from "@/components/reservation-places";
 import {
   TimeField,
+  defaultPickupPoint,
   formatSchedulePoint,
   isSlotPast,
   nextOpenSlot,
+  useClientOnlyValue,
   type ClockTime,
 } from "@/components/reservation-dates";
-
-const ZONE = "Europe/Warsaw";
-const MONTH_COUNTS = [1, 2, 3, 4, 5, 6, 12, 24, 36] as const;
-const KILOMETER_LIMITS = [1000, 2000, 3000, 4000, 5000, 6000] as const;
 
 type LongTermStart = {
   date: CalendarDate;
@@ -38,6 +47,8 @@ type LongTermStart = {
 export function LongTermBar({ places }: { places: PickupPlace[] }) {
   const [datesOpen, setDatesOpen] = useState(false);
   const [start, setStart] = useState<LongTermStart | null>(null);
+  const defaultStart = useClientOnlyValue(defaultPickupPoint);
+  const activeStart = start ?? defaultStart;
   const [months, setMonths] = useState<number | null>(null);
   const [kilometers, setKilometers] = useState<number | null>(null);
 
@@ -50,7 +61,11 @@ export function LongTermBar({ places }: { places: PickupPlace[] }) {
             <BarField
               icon={CalendarCheck2}
               label="Data i godzina odbioru"
-              value={start ? formatSchedulePoint(start.date, start.time) : "Wybierz datę"}
+              value={
+                activeStart
+                  ? formatSchedulePoint(activeStart.date, activeStart.time)
+                  : "Wybierz datę"
+              }
               onClick={() => setDatesOpen(true)}
               className="border-b-2 @lg:border-r-2 @5xl:border-b-0"
             />
@@ -60,7 +75,7 @@ export function LongTermBar({ places }: { places: PickupPlace[] }) {
               title="Liczba miesięcy"
               value={months}
               empty="Wybierz"
-              options={MONTH_COUNTS}
+              options={reservationConfig.longTermMonthCounts}
               format={formatMonths}
               onChange={setMonths}
               className="border-b-2 @lg:border-r-2 @5xl:border-b-0"
@@ -71,7 +86,7 @@ export function LongTermBar({ places }: { places: PickupPlace[] }) {
               title="Limit kilometrów"
               value={kilometers}
               empty="Wybierz"
-              options={KILOMETER_LIMITS}
+              options={reservationConfig.kilometerLimits}
               format={formatKilometers}
               onChange={setKilometers}
               className="border-b-2 @5xl:border-r-2 @5xl:border-b-0"
@@ -85,7 +100,12 @@ export function LongTermBar({ places }: { places: PickupPlace[] }) {
           </div>
         </div>
       </div>
-      <StartDateDialog open={datesOpen} start={start} onOpenChange={setDatesOpen} onConfirm={setStart} />
+      <StartDateDialog
+        open={datesOpen}
+        start={activeStart}
+        onOpenChange={setDatesOpen}
+        onConfirm={setStart}
+      />
     </>
   );
 }
@@ -109,10 +129,18 @@ function BarField({
       onClick={onClick}
       className={`flex min-h-16 min-w-0 cursor-pointer items-center gap-3 border-blue-medium bg-white px-4 py-3 text-left transition-colors duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--color-blue-dark)_4%,white)] motion-reduce:transition-none @5xl:px-5 ${className}`}
     >
-      <Icon className="size-5 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
+      <Icon
+        className="size-5 shrink-0 text-blue-medium"
+        strokeWidth={1.75}
+        aria-hidden
+      />
       <span className="min-w-0">
-        <span className="block truncate text-xxs text-blue-dark/55">{label}</span>
-        <span className="block truncate text-xs font-bold text-blue-dark">{value}</span>
+        <span className="block truncate text-xxs text-blue-dark/55">
+          {label}
+        </span>
+        <span className="block truncate text-xs font-bold text-blue-dark">
+          {value}
+        </span>
       </span>
     </button>
   );
@@ -201,7 +229,10 @@ function OptionDialog<T extends number>({
       className="pickup-overlay fixed inset-0 z-50 flex bg-black/50"
     >
       <Modal className="pickup-modal m-auto flex max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(24rem,calc(100%-1.5rem))] flex-col overflow-hidden rounded-2xl bg-white text-blue-dark shadow-2xl outline-none">
-        <Dialog aria-labelledby={titleId} className="grid max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden outline-none">
+        <Dialog
+          aria-labelledby={titleId}
+          className="grid max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden outline-none"
+        >
           <div className="relative shrink-0 px-12 py-4">
             <h2 id={titleId} className="text-center text-lg font-semibold">
               {title}
@@ -264,7 +295,11 @@ function StartDateDialog({
       className="pickup-overlay fixed inset-0 z-50 flex bg-black/50"
     >
       <Modal className="pickup-modal m-auto flex h-dvh max-h-dvh w-full max-w-none flex-col overflow-hidden bg-white text-blue-dark outline-none sm:h-auto sm:max-h-[calc(100dvh-1.5rem)] sm:w-[min(24rem,calc(100%-1.5rem))] sm:rounded-2xl sm:shadow-2xl">
-        <StartDateBody start={start} onOpenChange={onOpenChange} onConfirm={onConfirm} />
+        <StartDateBody
+          start={start}
+          onOpenChange={onOpenChange}
+          onConfirm={onConfirm}
+        />
       </Modal>
     </ModalOverlay>
   );
@@ -281,14 +316,14 @@ function StartDateBody({
 }) {
   const titleId = useId();
   const [date, setDate] = useState<CalendarDate | null>(start?.date ?? null);
-  const [time, setTime] = useState<ClockTime | null>(start?.time ?? null);
-
-  useEffect(() => {
-    if (!date || !time || !isSlotPast(date, time)) {
-      return;
+  const [time, setTime] = useState<ClockTime | null>(() => {
+    if (!start?.date || !start.time) {
+      return null;
     }
-    setTime(nextOpenSlot(date));
-  }, [date, time]);
+    return isSlotPast(start.date, start.time)
+      ? nextOpenSlot(start.date)
+      : start.time;
+  });
 
   const canAccept = Boolean(date && time && !isSlotPast(date, time));
 
@@ -312,9 +347,14 @@ function StartDateBody({
         </div>
         <Calendar
           aria-label="Data odbioru"
-          minValue={today(ZONE)}
+          minValue={today(reservationConfig.timeZone)}
           value={date}
-          onChange={setDate}
+          onChange={(next) => {
+            setDate(next);
+            if (time && isSlotPast(next, time)) {
+              setTime(nextOpenSlot(next));
+            }
+          }}
           className="mx-auto flex min-h-0 w-full flex-col overflow-hidden outline-none"
         >
           <div className="flex shrink-0 justify-end gap-2 px-5 pb-2">
@@ -375,7 +415,10 @@ function MonthLabel({ offsetMonths = 0 }: { offsetMonths?: number }) {
     return null;
   }
   const date = state.visibleRange.start.add({ months: offsetMonths });
-  const name = new Intl.DateTimeFormat("pl-PL", { month: "long", timeZone: ZONE }).format(date.toDate(ZONE));
+  const name = new Intl.DateTimeFormat("pl-PL", {
+    month: "long",
+    timeZone: reservationConfig.timeZone,
+  }).format(date.toDate(reservationConfig.timeZone));
   return <h3 className="mb-2 text-lg font-semibold capitalize">{name}</h3>;
 }
 
@@ -408,10 +451,16 @@ function StartDay({ date }: { date: CalendarDate }) {
         }
         return [
           "relative flex aspect-square w-full items-center justify-center rounded-full text-sm outline-none transition-colors duration-200 ease-out motion-reduce:transition-none",
-          cell.isDisabled ? "cursor-default text-blue-dark/30" : "cursor-pointer text-blue-dark",
+          cell.isDisabled
+            ? "cursor-default text-blue-dark/30"
+            : "cursor-pointer text-blue-dark",
           cell.isSelected ? "bg-blue-medium font-semibold text-white" : "",
-          !cell.isSelected && !cell.isDisabled ? "hover:bg-blue-dark/[0.04]" : "",
-          cell.isFocusVisible ? "z-10 ring-2 ring-blue-medium ring-offset-2" : "",
+          !cell.isSelected && !cell.isDisabled
+            ? "hover:bg-blue-dark/[0.04]"
+            : "",
+          cell.isFocusVisible
+            ? "z-10 ring-2 ring-blue-medium ring-offset-2"
+            : "",
         ].join(" ");
       }}
     >
