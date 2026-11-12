@@ -2,7 +2,7 @@ import { LogOut } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { PanelNav } from "@/components/account/panel-nav";
-import { accountCopy } from "@/i18n/account";
+import { accountCopy } from "@/i18n/panel-copy";
 import { isLang } from "@/i18n/config";
 import { logout } from "@/lib/auth/actions";
 

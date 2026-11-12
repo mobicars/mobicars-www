@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ForgotPasswordForm } from "@/components/auth/password-forms";
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { authFormsCopy } from "@/i18n/panel-copy";
 import { isLang } from "@/i18n/config";
 
 type Props = PageProps<"/[lang]/account/forgot-password">;

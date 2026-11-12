@@ -5,14 +5,18 @@ import { useRouter } from "next/navigation";
 import { Car, CircleCheck, Package, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 
 import { currentHrefWith } from "@/components/reservation/url";
+import { useMessages } from "@/i18n/messages-context";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
-/** Step labels, icons and the `step` value that opens each one (`null`: the car list). */
-const STEPS: { label: string; icon: LucideIcon; step: string | null }[] = [
-  { label: "Samochód", icon: Car, step: null },
-  { label: "Ochrona", icon: ShieldCheck, step: "protection" },
-  { label: "Dodatki", icon: Package, step: "extras" },
-  { label: "Twoje dane", icon: UserRound, step: "details" },
+/**
+ * Steps in order: the label key in `steps`, the icon and the `step` value that
+ * opens each one (`null`: the car list).
+ */
+const STEPS: { id: "car" | "protection" | "extras" | "details"; icon: LucideIcon; step: string | null }[] = [
+  { id: "car", icon: Car, step: null },
+  { id: "protection", icon: ShieldCheck, step: "protection" },
+  { id: "extras", icon: Package, step: "extras" },
+  { id: "details", icon: UserRound, step: "details" },
 ];
 
 /**
@@ -30,6 +34,7 @@ let shownStep: number | null = null;
  */
 export function ReservationSteps({ current }: { current: number }) {
   const router = useRouter();
+  const { steps } = useMessages();
   const list = useRef<HTMLOListElement>(null);
 
   // Step changes navigate with `scroll: false`; the new step starts here, not at
@@ -43,8 +48,9 @@ export function ReservationSteps({ current }: { current: number }) {
   }, [current]);
 
   return (
-    <ol ref={list} aria-label="Etapy rezerwacji" className="mb-8 flex w-full scroll-mt-4 items-center">
-      {STEPS.map(({ label, icon: Icon, step }, index) => {
+    <ol ref={list} aria-label={steps.label} className="mb-8 flex w-full scroll-mt-4 items-center">
+      {STEPS.map(({ id, icon: Icon, step }, index) => {
+        const label = steps[id];
         const done = index < current;
         const active = index === current;
         const content = (
@@ -77,7 +83,7 @@ export function ReservationSteps({ current }: { current: number }) {
         const last = index === STEPS.length - 1;
         return (
           <li
-            key={label}
+            key={id}
             aria-current={active ? "step" : undefined}
             className={`flex items-center text-sm font-semibold md:text-base ${last ? "" : "flex-1"}`}
           >
@@ -87,7 +93,7 @@ export function ReservationSteps({ current }: { current: number }) {
                 onClick={() => router.push(currentHrefWith({ [QUERY_KEYS.step]: step }), { scroll: false })}
                 className="flex shrink-0 cursor-pointer items-center gap-2 rounded-full md:gap-3 outline-none focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-offset-2 [&>span:last-child]:underline-offset-2 hover:[&>span:last-child]:underline"
               >
-                <span className="sr-only">Wróć do kroku: </span>
+                <span className="sr-only">{steps.backTo} </span>
                 {content}
               </button>
             ) : (

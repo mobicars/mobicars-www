@@ -110,9 +110,12 @@ Mutations are not retried.
 - Offer field 71 with value `81` sets `Offer.isPopular`.
 - On a dated short-term list, `Offer.isDiscounted` and `Offer.discountedCalculatedPrice` carry a segment promotion, and `Offer.promotion` its name and dates from `cennik[segmentId]`. The discounted total matched the calculate total on the live API.
 - `OfferImage.main` is the gallery's `default` flag: the offer's main photo.
+- `OfferImage.largeWebp` / `largeStandard` are the `original` size, for a full-width gallery. `webp` / `standard` stay the 512 px size.
+- `Offer.priceList` is the short-term `cennik` of the offer's segment: `deposit` (`kaucja`), `monthlyFrom` (`monthly_price`) and `bands` (`czasy`: `from`, `to`, `price`, `promotionalPrice`), sorted by `from`. It is the base price list the undated catalog and `getOffer` carry; `getOffer` has no `segmentId`, so its single `cennik` entry is used. A dated list applies the bands itself (`calculatedPrice`), so do not price a window from them. Null on the long-term list.
+- `Offer.minPrice` / `maxPrice` are the lowest and highest band price per day. `Offer.details` are the equipment lines (`details`), trimmed; object items use `nazwa`. The fleet pages (`lib/fleet/README.md`) use all three.
 - `Offer.monthlyPrice` is `cennik.cena_miesieczna` from the long-term list (`longTermQuote`). Short-term lists and `getOffer` leave it `null`; they price through `dailyPrice` and `calculatedPrice` (the whole searched period).
 - `Offer.brand` and `Offer.model` map `mark` and `model` as the spec names them, but the live list fills them the other way round (`mark: "Aygo"`, `model: "Toyota"`). Show `attributes.name` (key 1) when it is set. See `docs/quirks.md`.
-- Addon and accessory long-term catalogs use `loadLongTerm`.
+- Long-term catalogs: addons use `longTerm`, accessories `loadLongTerm` (live API, 12 November 2026; see `docs/quirks.md`).
 - `Extra.type` is `additionalType`; `1` is insurance. On a dated addon list `Extra.price` is the per-day price for that day count and `Extra.calculatedPrice` the window total. The calculate addon line matched it (see `docs/quirks.md`).
 - Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `ilosc`. Create sends both `quantity` and `ilosc` until a live create shows which one it reads (the old site sent `ilosc`). Do not match a selected accessory by `QuoteLine.id`: on the live short quote that id equalled the line price.
 - `createReservation` does not set `paymentMethod` or `statusRez` unless the caller passes `paymentMethodId` or `forcedStatusId`.

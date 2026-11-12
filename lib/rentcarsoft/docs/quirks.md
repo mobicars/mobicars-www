@@ -61,6 +61,17 @@ Read-only `GET /offers.json` for the reservation pages. A short-term list with `
 - Accessories have the same fields as addons (`additionalType`, `prices`, `calculatedPrice`, …) plus `penaltyAmount` (not parsed). No maximum quantity is sent; the old site capped it at 5.
 - Yes/no and select offer keys return value ids that do not depend on `lang`; only the text is translated (`Tak` / `Yes`). Transmission (key 8): `13` manual, `14` automatic. Yes values: 72 `isSmallCar` = `83`, 73 `isCompactCar` = `85`, 74 `isLargeCar` = `87`, 75 `isEcoCar` = `89`, 131 `isDeliveryCar` = `182` (the matching No values are `82`, `84`, `86`, `88`, `181`). Match on `FieldAttribute.valueId`, not on the text. `lib/reservation/offers.ts` uses these ids for the car filters.
 
+## Verified on 12 November 2026
+
+Read-only `GET /offers.json` (short and long term, no dates, all offer keys), `GET /offer/1219.json` in `en`, `GET /offer/999999.json`, and `GET /offer_keys.json`, for the fleet pages.
+
+- The undated short-term list (34 offers) carries the full segment price list: `cennik[segmentId]` with `kaucja`, `limitKm`, `monthly_price`, `is_promocja`, the promotion fields and `czasy` (six bands, `od` null on the first and `do` null on the last). `minPrice` / `maxPrice` are the lowest and highest band `cena` (Aygo 89 / 179). `days` is null and `dailyPrice` equals `maxPrice`. No offer had `is_promocja: 1` that day. Parsed as `Offer.priceList`, `minPrice`, `maxPrice`.
+- `details` is an array of strings on both lists and on `getOffer`, some with leading or trailing spaces (`" Zestaw wskaźników…"`). Parsed as `Offer.details`, trimmed.
+- `GET /offer/{id}.json` has no `segmentId` field. Its `cennik` has exactly one key, the segment id. `details`, `minPrice` and the gallery are as on the list. An unknown id returns HTTP 404 with an empty body (`not_found`).
+- The long-term-only offers 1224 ("Skoda Octavia OLD"), 1231 and 5000 are readable through `GET /offer/{id}.json` (`shortTerm: false`). The undated long-term list had 34 offers, 31 of them also on the short-term list.
+- Gallery images carry `urls` with sizes 128, 256, 384, 512 and `original`, each with `webp` and `standard` (png). The main photo (`default: true`) is the last image of offer 1219's gallery; order is not by `default`.
+- Key 10 (`description`) is HTML starting with an `<h1>` and contains an FAQ (`<h2>`/`<h3>` questions). Key 10 on `en` for offer 1219 was English; key 79 for 4457 and 1219 on `en` was Polish (the silent fallback). Dictionary ids for the equipment select keys: 65 central lock (65 Tak, 66 Nie), 67 air conditioning type (69 manual, 70 automatic, 170–172 zones), 68 windows and 69 mirrors (71/73 manual, 72/74 electric), 76 Bluetooth (90 Nie, 91 Tak), 77 cruise control (92 Nie, 93 Tak, 179, 180 active), 128 Android Auto/CarPlay (167 Brak, 168 wireless, 169 wired), 129 parking sensors (173 Brak, 174 rear, 175 front and rear), 130 rear camera (176 Brak, 177 rear, 178 360°). Fuel (key 9): 15 petrol, 16 diesel, 17 petrol + LPG, 18 hybrid, 102 hybrid + LPG, 110 electric, 202 plug-in hybrid.
+
 ## Verified on 9 October 2026
 
 Read-only `GET` calls. One short-term offer, one service point, one priced accessory, and a seven-day window. No `POST /reservation.json`.
@@ -116,5 +127,6 @@ Checked on `/reservationsall.json` (244 reservations created 20–27 October 202
 - Long-term calculate response fields above.
 - Promo `success` as a string.
 - JSON bodies for login and password recovery writes.
-- `loadLongTerm` on both addon and accessory lists.
+- Long-term extras flag (live API, 12 November 2026, segment 8474): the addon list answers only to `longTerm=true` (with `loadLongTerm` it returned no items), the accessory list only to `loadLongTerm=true`. The old site sent the same pair. `buildExtrasQuery` now sends `longTerm` for addons and `loadLongTerm` for accessories. The long-term addon list also contains daily-only items (e.g. "Strefa 1 (limit 400 km/ doba)") with `monthlyPrice: null`; the reservation flow leaves those out.
+- Long-term calculate (same day, offer 5196, 3 months, 2000 km): addon and accessory lines carry the whole-period `price` and `isOneTime`; accessories send the per-unit price as `itemPriceMoi`, addons as `itemPrice` (the parser reads either). `total` = `razem_miesiecznie_najem_akcesoria_dodatki` × months + `razem_jednorazowo` (2950 × 3 + 100 = 8950). The line `id` field held the price, not an id. `iloscMiesiecy` was not echoed once a one-time addon was added, so callers should keep their own month count.
 - Calculate accessory quantity is `ilosc`. OpenAPI names the same field `quantity`.

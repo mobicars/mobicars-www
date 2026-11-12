@@ -1,7 +1,5 @@
-import type { Lang } from "@/i18n/config";
+import { intlLocales as LOCALES, type Lang } from "@/i18n/config";
 import type { ClientReservation } from "@/lib/rentcarsoft";
-
-const LOCALES: Record<Lang, string> = { pl: "pl-PL", en: "en-GB", de: "de-DE", uk: "uk-UA" };
 
 /**
  * RentCarSoft dates are Warsaw wall time without an offset (`YYYY-MM-DD HH:mm:ss`).

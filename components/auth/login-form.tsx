@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 
-import { accountCopy } from "@/i18n/account";
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { useAccountCopy } from "@/i18n/account";
+import { useAuthFormsCopy } from "@/i18n/auth-forms";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import { login, type LoginState } from "@/lib/auth/actions";
@@ -13,8 +13,8 @@ import { FormAlert, PasswordField, SubmitButton, TextField } from "./fields";
 import { RecoveryCodeDialog } from "./password-forms";
 
 export function LoginForm({ lang, next }: { lang: Lang; next: string | null }) {
-  const t = accountCopy[lang].login;
-  const forms = authFormsCopy[lang];
+  const t = useAccountCopy().login;
+  const forms = useAuthFormsCopy();
   const [codeOpen, setCodeOpen] = useState(false);
   const [state, action, pending] = useActionState<LoginState, FormData>(
     async (previous, formData) => {

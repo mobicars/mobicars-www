@@ -83,6 +83,8 @@ export const QUERY_KEYS = {
   extras: "extras",
   /** Extras step: accessories as `id-quantity`, comma separated. */
   accessories: "acc",
+  /** Discount code, checked with `verifyPromoCode`; sent with every quote and the reservation. */
+  promo: "promo",
 } as const;
 
 const DATE_TIME = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/;

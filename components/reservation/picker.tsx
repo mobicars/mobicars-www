@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import type { ZonedDateTime } from "@internationalized/date";
 
 import type { TermBarProps } from "@/components/reservation/bar-field";
-import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
 import { LongTermBar } from "@/components/reservation/long-term-bar";
 import {
   defaultShortTermSchedule,
@@ -20,6 +20,8 @@ import { ShortTermBar } from "@/components/reservation/short-term-bar";
 import { issueMessage } from "@/components/reservation/messages";
 import { useClientOnlyValue } from "@/components/reservation/use-client-only-value";
 import type { Lang } from "@/i18n/config";
+import type { Messages } from "@/i18n/messages";
+import { useMessages } from "@/i18n/messages-context";
 import { reservationHref } from "@/i18n/routes";
 import { reservationConfig } from "@/lib/reservation/config";
 import type { PickupPlace } from "@/lib/reservation/places";
@@ -54,9 +56,15 @@ type ReservationPickerProps = {
    * over from the car list.
    */
   live?: boolean;
+  /**
+   * Car offer id (`offerId` of a fleet car). A normal search then opens the
+   * booking on the protection step for this car (`offer=<id>&step=protection`),
+   * e.g. from a car's page. Ignored with `live`, where the URL's own choice is kept.
+   */
+  offerId?: number;
 };
 
-/** Booking choices a live change carries over; a confirmed new search drops all but `view`. */
+/** Booking choices a live change carries over; a confirmed new search keeps only `KEPT_ON_RESTART`. */
 const KEPT_ON_CHANGE = [
   QUERY_KEYS.offer,
   QUERY_KEYS.step,
@@ -65,14 +73,16 @@ const KEPT_ON_CHANGE = [
   QUERY_KEYS.extras,
   QUERY_KEYS.accessories,
   QUERY_KEYS.view,
+  QUERY_KEYS.promo,
 ];
-const KEPT_ON_RESTART = [QUERY_KEYS.view];
+/** A new search starts the booking over, but the layout and a discount code stay. */
+const KEPT_ON_RESTART = [QUERY_KEYS.view, QUERY_KEYS.promo];
 
 const tabClassName =
-  "relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full px-3 text-xs font-bold tracking-wide text-blue-dark/65 outline-none transition-colors duration-200 ease-out hover:bg-muted-light data-selected:text-white data-selected:hover:bg-transparent data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-inset motion-reduce:transition-none @5xl:flex-none @5xl:px-6";
+  "relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full px-3 text-xs font-bold tracking-wide text-blue-dark/65 outline-none hover:bg-muted-light data-selected:text-white data-selected:hover:bg-transparent data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-inset @5xl:flex-none @5xl:px-6";
 
-const indicatorClassName =
-  "pointer-events-none absolute top-0 left-0 z-0 h-full w-full rounded-full bg-blue-medium transition-[translate,width,height] duration-200 ease-out motion-reduce:transition-none";
+/** The selected tab's background. No transition: the switch is instant, on or off. */
+const indicatorClassName = "pointer-events-none absolute top-0 left-0 z-0 h-full w-full rounded-full bg-blue-medium";
 
 /**
  * The search widget. It owns one draft for both terms, so switching the tab
@@ -87,8 +97,11 @@ export function ReservationPicker({
   term: lockedTerm,
   initial = null,
   live = false,
+  offerId,
 }: ReservationPickerProps) {
   const router = useRouter();
+  const messages = useMessages();
+  const texts = messages.search;
   const [updating, startUpdate] = useTransition();
   const [restartOpen, setRestartOpen] = useState(false);
   const [edits, setEdits] = useState<Partial<SearchDraft>>({});
@@ -136,7 +149,7 @@ export function ReservationPicker({
     const result = validateSearch(draft, { places, earliestStart: earliestPickup() });
     if (!result.ok) {
       setInvalid(new Set(result.issues.map((issue) => issue.field)));
-      showIssues(result.issues);
+      showIssues(messages, result.issues);
       fields.current[result.issues[0].field]?.focus();
       return;
     }
@@ -146,7 +159,7 @@ export function ReservationPicker({
       setRestartOpen(true);
       return;
     }
-    router.push(searchHref(result.search, []));
+    router.push(searchHref(result.search, [], offerId));
   }
 
   /** Confirmed "Szukaj" on a reservation page: same search, back to the car list. */
@@ -158,10 +171,19 @@ export function ReservationPicker({
     }
   }
 
-  /** Saves the search and builds its page URL, carrying `keep` over from the current one. */
-  function searchHref(search: ReservationSearch, keep: readonly string[]): string {
+  /**
+   * Saves the search and builds its page URL, carrying `keep` over from the
+   * current one. `offer` preselects a car; it is not saved with the search.
+   */
+  function searchHref(search: ReservationSearch, keep: readonly string[], offer?: number): string {
     const query = searchToQuery(search);
     saveSearchQuery(search.term, query);
+    if (offer !== undefined) {
+      // Straight to protection for that car; if the dates rule it out, the
+      // page falls back to the car list with a note.
+      query.set(QUERY_KEYS.offer, String(offer));
+      query.set(QUERY_KEYS.step, "protection");
+    }
     const current = new URL(window.location.href).searchParams;
     for (const key of keep) {
       const value = current.get(key);
@@ -201,15 +223,15 @@ export function ReservationPicker({
           className="flex w-full min-w-0 flex-col gap-3 outline-none"
         >
           <TabList
-            aria-label="Rodzaj wynajmu"
+            aria-label={texts.termLabel}
             className="flex w-full rounded-full bg-white p-1 @5xl:inline-flex @5xl:w-fit"
           >
             <Tab id="short" className={tabClassName}>
-              <span className="relative z-10">NA DNI</span>
+              <span className="relative z-10">{texts.tabShort}</span>
               <SelectionIndicator className={indicatorClassName} />
             </Tab>
             <Tab id="long" className={tabClassName}>
-              <span className="relative z-10">NA MIESIĄCE</span>
+              <span className="relative z-10">{texts.tabLong}</span>
               <SelectionIndicator className={indicatorClassName} />
             </Tab>
           </TabList>
@@ -226,7 +248,7 @@ export function ReservationPicker({
           {updating ? (
             <>
               <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden />
-              Aktualizujemy auta i ceny…
+              {texts.updating}
             </>
           ) : null}
         </p>
@@ -246,6 +268,7 @@ function RestartDialog({
   onConfirm: () => void;
 }) {
   const titleId = useId();
+  const texts = useMessages().search;
   return (
     <WidgetModal
       open={open}
@@ -253,28 +276,15 @@ function RestartDialog({
       className="w-[min(28rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
     >
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
-        <DialogHeader titleId={titleId} title="Zacząć od nowa?" className="pt-4 pb-1" />
+        <DialogHeader titleId={titleId} title={texts.restartTitle} className="pt-4 pb-1" />
         <div className="flex flex-col gap-5 px-5 pb-5">
-          <p className="text-center text-sm text-blue-dark/80">
-            Nie musisz klikać „Szukaj”: zmiana miejsca lub terminu od razu aktualizuje auta i ceny,
-            a Twój wybór zostaje. „Szukaj” wraca do początku, czyli do wyboru auta.
-          </p>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl border border-blue-dark/15 text-sm font-bold text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-dark/[0.04] motion-reduce:transition-none"
-            >
-              Anuluj
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl bg-blue-medium text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
-            >
-              Zacznij od wyboru auta
-            </button>
-          </div>
+          <p className="text-center text-sm text-blue-dark/80">{texts.restartText}</p>
+          <DialogActions
+            cancel={texts.cancel}
+            confirm={texts.restartConfirm}
+            onCancel={() => onOpenChange(false)}
+            onConfirm={onConfirm}
+          />
         </div>
       </Dialog>
     </WidgetModal>
@@ -283,17 +293,17 @@ function RestartDialog({
 
 const TOAST_ID = "reservation-search";
 
-function showIssues(issues: SearchIssue[]) {
-  const messages = issues.map(issueMessage);
-  if (messages.length === 1) {
-    toast.error(messages[0], { id: TOAST_ID });
+function showIssues(messages: Messages, issues: SearchIssue[]) {
+  const lines = issues.map((issue) => issueMessage(messages, issue));
+  if (lines.length === 1) {
+    toast.error(lines[0], { id: TOAST_ID });
     return;
   }
-  toast.error("Uzupełnij wyszukiwanie", {
+  toast.error(messages.search.completeSearch, {
     id: TOAST_ID,
     description: (
       <ul className="list-disc pl-4">
-        {messages.map((message) => (
+        {lines.map((message) => (
           <li key={message}>{message}</li>
         ))}
       </ul>

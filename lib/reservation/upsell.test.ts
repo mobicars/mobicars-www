@@ -48,7 +48,7 @@ const offers = [
 describe("upsell", () => {
   it("offers the nearest dearer classes, one free car each, popular first, in full rows of two", () => {
     assert.deepEqual(
-      upsellOptions(fabia, offers).map((option) => [option.car.segment, option.car.name, option.dailyIncrease, option.totalIncrease]),
+      upsellOptions(fabia, offers).map((option) => [option.car.segment, option.car.name, option.increase, option.totalIncrease]),
       [
         ["B+ Cross", "B+ Cross car", 20, 120],
         ["C", "popular C", 40, 240],
@@ -78,5 +78,17 @@ describe("upsell", () => {
 
   it("offers nothing without a price for the chosen car", () => {
     assert.deepEqual(upsellOptions({ ...fabia, totalPrice: null }, offers), []);
+  });
+
+  it("compares monthly prices for monthly rental", () => {
+    const small = car("A", 0, { monthlyPrice: 2000, dailyPrice: null, totalPrice: null });
+    const bigger = car("B", 0, { monthlyPrice: 2650, dailyPrice: null, totalPrice: null });
+    const cheaper = car("A+", 0, { monthlyPrice: 1900, dailyPrice: null, totalPrice: null });
+    const [option, ...rest] = upsellOptions(small, [small, bigger, cheaper], 4, 3);
+    assert.equal(rest.length, 0);
+    assert.equal(option.car, bigger);
+    assert.equal(option.unit, "month");
+    assert.equal(option.increase, 650);
+    assert.equal(option.totalIncrease, 1950);
   });
 });

@@ -4,11 +4,18 @@ import { Suspense } from "react";
 
 import { ReservationConfirmation } from "@/components/reservation/confirmation";
 import { isLang } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 
-export const metadata: Metadata = {
-  title: "Zamówienie złożone | MobiCars",
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata({ params }: PageProps<"/[lang]/reservation/confirmation">): Promise<Metadata> {
+  const { lang } = await params;
+  if (!isLang(lang)) {
+    return {};
+  }
+  return {
+    title: `${getMessages(lang).confirmation.metaTitle} | MobiCars`,
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function ReservationConfirmationPage({ params }: PageProps<"/[lang]/reservation/confirmation">) {
   const { lang } = await params;

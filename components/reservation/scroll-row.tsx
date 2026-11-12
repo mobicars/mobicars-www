@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+import { useMessages } from "@/i18n/messages-context";
+
 /**
  * A horizontal row that says it scrolls: at an edge with more content behind
  * it, the row fades out and shows an arrow button. Nothing shows when
@@ -17,6 +19,7 @@ export function ScrollRow({
   className?: string;
   children: ReactNode;
 }) {
+  const { steps } = useMessages();
   const row = useRef<HTMLDivElement>(null);
   const [more, setMore] = useState({ left: false, right: false });
 
@@ -64,14 +67,14 @@ export function ScrollRow({
         {children}
       </div>
       {more.left ? (
-        <button type="button" aria-label="Przewiń w lewo" onClick={() => scroll(-1)} className={`${arrow} left-0 justify-start bg-linear-to-r`}>
+        <button type="button" aria-label={steps.scrollLeft} onClick={() => scroll(-1)} className={`${arrow} left-0 justify-start bg-linear-to-r`}>
           <span className={circle}>
             <ChevronLeft className="size-4" aria-hidden />
           </span>
         </button>
       ) : null}
       {more.right ? (
-        <button type="button" aria-label="Przewiń w prawo" onClick={() => scroll(1)} className={`${arrow} right-0 justify-end bg-linear-to-l`}>
+        <button type="button" aria-label={steps.scrollRight} onClick={() => scroll(1)} className={`${arrow} right-0 justify-end bg-linear-to-l`}>
           <span className={circle}>
             <ChevronRight className="size-4" aria-hidden />
           </span>

@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { langFromPath, preferredLang } from "@/i18n/config";
-import { resolveAccountPath, resolveReservationPath } from "@/i18n/routes";
+import { resolveAccountPath, resolveFleetPath, resolveReservationPath } from "@/i18n/routes";
 import { loginPath, safeReturnPath, SESSION_COOKIE } from "@/lib/auth/paths";
 import { decryptSession } from "@/lib/auth/token";
 
@@ -24,6 +24,19 @@ export async function proxy(request: NextRequest) {
       }
       if (reservation.internal !== pathname) {
         url.pathname = reservation.internal;
+        return NextResponse.rewrite(url);
+      }
+      return NextResponse.next();
+    }
+    const fleet = resolveFleetPath(found.lang, pathname);
+    if (fleet) {
+      const url = request.nextUrl.clone();
+      if (fleet.canonical !== pathname) {
+        url.pathname = fleet.canonical;
+        return NextResponse.redirect(url, 308);
+      }
+      if (fleet.internal !== pathname) {
+        url.pathname = fleet.internal;
         return NextResponse.rewrite(url);
       }
       return NextResponse.next();
@@ -73,5 +86,10 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|api|.*\\..*).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|api|.*\\..*).*)",
+    // Old car URLs kept the dots of the name (`/pl/flota/nissan-x-trail-7-os.-4431`),
+    // which the first pattern skips as files. They redirect to the current slug.
+    "/:lang/(flota|fleet|flotte|avtopark)/:slug*",
+  ],
 };

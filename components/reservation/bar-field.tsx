@@ -3,6 +3,7 @@
 import type { Ref } from "react";
 import { Search, type LucideIcon } from "lucide-react";
 
+import { useMessages } from "@/i18n/messages-context";
 import type { PickupPlace } from "@/lib/reservation/places";
 import type { SearchDraft, SearchField } from "@/lib/reservation/search";
 
@@ -65,6 +66,7 @@ export type TermBarProps = {
 
 /** Submits the picker form. Sits in the last cell of each bar. */
 export function SearchButton() {
+  const texts = useMessages().search;
   return (
     <div className="bg-blue-medium @lg:col-span-2 @5xl:col-span-1">
       <button
@@ -72,7 +74,7 @@ export function SearchButton() {
         className="flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 bg-blue-medium px-5 text-sm font-bold text-white outline-none transition-colors duration-200 ease-out hover:bg-blue-dark focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-inset motion-reduce:transition-none @5xl:h-full @5xl:px-6"
       >
         <Search className="size-5" strokeWidth={1.75} aria-hidden />
-        Szukaj
+        {texts.submit}
       </button>
     </div>
   );

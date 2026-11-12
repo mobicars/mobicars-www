@@ -2,6 +2,9 @@
 
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 
+import { fill } from "@/i18n/fill";
+import { useMessages } from "@/i18n/messages-context";
+
 /**
  * Swipe row for phones: cards snap to the centre, the next one peeks in at
  * the edge, dots below show where you are and jump on tap. It opens on
@@ -27,6 +30,7 @@ export function Slider({
   dotsClassName?: string;
   children: ReactNode;
 }) {
+  const { steps } = useMessages();
   const items = Children.toArray(children);
   const list = useRef<HTMLUListElement>(null);
   const [active, setActive] = useState(startIndex);
@@ -106,7 +110,7 @@ export function Slider({
             <button
               key={index}
               type="button"
-              aria-label={`Pokaż ${index + 1} z ${items.length}`}
+              aria-label={fill(steps.slide, { index: index + 1, count: items.length })}
               aria-current={index === active || undefined}
               onClick={() => show(index)}
               className="flex size-6 cursor-pointer items-center justify-center"

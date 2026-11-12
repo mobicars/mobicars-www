@@ -22,14 +22,20 @@ const TYPE = { other: 0, insurance: 1, kids: 2, multimedia: 3, border: 4 } as co
 
 export type ExtraGroupId = "kids" | "multimedia" | "other";
 
-const GROUPS: { id: ExtraGroupId; type: number | null; title: string }[] = [
-  { id: "kids", type: TYPE.kids, title: "Dla dzieci" },
-  { id: "multimedia", type: TYPE.multimedia, title: "Multimedia i aplikacja" },
-  { id: "other", type: TYPE.other, title: "Pozostałe" },
+/** Group titles are `extras.groups.<id>` in messages/{lang}.json. */
+const GROUPS: { id: ExtraGroupId; type: number | null }[] = [
+  { id: "kids", type: TYPE.kids },
+  { id: "multimedia", type: TYPE.multimedia },
+  { id: "other", type: TYPE.other },
 ];
+
+/** What a price is per: a rental day (daily rental) or a month (monthly rental). */
+export type PriceUnit = "day" | "month";
 
 export type ExtraOption = {
   id: number;
+  /** `price` is per this unit, unless `oneTime`. */
+  unit: PriceUnit;
   kind: "toggle" | "quantity";
   name: string;
   /** Border zones: the part of the name in brackets, e.g. "limit 400 km/ doba". */
@@ -43,7 +49,7 @@ export type ExtraOption = {
   periodPrice: number | null;
 };
 
-export type ExtraGroup = { id: ExtraGroupId; title: string; items: ExtraOption[] };
+export type ExtraGroup = { id: ExtraGroupId; items: ExtraOption[] };
 
 export type ExtrasView = {
   /** Border trip zones, cheapest first. A single choice; none is the default. */
@@ -60,22 +66,23 @@ export type ExtrasSelection = {
   accessories: Map<number, number>;
 };
 
-export function toExtrasView(addons: Extra[], accessories: Extra[]): ExtrasView {
+export function toExtrasView(addons: Extra[], accessories: Extra[], unit: PriceUnit = "day"): ExtrasView {
   const zones = addons
     .filter((extra) => extra.type === TYPE.border && isOffered(extra))
-    .map(zoneOption)
+    .map((extra) => zoneOption(extra, unit))
     .toSorted((left, right) => left.price - right.price);
   const items = [
-    ...addons.filter((extra) => extra.type !== TYPE.border && isOffered(extra)).map((extra) => ({ extra, kind: "toggle" as const })),
+    ...addons
+      .filter((extra) => extra.type !== TYPE.border && isOffered(extra))
+      .map((extra) => ({ extra, kind: "toggle" as const })),
     ...accessories.filter(isOffered).map((extra) => ({ extra, kind: "quantity" as const })),
   ];
 
   return {
     zones,
-    groups: GROUPS.map(({ id, title }) => ({
+    groups: GROUPS.map(({ id }) => ({
       id,
-      title,
-      items: items.filter(({ extra }) => groupOf(extra.type) === id).map(({ extra, kind }) => toOption(extra, kind)),
+      items: items.filter(({ extra }) => groupOf(extra.type) === id).map(({ extra, kind }) => toOption(extra, kind, unit)),
     })).filter((group) => group.items.length > 0),
   };
 }
@@ -159,11 +166,12 @@ function isOffered(extra: Extra): boolean {
   return extra.type !== TYPE.insurance && ((extra.isDiscounted ? extra.priceDiscounted : extra.price) ?? 0) > 0;
 }
 
-function toOption(extra: Extra, kind: ExtraOption["kind"]): ExtraOption {
+function toOption(extra: Extra, kind: ExtraOption["kind"], unit: PriceUnit): ExtraOption {
   const price = (extra.isDiscounted ? extra.priceDiscounted : extra.price) ?? 0;
   const oneTime = extra.oneTimeFee === true;
   return {
     id: extra.id,
+    unit,
     kind,
     name: extra.name.trim(),
     note: null,
@@ -176,8 +184,8 @@ function toOption(extra: Extra, kind: ExtraOption["kind"]): ExtraOption {
 }
 
 /** "Wyjazd za granicę Strefa 1 (limit 400 km/ doba)" → "Strefa 1" with the note "limit 400 km/ doba". */
-function zoneOption(extra: Extra): ExtraOption {
-  const option = toOption(extra, "toggle");
+function zoneOption(extra: Extra, unit: PriceUnit): ExtraOption {
+  const option = toOption(extra, "toggle", unit);
   const match = option.name.match(/^(.*?)\s*\(([^)]*)\)\s*$/);
   const base = (match ? match[1] : option.name).replace(/^wyjazd za granic[ęe]\s*/i, "").trim();
   return { ...option, name: base || option.name, note: match ? match[2].trim() : null };

@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { DetailsForm } from "@/components/account/details-form";
 import { isLang, type Lang } from "@/i18n/config";
-import { detailsCopy } from "@/i18n/details";
+import { detailsCopy } from "@/i18n/panel-copy";
 import { getAccountDetails } from "@/lib/auth/dal";
 
 export async function generateMetadata({

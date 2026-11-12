@@ -5,6 +5,8 @@ import Image from "next/image";
 
 import { ChooseButton, CompactOfferCard, Price, PromotionLine, SpecList } from "@/components/reservation/offer-parts";
 import { ScrollRow } from "@/components/reservation/scroll-row";
+import { fill } from "@/i18n/fill";
+import { useMessages } from "@/i18n/messages-context";
 import type { OfferCard } from "@/lib/reservation/offers";
 
 /**
@@ -41,13 +43,17 @@ export function SegmentRow({
   selectedId,
   onChoose,
   onSwap,
+  preload = false,
 }: {
   segment: OfferSegment;
   selectedId: number | null;
   onChoose: (id: number) => void;
   /** The class already holds the chosen car: a thumbnail makes another car of it the choice, in place. */
   onSwap: (id: number) => void;
+  /** The first row of the list: its photo is the page's largest paint. */
+  preload?: boolean;
 }) {
+  const { cars } = useMessages();
   const chosenHere = segment.offers.find((offer) => offer.id === selectedId);
   const [previewId, setPreviewId] = useState(
     () => (chosenHere ?? segment.offers[0]).id,
@@ -75,15 +81,16 @@ export function SegmentRow({
         title={segment.name}
         subtitle={
           <>
-            <span className="font-semibold text-blue-dark">{preview.name}</span> lub podobny
+            <span className="font-semibold text-blue-dark">{preview.name}</span> {cars.orSimilar}
           </>
         }
         selected={selected}
         highlighted={chosenHere !== undefined}
         onChoose={() => onChoose(preview.id)}
+        preload={preload}
       >
         {segment.offers.length > 1 ? (
-          <ScrollRow label={`Samochody w klasie ${segment.name}`}>
+          <ScrollRow label={fill(cars.carsInClass, { name: segment.name })}>
             {segment.offers.map((offer) => (
               <button
                 key={offer.id}
@@ -122,13 +129,15 @@ export function SegmentRow({
             src={preview.image.src}
             alt={preview.image.alt}
             fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 768px) 42vw, 100vw"
+            // About a third of the list column next to the 20rem summary panel.
+            sizes="(min-width: 1280px) 300px, (min-width: 1024px) 280px, 340px"
+            preload={preload}
             className="object-contain p-4"
           />
         ) : null}
         {preview.popular ? (
           <span className="absolute top-3 left-3 rounded-full bg-green-light px-2.5 py-1 text-xxs font-bold text-green-dark">
-            Popularny
+            {cars.popular}
           </span>
         ) : null}
       </div>
@@ -139,12 +148,12 @@ export function SegmentRow({
             {segment.name}
           </h3>
           <p className="text-sm text-muted-dark">
-            <span className="font-semibold text-blue-dark">{preview.name}</span> lub podobny
+            <span className="font-semibold text-blue-dark">{preview.name}</span> {cars.orSimilar}
           </p>
         </div>
         <SpecList offer={preview} />
         {segment.offers.length > 1 ? (
-          <div role="group" aria-label={`Samochody w klasie ${segment.name}`} className="mt-auto flex flex-wrap gap-2">
+          <div role="group" aria-label={fill(cars.carsInClass, { name: segment.name })} className="mt-auto flex flex-wrap gap-2">
             {segment.offers.map((offer) => (
               <button
                 key={offer.id}

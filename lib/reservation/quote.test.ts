@@ -47,9 +47,9 @@ describe("quote view", () => {
   it("lists the API's own amounts and total", () => {
     assert.deepEqual(toQuoteView(base), {
       lines: [
-        { label: "Wynajem (6 dób)", amount: 715.2, regular: 894 },
-        { label: "Podstawienie auta", amount: 50, regular: null },
-        { label: "Ochrona Premium", amount: 414, regular: null },
+        { kind: "rent", days: 6, amount: 715.2, regular: 894 },
+        { kind: "pickup", amount: 50, regular: null },
+        { kind: "item", name: "Ochrona Premium", amount: 414, regular: null },
       ],
       total: 1179.2,
       deposit: 0,
@@ -65,5 +65,57 @@ describe("quote view", () => {
       quoteQuery("pl", "pickup=479&from=2026-11-20T10%3A00", 4457, [1006]),
       "pickup=479&from=2026-11-20T10%3A00&lang=pl&offer=4457&addon=1006",
     );
+  });
+});
+
+describe("monthly quote", () => {
+  // Live API, 12 November 2026: offer 5196, 3 months, 2000 km, Standard, zone 1, guarantee, one child seat.
+  const monthly: ReservationQuote = {
+    ...base,
+    term: "long",
+    total: 8950,
+    pickUpPrice: 0,
+    returnPrice: 0,
+    relocationPrice: 0,
+    rent: null,
+    days: null,
+    months: 3,
+    monthlyRent: 2650,
+    monthlyWithExtras: 2950,
+    oneTimeTotal: 100,
+    monthlyKmLimit: 2000,
+    totalKmLimit: 6000,
+    mileageLimitFee: 0.5,
+    addons: [
+      { id: 0, price: 0, suggested: 0, itemPrice: 0, isOneTime: false, name: "Ochrona Standard", nameEn: null },
+      { id: 450, price: 450, suggested: 150, itemPrice: 150, isOneTime: false, name: "Strefa 1", nameEn: null },
+      { id: 100, price: 100, suggested: 100, itemPrice: 100, isOneTime: true, name: "Gwarancja", nameEn: null },
+    ],
+    accessories: [
+      { id: 450, price: 450, suggested: 150, itemPrice: 150, isOneTime: false, name: "Fotelik", nameEn: null },
+    ],
+  };
+
+  it("splits monthly and one-time lines and keeps the API totals", () => {
+    const view = toQuoteView({ ...monthly, months: null }, 3);
+    assert.equal(view.total, 8950);
+    assert.deepEqual(
+      view.lines.map((line) => [line.kind, line.name ?? null, line.amount]),
+      [
+        ["monthlyRent", null, 2650],
+        ["item", "Ochrona Standard", 0],
+        ["item", "Strefa 1", 150],
+        ["item", "Fotelik", 150],
+      ],
+    );
+    assert.deepEqual(view.monthly, {
+      months: 3,
+      perMonth: 2950,
+      oneTimeLines: [{ kind: "item", name: "Gwarancja", amount: 100, regular: null }],
+      oneTimeTotal: 100,
+      kmPerMonth: 2000,
+      kmTotal: 6000,
+      overLimitFee: 0.5,
+    });
   });
 });

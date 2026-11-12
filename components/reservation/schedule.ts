@@ -9,8 +9,12 @@ import {
   type CalendarDate,
 } from "@internationalized/date";
 
+import { formatMonths } from "@/components/reservation/format";
+import { intlLocales, type Lang } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
+import type { Messages } from "@/i18n/messages";
 import { reservationConfig } from "@/lib/reservation/config";
-import { formatQueryDateTime } from "@/lib/reservation/search";
+import { formatQueryDateTime, type ReservationSearch } from "@/lib/reservation/search";
 
 /** Pickup and return slot math for the widget. No React here. */
 
@@ -49,14 +53,37 @@ export function valueFromPoint(date: CalendarDate, time: ClockTime): string {
   return formatQueryDateTime(toCalendarDateTime(date, new Time(time.hour, time.minute)));
 }
 
-export function formatSchedulePoint(point: SchedulePoint): string {
-  const formatted = new Intl.DateTimeFormat("pl-PL", {
+/** "05 wrz 2026, 10:00"; "05 Sept 2026, 10:00"; "05. Sept. 2026, 10:00". */
+export function formatSchedulePoint(lang: Lang, point: SchedulePoint): string {
+  const formatted = new Intl.DateTimeFormat(intlLocales[lang], {
     day: "2-digit",
     month: "short",
     year: "numeric",
     timeZone: reservationConfig.timeZone,
   }).format(point.date.toDate(reservationConfig.timeZone));
-  return `${formatted.replace(".", "")}, ${formatClock(point.time)}`;
+  // Polish short months take no dot; other languages keep their own punctuation.
+  return `${lang === "pl" ? formatted.replace(".", "") : formatted}, ${formatClock(point.time)}`;
+}
+
+/**
+ * Short from–to of a search, e.g. "5 wrz, 10:00 – 8 wrz, 10:00" or
+ * "od 5 wrz, 10:00 · 3 miesiące". Takes the texts, so client code can use it
+ * without loading every language (`compactTrip` is the server shortcut).
+ */
+export function formatTripDates(lang: Lang, texts: Messages["search"], search: ReservationSearch): string {
+  const short = (value: string) => {
+    const point = pointFromValue(value);
+    if (!point) {
+      return value;
+    }
+    const day = new Intl.DateTimeFormat(intlLocales[lang], { day: "numeric", month: "short", timeZone: "UTC" }).format(
+      point.date.toDate("UTC"),
+    );
+    return `${lang === "pl" ? day.replace(".", "") : day}, ${formatClock(point.time)}`;
+  };
+  return search.term === "short"
+    ? `${short(search.start)} – ${short(search.end)}`
+    : `${fill(texts.fromDate, { date: short(search.start) })} · ${formatMonths(lang, search.months)}`;
 }
 
 export function formatClock(time: ClockTime): string {

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { authFormsCopy } from "@/i18n/panel-copy";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 

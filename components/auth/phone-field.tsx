@@ -24,7 +24,7 @@ import {
   useFilter,
 } from "react-aria-components";
 
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { useAuthFormsCopy } from "@/i18n/auth-forms";
 import type { Lang } from "@/i18n/config";
 
 /** Countries MobiCars customers come from most, shown first. */
@@ -82,7 +82,7 @@ export function PhoneField({
   required?: boolean;
   invalid?: boolean;
 }) {
-  const t = authFormsCopy[lang].phone;
+  const t = useAuthFormsCopy().phone;
   const inputId = useId();
   const countries = useCountries(lang);
   const initial = useMemo(() => splitPhone(defaultValue), [defaultValue]);

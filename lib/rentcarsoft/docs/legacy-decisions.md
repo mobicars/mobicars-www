@@ -27,7 +27,7 @@ Source of the old client: `mobicars-pl/lib/rentcarsoft`. It is migration referen
 
 ## Replaced
 
-- Addon long-term filter is `loadLongTerm`, including the addon list. The old addon client sent `longTerm`.
+- Addon long-term filter: the old addon client sent `longTerm`, and the live API (12 November 2026) agrees: the addon list ignores `loadLongTerm`. Accessories use `loadLongTerm`. See `quirks.md`.
 - Accessory lines use the domain field `quantity`. Calculate sends that number as `ilosc`, because a live quote ignored `quantity` and priced `ilosc`. Create still sends `quantity`. See `quirks.md`.
 - Sort is `order=default`, which matched `pozycja` and also matched an unknown sort token on the live list. `pozycja` is not sent.
 - Long-term calculate sends `longTerm=1`. A boolean `true` on a short rental window stayed on the short response shape during the live check.

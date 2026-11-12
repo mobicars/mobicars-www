@@ -1,10 +1,9 @@
 "use client";
 
-import { useContext, useEffect, useId, useState } from "react";
+import { useContext, useId, useState, useSyncExternalStore } from "react";
 import {
   CalendarCell,
   Dialog,
-  I18nProvider,
   RangeCalendar,
   RangeCalendarStateContext,
 } from "react-aria-components";
@@ -33,7 +32,30 @@ import {
   type ClockTime,
   type ReservationSchedule,
 } from "@/components/reservation/schedule";
+import { intlLocales } from "@/i18n/config";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import { reservationConfig } from "@/lib/reservation/config";
+
+const WIDE_QUERY = "(min-width: 768px)";
+
+function subscribeWide(onChange: () => void) {
+  const query = window.matchMedia(WIDE_QUERY);
+  query.addEventListener("change", onChange);
+  return () => query.removeEventListener("change", onChange);
+}
+
+/**
+ * Two months side by side from `md`. Read during render, so the dialog opens
+ * in the right layout at once; the server (never showing it) assumes a phone.
+ */
+function useWide(): boolean {
+  return useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => false,
+  );
+}
 
 type ReservationDatesDialogProps = {
   open: boolean;
@@ -57,7 +79,8 @@ export function ReservationDatesDialog({ open, ...props }: ReservationDatesDialo
 
 function DatesDialogBody({ schedule, onOpenChange, onConfirm }: Omit<ReservationDatesDialogProps, "open">) {
   const titleId = useId();
-  const [wide, setWide] = useState(false);
+  const texts = useMessages().search;
+  const wide = useWide();
   const [range, setRange] = useState<{ start: CalendarDate; end: CalendarDate } | null>(
     schedule ? { start: schedule.start, end: schedule.end } : null,
   );
@@ -66,14 +89,6 @@ function DatesDialogBody({ schedule, onOpenChange, onConfirm }: Omit<Reservation
   const monthCount = wide
     ? reservationConfig.shortTermCalendarMonths.desktop
     : reservationConfig.shortTermCalendarMonths.mobile;
-
-  useEffect(() => {
-    const query = window.matchMedia("(min-width: 768px)");
-    const update = () => setWide(query.matches);
-    update();
-    query.addEventListener("change", update);
-    return () => query.removeEventListener("change", update);
-  }, []);
 
   const canAccept = Boolean(
     range &&
@@ -84,110 +99,109 @@ function DatesDialogBody({ schedule, onOpenChange, onConfirm }: Omit<Reservation
   );
 
   return (
-    <I18nProvider locale="pl-PL">
-      <Dialog
-        aria-labelledby={titleId}
-        className="grid h-full max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden outline-none"
+    <Dialog
+      aria-labelledby={titleId}
+      className="grid h-full max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden outline-none"
+    >
+      <DialogHeader titleId={titleId} title={texts.datesTitle} />
+      <RangeCalendar
+        aria-label={texts.rentalRange}
+        minValue={today(reservationConfig.timeZone)}
+        value={range}
+        onChange={(next) => {
+          setRange(next);
+          if (!next) {
+            return;
+          }
+          const nextPickup =
+            pickup && isSlotPast(next.start, pickup) ? nextOpenSlot(next.start) : pickup;
+          if (nextPickup !== pickup) {
+            setPickup(nextPickup);
+          }
+          if (nextPickup && dropoff && isDropoffTooEarly(next.start, next.end, nextPickup, dropoff)) {
+            setDropoff(nextSlotAfter(next.end, nextPickup, next.start));
+          }
+        }}
+        visibleDuration={{ months: monthCount }}
+        className="mx-auto flex min-h-0 w-full max-w-4xl flex-col overflow-hidden outline-none"
       >
-        <DialogHeader titleId={titleId} title="Data i godzina" />
-        <RangeCalendar
-          aria-label="Zakres wynajmu"
-          minValue={today(reservationConfig.timeZone)}
-          value={range}
-          onChange={(next) => {
-            setRange(next);
-            if (!next) {
-              return;
+        <CalendarNav />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2">
+          <div
+            className={
+              wide
+                ? "mx-auto grid w-fit grid-cols-2 gap-8"
+                : "mx-auto flex w-full flex-col items-center gap-6"
             }
-            const nextPickup =
-              pickup && isSlotPast(next.start, pickup) ? nextOpenSlot(next.start) : pickup;
-            if (nextPickup !== pickup) {
-              setPickup(nextPickup);
-            }
-            if (nextPickup && dropoff && isDropoffTooEarly(next.start, next.end, nextPickup, dropoff)) {
-              setDropoff(nextSlotAfter(next.end, nextPickup, next.start));
-            }
-          }}
-          visibleDuration={{ months: monthCount }}
-          className="mx-auto flex min-h-0 w-full max-w-4xl flex-col overflow-hidden outline-none"
-        >
-          <CalendarNav />
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2">
-            <div
-              className={
-                wide
-                  ? "mx-auto grid w-fit grid-cols-2 gap-8"
-                  : "mx-auto flex w-full flex-col items-center gap-6"
-              }
-            >
-              {Array.from({ length: monthCount }, (_, index) => (
-                <div key={index} className="w-full max-w-[17.5rem]">
-                  <MonthLabel offsetMonths={index} />
-                  <MonthGrid offsetMonths={index} renderDay={(date) => <RangeDay date={date} />} />
-                </div>
-              ))}
-            </div>
+          >
+            {Array.from({ length: monthCount }, (_, index) => (
+              <div key={index} className="w-full max-w-[17.5rem]">
+                <MonthLabel offsetMonths={index} />
+                <MonthGrid offsetMonths={index} renderDay={(date) => <RangeDay date={date} />} />
+              </div>
+            ))}
           </div>
-        </RangeCalendar>
-        <div className="flex shrink-0 flex-col gap-3 border-t border-blue-dark/10 bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
-          <div className="grid flex-1 grid-cols-2 gap-3">
-            <TimeField
-              label="Godzina odbioru"
-              icon={Timer}
-              date={range?.start ?? null}
-              value={pickup}
-              onChange={(slot) => {
-                setPickup(slot);
-                if (!range) {
-                  return;
-                }
-                if (!dropoff) {
-                  setDropoff(suggestedDropoff(range.start, range.end, slot));
-                  return;
-                }
-                if (isDropoffTooEarly(range.start, range.end, slot, dropoff)) {
-                  setDropoff(nextSlotAfter(range.end, slot, range.start));
-                }
-              }}
-              isBlocked={(slot) => (range ? isSlotPast(range.start, slot) : false)}
-            />
-            <TimeField
-              label="Godzina zwrotu"
-              icon={TimerReset}
-              date={range?.end ?? null}
-              value={dropoff}
-              onChange={setDropoff}
-              isBlocked={(slot) => {
-                if (!range) {
-                  return false;
-                }
-                if (!pickup) {
-                  return isSlotPast(range.end, slot);
-                }
-                return isDropoffTooEarly(range.start, range.end, pickup, slot);
-              }}
-            />
-          </div>
-          <ConfirmButton
-            disabled={!canAccept}
-            onClick={() => {
-              if (!range || !pickup || !dropoff) {
+        </div>
+      </RangeCalendar>
+      <div className="flex shrink-0 flex-col gap-3 border-t border-blue-dark/10 bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
+        <div className="grid flex-1 grid-cols-2 gap-3">
+          <TimeField
+            label={texts.pickupTime}
+            icon={Timer}
+            date={range?.start ?? null}
+            value={pickup}
+            onChange={(slot) => {
+              setPickup(slot);
+              if (!range) {
                 return;
               }
-              onConfirm({ start: range.start, end: range.end, pickup, dropoff });
-              onOpenChange(false);
+              if (!dropoff) {
+                setDropoff(suggestedDropoff(range.start, range.end, slot));
+                return;
+              }
+              if (isDropoffTooEarly(range.start, range.end, slot, dropoff)) {
+                setDropoff(nextSlotAfter(range.end, slot, range.start));
+              }
             }}
-          >
-            Zatwierdź wybór
-          </ConfirmButton>
+            isBlocked={(slot) => (range ? isSlotPast(range.start, slot) : false)}
+          />
+          <TimeField
+            label={texts.returnTime}
+            icon={TimerReset}
+            date={range?.end ?? null}
+            value={dropoff}
+            onChange={setDropoff}
+            isBlocked={(slot) => {
+              if (!range) {
+                return false;
+              }
+              if (!pickup) {
+                return isSlotPast(range.end, slot);
+              }
+              return isDropoffTooEarly(range.start, range.end, pickup, slot);
+            }}
+          />
         </div>
-      </Dialog>
-    </I18nProvider>
+        <ConfirmButton
+          disabled={!canAccept}
+          onClick={() => {
+            if (!range || !pickup || !dropoff) {
+              return;
+            }
+            onConfirm({ start: range.start, end: range.end, pickup, dropoff });
+            onOpenChange(false);
+          }}
+        >
+          {texts.confirmChoice}
+        </ConfirmButton>
+      </div>
+    </Dialog>
   );
 }
 
 function RangeDay({ date }: { date: CalendarDate }) {
   const calendar = useContext(RangeCalendarStateContext);
+  const locale = intlLocales[useLang()];
   const preview = Boolean(calendar?.anchorDate);
 
   return (
@@ -197,7 +211,7 @@ function RangeDay({ date }: { date: CalendarDate }) {
         if (cell.isOutsideMonth) {
           return "pointer-events-none invisible aspect-square w-full";
         }
-        const { continuesLeft, continuesRight } = segmentEdges(cell);
+        const { continuesLeft, continuesRight } = segmentEdges(cell, locale);
         const hollow = preview && cell.isSelected && (cell.isSelectionStart || cell.isSelectionEnd);
         return [
           "relative flex aspect-square w-full items-center justify-center text-sm outline-none transition-colors duration-200 ease-out motion-reduce:transition-none",
@@ -233,13 +247,17 @@ function RangeDay({ date }: { date: CalendarDate }) {
   );
 }
 
-function segmentEdges(cell: {
-  date: CalendarDate;
-  isSelected: boolean;
-  isSelectionStart: boolean;
-  isSelectionEnd: boolean;
-}) {
-  const dow = getDayOfWeek(cell.date, "pl-PL");
+/** Whether a selected day's band runs on into its neighbours; weeks start on the locale's first day. */
+function segmentEdges(
+  cell: {
+    date: CalendarDate;
+    isSelected: boolean;
+    isSelectionStart: boolean;
+    isSelectionEnd: boolean;
+  },
+  locale: string,
+) {
+  const dow = getDayOfWeek(cell.date, locale);
   const continuesLeft =
     cell.isSelected &&
     !cell.isSelectionStart &&
@@ -270,6 +288,7 @@ export function TimeField({
   isBlocked: (slot: ClockTime) => boolean;
 }) {
   const titleId = useId();
+  const texts = useMessages().search;
   const [open, setOpen] = useState(false);
 
   return (
@@ -306,7 +325,7 @@ export function TimeField({
               onChange(slot);
               setOpen(false);
             }}
-            empty="Brak dostępnych godzin."
+            empty={texts.noHours}
           />
         </Dialog>
       </WidgetModal>

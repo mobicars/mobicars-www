@@ -13,7 +13,7 @@ import {
   nowInWarsaw,
 } from "@/components/account/format";
 import { StatusBadge } from "@/components/account/reservation-card";
-import { accountCopy } from "@/i18n/account";
+import { accountCopy } from "@/i18n/panel-copy";
 import { isLang, type Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import { getAccount, getMyReservations } from "@/lib/auth/dal";

@@ -12,9 +12,13 @@ import {
   valueFromPoint,
   type ReservationSchedule,
 } from "@/components/reservation/schedule";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 
 /** Daily rental: place, pickup and return date. */
 export function ShortTermBar({ places, draft, onChange, invalid, fieldRef }: TermBarProps) {
+  const lang = useLang();
+  const texts = useMessages().search;
   const [datesOpen, setDatesOpen] = useState(false);
   const start = pointFromValue(draft.start);
   const end = pointFromValue(draft.end);
@@ -36,8 +40,8 @@ export function ShortTermBar({ places, draft, onChange, invalid, fieldRef }: Ter
           <BarField
             buttonRef={fieldRef("start")}
             icon={CalendarCheck2}
-            label="Data i godzina odbioru"
-            value={start ? formatSchedulePoint(start) : "Wybierz datę"}
+            label={texts.pickupDateTime}
+            value={start ? formatSchedulePoint(lang, start) : texts.chooseDate}
             onClick={() => setDatesOpen(true)}
             invalid={invalid.has("start")}
             className="border-b-2 @lg:border-r-2 @5xl:border-b-0"
@@ -45,8 +49,8 @@ export function ShortTermBar({ places, draft, onChange, invalid, fieldRef }: Ter
           <BarField
             buttonRef={fieldRef("end")}
             icon={CalendarMinus}
-            label="Data i godzina zwrotu"
-            value={end ? formatSchedulePoint(end) : "Wybierz datę"}
+            label={texts.returnDateTime}
+            value={end ? formatSchedulePoint(lang, end) : texts.chooseDate}
             onClick={() => setDatesOpen(true)}
             invalid={invalid.has("end")}
             className="border-b-2 @5xl:border-b-0"

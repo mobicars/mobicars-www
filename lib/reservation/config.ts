@@ -35,4 +35,11 @@ export const reservationConfig = {
   longTermMonthCounts: [1, 2, 3, 4, 5, 6, 12, 24, 36],
   /** Kilometer limits offered for monthly rental. */
   kilometerLimits: [1000, 2000, 3000, 4000, 5000, 6000],
+  /**
+   * Daily searches this long (in days) or longer get a note on the car list
+   * suggesting monthly rental for the same pickup (`monthlyAlternative`).
+   */
+  monthlyHintDays: 28,
+  /** Kilometre limit the monthly suggestion starts with; the customer can change it there. */
+  monthlyHintKm: 2000,
 } as const;

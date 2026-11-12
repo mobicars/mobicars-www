@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { isUpcoming, nowInWarsaw } from "@/components/account/format";
 import { ReservationCard } from "@/components/account/reservation-card";
-import { accountCopy } from "@/i18n/account";
+import { accountCopy } from "@/i18n/panel-copy";
 import { isLang, type Lang } from "@/i18n/config";
 import { getMyReservations } from "@/lib/auth/dal";
 

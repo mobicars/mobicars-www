@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useActionState, useEffect, useId, useState, useTransition } from "react";
 import { Button, Dialog, Modal, ModalOverlay } from "react-aria-components";
 
-import { accountCopy } from "@/i18n/account";
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { useAccountCopy } from "@/i18n/account";
+import { useAuthFormsCopy } from "@/i18n/auth-forms";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import {
@@ -25,9 +25,9 @@ import { FormAlert, PasswordField, SubmitButton, TextField } from "./fields";
 
 const RESEND_COOLDOWN_S = 60;
 
-function useCopy(lang: Lang) {
-  const login = accountCopy[lang].login;
-  const forms = authFormsCopy[lang];
+function useCopy() {
+  const login = useAccountCopy().login;
+  const forms = useAuthFormsCopy();
   const errorText = (code: string): string =>
     (forms.password as Record<string, string>)[code] ??
     (forms.code as unknown as Record<string, string>)[code] ??
@@ -37,8 +37,8 @@ function useCopy(lang: Lang) {
 }
 
 /** New password + confirmation, shared by reset and change. */
-function NewPasswordFields({ lang, invalid }: { lang: Lang; invalid: boolean }) {
-  const { login, forms } = useCopy(lang);
+function NewPasswordFields({ invalid }: { invalid: boolean }) {
+  const { login, forms } = useCopy();
   return (
     <>
       <PasswordField
@@ -69,7 +69,7 @@ function NewPasswordFields({ lang, invalid }: { lang: Lang; invalid: boolean }) 
 
 /** Step 1 of recovery: ask for the email, then open the code dialog. */
 export function ForgotPasswordForm({ lang }: { lang: Lang }) {
-  const { forms, errorText } = useCopy(lang);
+  const { forms, errorText } = useCopy();
   const t = forms.forgot;
   const [dialogEmail, setDialogEmail] = useState<string | null>(null);
   const [state, action, pending] = useActionState<RecoveryRequestResult | null, FormData>(
@@ -139,7 +139,7 @@ export function RecoveryCodeDialog({
   justSent: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
-  const { forms } = useCopy(lang);
+  const { forms } = useCopy();
   const titleId = useId();
   const [code, setCode] = useState<string | null>(null);
 
@@ -159,7 +159,7 @@ export function RecoveryCodeDialog({
             <X className="size-4" aria-hidden />
           </Button>
           {code === null ? (
-            <CodeStep lang={lang} email={email} titleId={titleId} justSent={justSent} onVerified={setCode} />
+            <CodeStep email={email} titleId={titleId} justSent={justSent} onVerified={setCode} />
           ) : (
             <PasswordStep lang={lang} email={email} code={code} titleId={titleId} onRestart={() => setCode(null)} />
           )}
@@ -170,19 +170,17 @@ export function RecoveryCodeDialog({
 }
 
 function CodeStep({
-  lang,
   email,
   titleId,
   justSent,
   onVerified,
 }: {
-  lang: Lang;
   email: string;
   titleId: string;
   justSent: boolean;
   onVerified: (code: string) => void;
 }) {
-  const { forms, errorText } = useCopy(lang);
+  const { forms, errorText } = useCopy();
   const t = forms.code;
   const [state, action, pending] = useActionState<VerifyCodeState, FormData>(
     async (previous, formData) => {
@@ -277,7 +275,7 @@ function PasswordStep({
   titleId: string;
   onRestart: () => void;
 }) {
-  const { forms, errorText } = useCopy(lang);
+  const { forms, errorText } = useCopy();
   const t = forms.code;
   const [state, action, pending] = useActionState<ResetPasswordState, FormData>(resetPassword, null);
   const error = state?.error ?? null;
@@ -295,7 +293,7 @@ function PasswordStep({
         <input type="hidden" name="code" value={code} />
         {/* Lets password managers save the new password under the right account. */}
         <input type="email" name="username" autoComplete="username" value={email} readOnly hidden />
-        <NewPasswordFields lang={lang} invalid={error === "too_short" || error === "mismatch"} />
+        <NewPasswordFields invalid={error === "too_short" || error === "mismatch"} />
         {error ? (
           <FormAlert tone="error">
             {errorText(error)}
@@ -316,7 +314,7 @@ function PasswordStep({
 }
 
 export function ChangePasswordForm({ lang }: { lang: Lang }) {
-  const { login, forms, errorText } = useCopy(lang);
+  const { login, forms, errorText } = useCopy();
   const t = forms.security;
   const [state, action, pending] = useActionState<ChangePasswordState, FormData>(changePassword, null);
   const error = state && "error" in state ? state.error : null;
@@ -335,7 +333,6 @@ export function ChangePasswordForm({ lang }: { lang: Lang }) {
         hideLabel={login.hidePassword}
       />
       <NewPasswordFields
-        lang={lang}
         invalid={error === "too_short" || error === "mismatch" || error === "same"}
       />
       {state && "done" in state ? <FormAlert tone="success">{t.done}</FormAlert> : null}

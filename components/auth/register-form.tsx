@@ -3,8 +3,8 @@
 import Link from "next/link";
 import { useActionState, useState } from "react";
 
-import { accountCopy } from "@/i18n/account";
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { useAccountCopy } from "@/i18n/account";
+import { useAuthFormsCopy } from "@/i18n/auth-forms";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import { register, type RegisterField, type RegisterState } from "@/lib/auth/account-actions";
@@ -13,8 +13,8 @@ import { FormAlert, PasswordField, SubmitButton, TextField } from "./fields";
 import { PhoneField } from "./phone-field";
 
 export function RegisterForm({ lang }: { lang: Lang }) {
-  const login = accountCopy[lang].login;
-  const forms = authFormsCopy[lang];
+  const login = useAccountCopy().login;
+  const forms = useAuthFormsCopy();
   const t = forms.register;
   const [state, action, pending] = useActionState<RegisterState, FormData>(register, null);
   const [type, setType] = useState<"private" | "company">("private");

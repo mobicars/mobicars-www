@@ -6,10 +6,15 @@ import { useRouter } from "next/navigation";
 import { Dialog } from "react-aria-components";
 import { ArrowRight, Fuel, LoaderCircle, Settings2, Users } from "lucide-react";
 
-import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
-import { ChooseButton, formatMoney } from "@/components/reservation/offer-parts";
+import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { formatMoney } from "@/components/reservation/format";
+import { ChooseButton } from "@/components/reservation/offer-parts";
 import { Slider } from "@/components/reservation/slider";
 import { currentHrefWith } from "@/components/reservation/url";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
+import { plural } from "@/i18n/plural";
 import type { OfferCard } from "@/lib/reservation/offers";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 import type { UpsellOption } from "@/lib/reservation/upsell";
@@ -21,6 +26,7 @@ import type { UpsellOption } from "@/lib/reservation/upsell";
  */
 export function Upsell({ current, options }: { current: OfferCard; options: UpsellOption[] }) {
   const router = useRouter();
+  const t = useMessages().upsell;
   const [pending, startTransition] = useTransition();
   const [confirm, setConfirm] = useState<UpsellOption | null>(null);
 
@@ -37,19 +43,19 @@ export function Upsell({ current, options }: { current: OfferCard; options: Upse
     <section aria-labelledby="upsell-title" aria-busy={pending}>
       <div className="mb-3 flex items-center gap-2">
         <h3 id="upsell-title" className="text-lg font-semibold text-blue-dark">
-          Potrzebujesz większego komfortu?
+          {t.title}
         </h3>
         {pending ? (
           <span role="status" className="flex items-center gap-1 text-xs text-muted-dark">
             <LoaderCircle className="size-4 animate-spin text-blue-medium motion-reduce:animate-none" aria-hidden />
-            Zmieniamy auto…
+            {t.switching}
           </span>
         ) : null}
       </div>
       {/* Phones: a swipe row. Wider: two per row; a single suggestion takes the whole width as a larger card. */}
       {options.length > 1 ? (
         <Slider
-          label="Większe samochody"
+          label={t.cars}
           className="-mx-3 scroll-px-3 px-3 pb-1 @xl:mx-0 @xl:grid @xl:grid-cols-2 @xl:gap-4 @xl:overflow-visible @xl:px-0"
           itemClassName="w-[85%] @xl:w-auto"
           dotsClassName="@xl:hidden"
@@ -89,6 +95,8 @@ function UpsellCard({
   disabled: boolean;
   onChoose: () => void;
 }) {
+  const t = useMessages().upsell;
+  const lang = useLang();
   const { car } = option;
   const photo = car.image ? (
     <span className={`relative block w-full ${wide ? "h-44 @xl:h-auto @xl:min-h-48 @xl:w-1/2 @xl:shrink-0" : "my-3 h-28"}`}>
@@ -113,13 +121,13 @@ function UpsellCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className={`font-semibold text-blue-dark ${wide ? "text-xl" : ""}`}>{car.name}</h4>
-          <p className="text-xs text-muted-dark">lub podobny · {car.segment}</p>
+          <p className="text-xs text-muted-dark">{fill(t.orSimilar, { segment: car.segment })}</p>
         </div>
         <p className="shrink-0 text-right">
           <span className={`block font-bold text-green-medium ${wide ? "text-2xl" : "text-lg"}`}>
-            +{formatMoney(option.dailyIncrease)}
+            +{formatMoney(lang, option.increase)}
           </span>
-          <span className="block text-xxs text-muted-dark">/ doba</span>
+          <span className="block text-xxs text-muted-dark">{option.unit === "month" ? t.perMonth : t.perDay}</span>
         </p>
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-blue-dark/80">
@@ -138,13 +146,13 @@ function UpsellCard({
         {car.seats ? (
           <li className="flex items-center gap-1">
             <Users className="size-3.5 text-blue-medium" strokeWidth={1.75} aria-hidden />
-            {car.seats} miejsc
+            {car.seats} {plural(lang, Number(car.seats), t.seats)}
           </li>
         ) : null}
       </ul>
       {wide ? null : photo}
       <p className={`mt-auto text-xxs text-muted-dark ${wide ? "pt-4" : ""}`}>
-        +{formatMoney(option.totalIncrease)} za cały wynajem
+        {fill(t.wholeRental, { price: formatMoney(lang, option.totalIncrease) })}
       </p>
       {/* The card-wide click area comes from the button's ::after. */}
       <span className={disabled ? "pointer-events-none opacity-60" : undefined}>
@@ -170,6 +178,8 @@ function ConfirmDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useMessages().upsell;
+  const lang = useLang();
   const titleId = useId();
   return (
     <WidgetModal
@@ -178,41 +188,28 @@ function ConfirmDialog({
       className="w-[min(30rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
     >
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
-        <DialogHeader titleId={titleId} title="Czy potwierdzasz zmianę klasy samochodu?" className="pt-4 pb-1" />
+        <DialogHeader titleId={titleId} title={t.confirmTitle} className="pt-4 pb-1" />
         {option ? (
           <div className="flex flex-col items-center gap-4 px-5 pb-5 text-center">
             <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-blue-dark/80">
               <span>
                 {current.name} <span className="text-muted-dark">({current.segment})</span>
               </span>
-              <ArrowRight className="size-4 text-blue-medium" aria-label="na" />
+              <ArrowRight className="size-4 text-blue-medium" aria-label={t.to} />
               <span className="font-semibold text-blue-dark">
                 {option.car.name} <span className="font-normal text-muted-dark">({option.car.segment})</span>
               </span>
             </p>
             <p className="text-sm text-blue-dark">
-              Dopłata <span className="font-bold text-green-medium">+{formatMoney(option.dailyIncrease)}</span> / doba
-              <span className="text-muted-dark"> (+{formatMoney(option.totalIncrease)} za cały wynajem)</span>
+              {t.surcharge} <span className="font-bold text-green-medium">+{formatMoney(lang, option.increase)}</span>{" "}
+              {option.unit === "month" ? t.perMonth : t.perDay}
+              <span className="text-muted-dark">
+                {" "}
+                ({fill(t.wholeRental, { price: formatMoney(lang, option.totalIncrease) })})
+              </span>
             </p>
-            <p className="text-xs text-muted-dark">
-              Wybraną ochronę i dodatki sprawdzimy dla nowego auta; cenę policzymy od nowa.
-            </p>
-            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={onCancel}
-                className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl border border-blue-dark/15 text-sm font-bold text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-dark/[0.04] motion-reduce:transition-none"
-              >
-                Nie, cofnij
-              </button>
-              <button
-                type="button"
-                onClick={onConfirm}
-                className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl bg-blue-medium text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
-              >
-                Tak, potwierdzam
-              </button>
-            </div>
+            <p className="text-xs text-muted-dark">{t.recheck}</p>
+            <DialogActions cancel={t.cancel} confirm={t.confirm} onCancel={onCancel} onConfirm={onConfirm} />
           </div>
         ) : null}
       </Dialog>

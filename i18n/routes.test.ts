@@ -4,8 +4,10 @@ import { describe, it } from "node:test";
 import { loginPath, safeReturnPath } from "../lib/auth/paths";
 import {
   accountHref,
+  fleetHref,
   reservationHref,
   resolveAccountPath,
+  resolveFleetPath,
   resolveReservationPath,
   switchLangHref,
 } from "./routes";
@@ -137,9 +139,9 @@ describe("switchLangHref", () => {
       switchLangHref("/pl/rezerwacja", "?pickup=479&from=2026-11-14T10%3A00", "en"),
       "/en/reservation?pickup=479&from=2026-11-14T10%3A00",
     );
-    assert.equal(switchLangHref("/pl/rezerwacja/dlugoterminowa", "", "de"), "/de/reservation/long-term");
+    assert.equal(switchLangHref("/pl/rezerwacja/dlugoterminowa", "", "de"), "/de/buchung/langzeit");
     assert.equal(switchLangHref("/en/reservation", "pickup=1", "pl"), "/pl/rezerwacja?pickup=1");
-    assert.equal(switchLangHref("/pl/rezerwacja/potwierdzenie", "", "uk"), "/uk/reservation/confirmation");
+    assert.equal(switchLangHref("/pl/rezerwacja/potwierdzenie", "", "uk"), "/uk/bronyuvannya/pidtverdzhennya");
   });
 
   it("keeps the panel page and its id", () => {
@@ -153,5 +155,65 @@ describe("switchLangHref", () => {
     assert.equal(switchLangHref("/pl/o-nas", "", "en"), "/en/o-nas");
     assert.equal(switchLangHref("/", "", "en"), "/en");
     assert.equal(switchLangHref("/pl/rezerwacja/cokolwiek", "", "en"), "/en");
+  });
+});
+
+describe("fleet routes", () => {
+  it("builds the localized list and car URLs", () => {
+    assert.equal(fleetHref("pl"), "/pl/flota");
+    assert.equal(fleetHref("pl", "toyota-yaris-1219"), "/pl/flota/toyota-yaris-1219");
+    assert.equal(fleetHref("en", "toyota-yaris-1219"), "/en/fleet/toyota-yaris-1219");
+    assert.equal(fleetHref("de"), "/de/flotte");
+  });
+
+  it("rewrites Polish URLs to the English app folder", () => {
+    assert.deepEqual(resolveFleetPath("pl", "/pl/flota"), {
+      canonical: "/pl/flota",
+      internal: "/pl/fleet",
+      slug: null,
+    });
+    assert.deepEqual(resolveFleetPath("pl", "/pl/flota/toyota-yaris-1219"), {
+      canonical: "/pl/flota/toyota-yaris-1219",
+      internal: "/pl/fleet/toyota-yaris-1219",
+      slug: "toyota-yaris-1219",
+    });
+    assert.equal(resolveFleetPath("uk", "/uk/avtopark/mg-4-4560")?.internal, "/uk/fleet/mg-4-4560");
+  });
+
+  it("points mixed spellings and trailing slashes at the canonical URL", () => {
+    assert.equal(resolveFleetPath("pl", "/pl/fleet/mg-4-4560")?.canonical, "/pl/flota/mg-4-4560");
+    assert.equal(resolveFleetPath("pl", "/pl/flota/")?.canonical, "/pl/flota");
+    assert.equal(resolveFleetPath("en", "/en/flota"), null);
+    assert.equal(resolveFleetPath("pl", "/pl/flota/a/b")?.slug, null);
+  });
+
+  it("keeps the car when the language changes", () => {
+    assert.equal(switchLangHref("/pl/flota/toyota-yaris-1219", "", "en"), "/en/fleet/toyota-yaris-1219");
+    assert.equal(switchLangHref("/en/fleet", "?kategoria=eco", "pl"), "/pl/flota?kategoria=eco");
+  });
+});
+
+describe("German and Ukrainian segments", () => {
+  it("builds localized panel and reservation URLs, Ukrainian in Latin letters", () => {
+    assert.equal(accountHref("de", "reservations", 12), "/de/konto/buchungen/12");
+    assert.equal(accountHref("uk", "forgotPassword"), "/uk/kabinet/vidnovyty-parol");
+    assert.equal(reservationHref("uk", "long"), "/uk/bronyuvannya/dovhostrokova");
+    for (const lang of ["de", "uk"] as const) {
+      assert.match(accountHref(lang, "security"), /^[a-z0-9/-]+$/);
+    }
+  });
+
+  it("redirects English segments to the localized ones and rewrites to the app folder", () => {
+    const route = resolveAccountPath("de", "/de/account/login");
+    assert.equal(route?.canonical, "/de/konto/anmelden");
+    assert.equal(route?.internal, "/de/account/login");
+    assert.equal(resolveAccountPath("uk", "/uk/kabinet/dani")?.internal, "/uk/account/details");
+    assert.equal(resolveReservationPath("de", "/de/buchung/bestaetigung")?.internal, "/de/reservation/confirmation");
+  });
+
+  it("switches between languages keeping the page", () => {
+    assert.equal(switchLangHref("/pl/konto/rezerwacje/12", "", "uk"), "/uk/kabinet/bronyuvannya/12");
+    assert.equal(switchLangHref("/de/konto/daten", "", "pl"), "/pl/konto/dane");
+    assert.equal(switchLangHref("/uk/bronyuvannya", "?pickup=3", "de"), "/de/buchung?pickup=3");
   });
 });

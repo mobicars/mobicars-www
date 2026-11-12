@@ -6,6 +6,9 @@ import { SiteFooter, SiteHeader } from "@/components/layout/site-chrome";
 import { PreviewBanner } from "@/components/ui/preview-banner";
 import { Toaster } from "@/components/ui/toaster";
 import { isLang, langStaticParams } from "@/i18n/config";
+import { LangProvider } from "@/i18n/lang-context";
+import { getMessages } from "@/i18n/messages";
+import { MessagesProvider } from "@/i18n/messages-context";
 
 import "../globals.css";
 
@@ -17,10 +20,10 @@ const poppins = Poppins({
   fallback: ["Arial", "Helvetica", "sans-serif"],
 });
 
-export const metadata: Metadata = {
-  title: "MobiCars",
-  description: "Wynajem samochodów",
-};
+export async function generateMetadata({ params }: LayoutProps<"/[lang]">): Promise<Metadata> {
+  const { lang } = await params;
+  return { title: "MobiCars", description: getMessages(isLang(lang) ? lang : "pl").layout.description };
+}
 
 export function generateStaticParams() {
   return langStaticParams();
@@ -38,11 +41,15 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`${poppins.variable} h-full antialiased`}>
       <body className={`${poppins.className} flex min-h-full flex-col`}>
-        <SiteHeader lang={lang} />
-        {children}
-        <SiteFooter lang={lang} />
-        <PreviewBanner />
-        <Toaster />
+        <LangProvider lang={lang}>
+          <MessagesProvider messages={getMessages(lang)}>
+            <SiteHeader lang={lang} />
+            {children}
+            <SiteFooter lang={lang} />
+            <PreviewBanner />
+            <Toaster />
+          </MessagesProvider>
+        </LangProvider>
       </body>
     </html>
   );

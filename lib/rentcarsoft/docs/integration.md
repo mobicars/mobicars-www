@@ -58,4 +58,4 @@ Accessory `quantity` is sent as `ilosc` on calculate and as `quantity` on create
 
 ## Extras
 
-Addons send customer filters as `clients`. Accessories send them as `customers`. Both use `loadLongTerm` when `longTerm` is true.
+Addons send customer filters as `clients`. Accessories send them as `customers`. When `longTerm` is true, addons send `longTerm` and accessories `loadLongTerm` (the live API ignores the other spelling; see `quirks.md`).

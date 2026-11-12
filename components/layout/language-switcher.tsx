@@ -5,6 +5,8 @@ import { Button, Menu, MenuItem, MenuTrigger, Popover } from "react-aria-compone
 import { Check, ChevronDown } from "lucide-react";
 
 import { languages, type Lang } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
+import { useMessages } from "@/i18n/messages-context";
 import { switchLangHref } from "@/i18n/routes";
 
 /**
@@ -16,11 +18,12 @@ import { switchLangHref } from "@/i18n/routes";
 export function LanguageSwitcher({ lang }: { lang: Lang }) {
   const router = useRouter();
   const current = languages.find((item) => item.lang === lang) ?? languages[0];
+  const t = useMessages().layout;
 
   return (
     <MenuTrigger>
       <Button
-        aria-label={`Język: ${current.label}`}
+        aria-label={fill(t.languageCurrent, { label: current.label })}
         className="flex h-10 cursor-pointer items-center gap-2 rounded-full px-3 text-xs font-bold text-blue-dark uppercase outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none"
       >
         {current.lang}
@@ -30,7 +33,7 @@ export function LanguageSwitcher({ lang }: { lang: Lang }) {
       </Button>
       <Popover placement="bottom end" offset={6} className="min-w-44 rounded-xl bg-white p-1 shadow-xl ring-1 ring-blue-dark/10 outline-none">
         <Menu
-          aria-label="Wybierz język"
+          aria-label={t.languageChoose}
           selectionMode="single"
           selectedKeys={[lang]}
           onAction={(key) => {

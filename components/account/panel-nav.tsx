@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
-import { accountCopy } from "@/i18n/account";
+import { useAccountCopy } from "@/i18n/account";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import { logout } from "@/lib/auth/actions";
@@ -27,7 +27,7 @@ function ActivePanelNav({ lang }: { lang: Lang }) {
 }
 
 function PanelNavList({ lang, pathname }: { lang: Lang; pathname: string | null }) {
-  const t = accountCopy[lang].nav;
+  const t = useAccountCopy().nav;
   const items = [
     { href: accountHref(lang), label: t.overview, icon: LayoutDashboard, exact: true },
     { href: accountHref(lang, "reservations"), label: t.reservations, icon: CalendarDays, exact: false },

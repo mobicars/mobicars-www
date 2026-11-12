@@ -6,12 +6,17 @@ import { useRouter } from "next/navigation";
 import { ArrowLeft, Globe, House, Minus, Plus, X } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
-import { ChooseButton, formatMoney } from "@/components/reservation/offer-parts";
+import { formatMoney } from "@/components/reservation/format";
+import { ChooseButton } from "@/components/reservation/offer-parts";
 import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@/components/reservation/summary";
-import { currentHrefWith, replaceParam } from "@/components/reservation/url";
+import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/reservation/url";
 import { Slider } from "@/components/reservation/slider";
 import { Upsell } from "@/components/reservation/upsell";
 import { useQuote } from "@/components/reservation/use-quote";
+import { buttonClass } from "@/components/ui/button";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import {
   MAX_QUANTITY,
   selectedAccessories,
@@ -58,6 +63,7 @@ export function ExtrasStep({
   upsell?: UpsellOption[];
 }) {
   const router = useRouter();
+  const t = useMessages().extras;
   const [selection, setSelection] = useState(initialSelection);
   const quote = useQuote(
     quoteQuery(
@@ -104,18 +110,9 @@ export function ExtrasStep({
   }
 
   const backToProtection = () => router.push(currentHrefWith({ [QUERY_KEYS.step]: "protection" }), { scroll: false });
-  const backToCars = () =>
-    router.push(
-      currentHrefWith({
-        [QUERY_KEYS.step]: null,
-        [QUERY_KEYS.protection]: null,
-        [QUERY_KEYS.zone]: null,
-        [QUERY_KEYS.extras]: null,
-        [QUERY_KEYS.accessories]: null,
-      }), { scroll: false }
-    );
+  const backToCars = () => router.push(restartCarChoice(), { scroll: false });
   const action = {
-    label: "DALEJ",
+    label: t.next,
     onClick: () => router.push(currentHrefWith({ [QUERY_KEYS.step]: "details" }), { scroll: false }),
   };
   const prices = quotePrices(quote);
@@ -125,7 +122,7 @@ export function ExtrasStep({
       <section aria-labelledby="extras-title" className="@container flex min-w-0 flex-col gap-8">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 id="extras-title" className="text-2xl font-semibold text-blue-dark">
-            Wybierz dodatki
+            {t.title}
           </h2>
           <button
             type="button"
@@ -133,15 +130,13 @@ export function ExtrasStep({
             className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Wróć do ochrony
+            {t.backToProtection}
           </button>
         </div>
 
         {droppedCount > 0 ? (
           <p role="status" className="rounded-xl bg-blue-light px-4 py-3 text-sm text-blue-dark">
-            {droppedCount === 1
-              ? "Jeden z wybranych wcześniej dodatków nie jest dostępny dla tego auta lub terminu i został usunięty."
-              : "Część wybranych wcześniej dodatków nie jest dostępna dla tego auta lub terminu i została usunięta."}
+            {droppedCount === 1 ? t.droppedOne : t.droppedMany}
           </p>
         ) : null}
 
@@ -152,7 +147,7 @@ export function ExtrasStep({
         {view.groups.map((group) => (
           <section key={group.id} aria-labelledby={`extras-${group.id}`}>
             <h3 id={`extras-${group.id}`} className="mb-3 text-lg font-semibold text-blue-dark">
-              {group.title}
+              {t.groups[group.id]}
             </h3>
             <ul className="grid grid-cols-2 gap-3 @md:gap-4 @2xl:grid-cols-3 @3xl:grid-cols-4">
               {group.items.map((item) => (
@@ -175,13 +170,13 @@ export function ExtrasStep({
 
         {view.zones.length === 0 && view.groups.length === 0 ? (
           <p className="rounded-2xl bg-white p-6 text-sm text-blue-dark shadow-sm">
-            Do tego auta i terminu nie ma dodatków do wyboru.
+            {t.none}
           </p>
         ) : null}
 
         <Upsell current={car} options={upsell} />
       </section>
-      <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} />
+      <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} searchQuery={searchQuery} />
       <MobileSummaryBar car={car} prices={prices} action={action} />
     </div>
   );
@@ -197,6 +192,8 @@ function BorderZones({
   value: number | null;
   onChange: (zone: number | null) => void;
 }) {
+  const t = useMessages().extras;
+  const lang = useLang();
   return (
     <section aria-labelledby="extras-border" className="rounded-3xl bg-white p-5 shadow-sm">
       <div className="mb-4 flex items-start gap-3">
@@ -205,24 +202,22 @@ function BorderZones({
         </span>
         <div>
           <h3 id="extras-border" className="text-lg font-semibold text-blue-dark">
-            Wyjazd za granicę
+            {t.borderTitle}
           </h3>
-          <p className="text-sm text-muted-dark">
-            Planujesz wyjazd poza Polskę? Wybierz strefę z krajami, do których jedziesz.
-          </p>
+          <p className="text-sm text-muted-dark">{t.borderText}</p>
         </div>
       </div>
       {/* Narrow: a swipe row with the chosen zone in view; wider: a grid. */}
       <div role="radiogroup" aria-labelledby="extras-border">
       <Slider
-        label="Strefy wyjazdu"
+        label={t.zones}
         startIndex={value === null ? 0 : zones.findIndex((zone) => zone.id === value) + 1}
         className="-mx-5 scroll-px-5 px-5 pb-1 @md:mx-0 @md:grid @md:grid-cols-2 @md:overflow-visible @md:px-0 @3xl:grid-cols-4"
         itemClassName="w-[62%] @md:w-auto"
         dotsClassName="@md:hidden"
       >
-        <ZoneCard selected={value === null} onSelect={() => onChange(null)} title="Bez wyjazdu" note="Tylko Polska" image={null}>
-          <span className="text-lg font-bold text-green-medium">0,00 zł</span>
+        <ZoneCard selected={value === null} onSelect={() => onChange(null)} title={t.noTrip} note={t.polandOnly} image={null}>
+          <span className="text-lg font-bold text-green-medium">{formatMoney(lang, 0)}</span>
         </ZoneCard>
         {zones.map((zone) => (
           <ZoneCard
@@ -320,6 +315,7 @@ function ExtraTile({
   onToggle: () => void;
   onQuantity: (quantity: number) => void;
 }) {
+  const lang = useLang();
   const chosen = quantity > 0;
   return (
     <article
@@ -338,9 +334,9 @@ function ExtraTile({
           <Image src={item.image} alt="" fill sizes="240px" className="object-contain" />
         </span>
       ) : null}
-      {/* Long Polish words ("Zarezerwowanego") must not push a half-width tile wider. */}
+      {/* Long words ("Zarezerwowanego") must not push a half-width tile wider; hyphens need the right `lang`. */}
       <h4
-        lang="pl"
+        lang={lang}
         className={`text-sm font-semibold break-words hyphens-auto text-blue-dark @md:text-base ${
           item.image || !item.description ? "" : "pr-7"
         }`}
@@ -361,54 +357,49 @@ function ExtraTile({
 
 /** Price as the API sends it: per day with the period total, or once. */
 function ExtraPrice({ item }: { item: ExtraOption }) {
+  const t = useMessages().extras;
+  const lang = useLang();
+  const period = !item.oneTime && item.periodPrice !== null ? fill(t.wholeRental, { price: formatMoney(lang, item.periodPrice) }) : null;
+  const notes = [period, item.kind === "quantity" ? t.perItem : null].filter(Boolean);
   return (
     <div className="min-w-0">
       <p className="text-lg font-bold text-blue-dark">
-        {formatMoney(item.price)}
-        <span className="text-xs font-semibold text-muted-dark">{item.oneTime ? " jednorazowo" : " / doba"}</span>
+        {formatMoney(lang, item.price)}
+        <span className="text-xs font-semibold text-muted-dark"> {item.oneTime ? t.oneTime : item.unit === "month" ? t.perMonth : t.perDay}</span>
       </p>
-      {(!item.oneTime && item.periodPrice !== null) || item.kind === "quantity" ? (
-        <p className="text-xxs text-muted-dark">
-          {!item.oneTime && item.periodPrice !== null ? `${formatMoney(item.periodPrice)} za cały wynajem` : ""}
-          {!item.oneTime && item.periodPrice !== null && item.kind === "quantity" ? ", " : ""}
-          {item.kind === "quantity" ? "za sztukę" : ""}
-        </p>
-      ) : null}
+      {notes.length > 0 ? <p className="text-xxs text-muted-dark">{notes.join(", ")}</p> : null}
     </div>
   );
 }
 
 /** "Dodaj" (green, +) adds the extra; once added, "Usuń" (red, ×) takes it off. Icons without frames, like ✓ on "Wybrany". */
 function ToggleButton({ added, onClick }: { added: boolean; onClick: () => void }) {
+  const t = useMessages().extras;
   return (
     <button
       type="button"
       aria-pressed={added}
       onClick={onClick}
-      className={`flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl px-4 text-sm font-bold text-white transition-colors duration-200 ease-out motion-reduce:transition-none ${
-        added ? "bg-red-500 hover:bg-red-600" : "bg-green-medium hover:bg-green-dark"
-      }`}
+      className={buttonClass(added ? "danger" : "success", "md", "w-full px-4")}
     >
       {added ? <X className="size-4" aria-hidden /> : <Plus className="size-4" aria-hidden />}
-      {added ? "Usuń" : "Dodaj"}
+      {added ? t.remove : t.add}
     </button>
   );
 }
 
 function Stepper({ name, value, onChange }: { name: string; value: number; onChange: (value: number) => void }) {
-  // "+" adds, green like "Dodaj"; "−" removes, red like "Usuń".
-  const button =
-    "flex size-10 cursor-pointer items-center justify-center rounded-lg transition-colors duration-200 ease-out disabled:cursor-default disabled:opacity-40 motion-reduce:transition-none";
-  const less = `${button} bg-red-500 text-white hover:bg-red-600 disabled:hover:bg-red-500`;
-  const more = `${button} bg-green-medium text-white hover:bg-green-dark disabled:hover:bg-green-medium`;
+  const t = useMessages().extras;
+  // "+" adds, green like "Dodaj"; "−" removes, red like "Usuń". Square, so no side padding.
+  const square = "size-10 px-0!";
   return (
-    <div role="group" aria-label={`Ilość: ${name}`} className="flex items-center justify-between gap-2 rounded-xl bg-surface p-1">
+    <div role="group" aria-label={fill(t.quantity, { name })} className="flex items-center justify-between gap-2 rounded-xl bg-surface p-1">
       <button
         type="button"
-        aria-label="Mniej"
+        aria-label={t.less}
         disabled={value === 0}
         onClick={() => onChange(value - 1)}
-        className={less}
+        className={buttonClass("danger", "sm", square)}
       >
         <Minus className="size-4" aria-hidden />
       </button>
@@ -417,10 +408,10 @@ function Stepper({ name, value, onChange }: { name: string; value: number; onCha
       </output>
       <button
         type="button"
-        aria-label="Więcej"
+        aria-label={t.more}
         disabled={value === MAX_QUANTITY}
         onClick={() => onChange(value + 1)}
-        className={more}
+        className={buttonClass("success", "sm", square)}
       >
         <Plus className="size-4" aria-hidden />
       </button>

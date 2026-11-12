@@ -4,6 +4,7 @@ import { useState, type ReactNode } from "react";
 import { CalendarDays, ChevronUp, MapPin, Pencil } from "lucide-react";
 
 import type { CompactTrip } from "@/components/reservation/trip";
+import { useMessages } from "@/i18n/messages-context";
 
 /**
  * Below `lg` the search widget on a results page folds into one tappable line
@@ -12,6 +13,7 @@ import type { CompactTrip } from "@/components/reservation/trip";
  * mounted either way, so its live updates and dialogs keep working.
  */
 export function CompactSearch({ trip, children }: { trip: CompactTrip; children: ReactNode }) {
+  const texts = useMessages().search;
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,7 +37,7 @@ export function CompactSearch({ trip, children }: { trip: CompactTrip; children:
           </span>
           <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-light text-blue-medium">
             <Pencil className="size-4" aria-hidden />
-            <span className="sr-only">Zmień miejsce lub termin</span>
+            <span className="sr-only">{texts.changeTrip}</span>
           </span>
         </button>
       )}
@@ -49,7 +51,7 @@ export function CompactSearch({ trip, children }: { trip: CompactTrip; children:
             className="mx-auto mt-3 flex cursor-pointer items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold text-white/90 hover:text-white lg:hidden"
           >
             <ChevronUp className="size-4" aria-hidden />
-            Zwiń
+            {texts.collapse}
           </button>
         ) : null}
       </div>

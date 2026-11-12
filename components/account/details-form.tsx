@@ -6,7 +6,7 @@ import { useActionState, type ReactNode } from "react";
 import { FormAlert, SubmitButton, TextField } from "@/components/auth/fields";
 import { PhoneField } from "@/components/auth/phone-field";
 import type { Lang } from "@/i18n/config";
-import { detailsCopy } from "@/i18n/details";
+import { useDetailsCopy, type DetailsCopy } from "@/i18n/details";
 import {
   CONSENT_FIELDS,
   TEXT_FIELDS,
@@ -22,7 +22,7 @@ const GROUPS: { title: "personal" | "address" | "company"; fields: TextFieldName
 ];
 
 export function DetailsForm({ lang, details }: { lang: Lang; details: AccountDetails }) {
-  const t = detailsCopy[lang];
+  const t = useDetailsCopy();
   const [state, action, pending] = useActionState<UpdateDetailsState, FormData>(updateDetails, null);
   const bad = (name: string) => (state && "error" in state ? state.fields.includes(name) : false);
   // React resets the form after each submit: show what was sent, not the old data.
@@ -102,7 +102,7 @@ function Field({
   name: TextFieldName;
   wide?: boolean;
   lang: Lang;
-  t: (typeof detailsCopy)[Lang];
+  t: DetailsCopy;
   bad: (name: string) => boolean;
   textValue: (name: TextFieldName) => string;
 }) {

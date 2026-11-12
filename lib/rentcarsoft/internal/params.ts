@@ -308,7 +308,14 @@ export function buildExtrasQuery(
     query.priceSegments = input.priceSegmentIds;
   }
   if (input.longTerm) {
-    query.loadLongTerm = true;
+    // Live API, 12 November 2026: addons answer only to `longTerm`
+    // (`loadLongTerm` returned none), accessories only to `loadLongTerm`.
+    // The old site sent the same pair.
+    if (clientParam === "clients") {
+      query.longTerm = true;
+    } else {
+      query.loadLongTerm = true;
+    }
   }
   if (input.pickUpDate) {
     query.pickupDate = input.pickUpDate;

@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useId, useState, useTransition } from "react";
+import { useEffect, useId, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog } from "react-aria-components";
 import { Clock } from "lucide-react";
 import { today } from "@internationalized/date";
 
-import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
 import {
   earliestPickupPoint,
   formatClock,
@@ -17,6 +17,11 @@ import {
   type SchedulePoint,
 } from "@/components/reservation/schedule";
 import { currentHrefWith } from "@/components/reservation/url";
+import type { Lang } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
+import { plural } from "@/i18n/plural";
 import { reservationConfig } from "@/lib/reservation/config";
 import { QUERY_KEYS, movePickup, toZonedDateTime } from "@/lib/reservation/search";
 
@@ -34,12 +39,14 @@ type Check = {
  * A booking in progress is not thrown out when its pickup gets close (see
  * "Pickup time rules" in `lib/reservation/README.md`). Instead, once the
  * pickup is less than `pickupLeadMinutes` away, or past, this offers to move
- * it to the earliest open slot. "Zmienię termin sam" closes it for that time.
+ * it to the earliest open slot. "I'll change it myself" closes it for that time.
  * The clock is read in the browser only, after mount and every 30 seconds.
  */
 export function PickupTimeGuard({ start, end }: { start: string; end: string | null }) {
   const router = useRouter();
   const titleId = useId();
+  const lang = useLang();
+  const texts = useMessages().search;
   const [check, setCheck] = useState<Check | null>(null);
   const [dismissed, setDismissed] = useState<string | null>(null);
   const [moving, startMove] = useTransition();
@@ -53,6 +60,7 @@ export function PickupTimeGuard({ start, end }: { start: string; end: string | n
 
   const open = check !== null && dismissed !== start && !moving;
   const lead = reservationConfig.pickupLeadMinutes;
+  const minutes = `${lead} ${plural(lang, lead, texts.minutes)}`;
 
   function move() {
     if (!check) {
@@ -83,7 +91,7 @@ export function PickupTimeGuard({ start, end }: { start: string; end: string | n
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
         <DialogHeader
           titleId={titleId}
-          title={check?.passed ? "Godzina odbioru już minęła" : `Do odbioru zostało mniej niż ${lead} minut`}
+          title={check?.passed ? texts.guardPassed : fill(texts.guardSoon, { minutes })}
           className="pt-4 pb-1"
         />
         {check ? (
@@ -92,31 +100,23 @@ export function PickupTimeGuard({ start, end }: { start: string; end: string | n
               <Clock className="size-6" strokeWidth={1.75} aria-hidden />
             </span>
             <p className="text-sm text-blue-dark/80">
-              Potrzebujemy co najmniej {lead} minut, żeby przygotować dla Ciebie auto. Proponujemy odbiór{" "}
-              <span className="font-semibold text-blue-dark">{formatSchedulePoint(check.next)}</span>.
+              <WithPoint
+                text={fill(texts.guardOffer, { minutes })}
+                point={<span className="font-semibold text-blue-dark">{formatSchedulePoint(lang, check.next)}</span>}
+              />
             </p>
             {movedEnd ? (
               <p className="text-xs text-muted-dark">
-                Zwrot przesuniemy tak samo, na {formatSchedulePoint(movedEnd)}, żeby długość wynajmu się nie zmieniła.
+                {fill(texts.guardReturn, { point: formatSchedulePoint(lang, movedEnd) })}
               </p>
             ) : null}
-            <p className="text-xs text-muted-dark">Wybrane auto, ochronę i dodatki zachowamy, a cenę policzymy od nowa.</p>
-            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row">
-              <button
-                type="button"
-                onClick={close}
-                className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl border border-blue-dark/15 text-sm font-bold text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-dark/[0.04] motion-reduce:transition-none"
-              >
-                Zmienię termin sam
-              </button>
-              <button
-                type="button"
-                onClick={move}
-                className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl bg-blue-medium px-3 text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
-              >
-                Przesuń na {shortPoint(check.next)}
-              </button>
-            </div>
+            <p className="text-xs text-muted-dark">{texts.guardKeep}</p>
+            <DialogActions
+              cancel={texts.guardSelf}
+              confirm={fill(texts.guardMove, { point: shortPoint(lang, check.next) })}
+              onCancel={close}
+              onConfirm={move}
+            />
           </div>
         ) : null}
       </Dialog>
@@ -124,9 +124,23 @@ export function PickupTimeGuard({ start, end }: { start: string; end: string | n
   );
 }
 
+/** `text` with its `{point}` placeholder replaced by an element, e.g. the date in bold. */
+function WithPoint({ text, point }: { text: string; point: ReactNode }) {
+  const [before, after = ""] = text.split("{point}");
+  return (
+    <>
+      {before}
+      {point}
+      {after}
+    </>
+  );
+}
+
 /** "23:30" for today, the full date otherwise. */
-function shortPoint(point: SchedulePoint): string {
-  return point.date.compare(today(reservationConfig.timeZone)) === 0 ? formatClock(point.time) : formatSchedulePoint(point);
+function shortPoint(lang: Lang, point: SchedulePoint): string {
+  return point.date.compare(today(reservationConfig.timeZone)) === 0
+    ? formatClock(point.time)
+    : formatSchedulePoint(lang, point);
 }
 
 /** Null while the pickup is still far enough; otherwise the earliest slot and the moved dates. */

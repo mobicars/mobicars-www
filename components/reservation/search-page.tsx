@@ -1,9 +1,12 @@
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
-import { CarFront } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, CalendarRange, CarFront } from "lucide-react";
 
+import { CompactSearch } from "@/components/reservation/compact-search";
 import { CustomerStep, type AccountPrefill } from "@/components/reservation/customer-step";
 import { EmptyState } from "@/components/reservation/empty-state";
+import { formatDayCount, formatMonths } from "@/components/reservation/format";
 import { ExtrasStep } from "@/components/reservation/extras-step";
 import { OfferList, type OfferView } from "@/components/reservation/offer-list";
 import { ReservationPicker } from "@/components/reservation/picker";
@@ -14,21 +17,23 @@ import { SearchProblem } from "@/components/reservation/search-problem";
 import { ReservationSteps } from "@/components/reservation/steps";
 import type { TripSummary } from "@/components/reservation/summary";
 import { compactTrip, tripSummary, type CompactTrip } from "@/components/reservation/trip";
-import { CompactSearch } from "@/components/reservation/compact-search";
+import { buttonClass } from "@/components/ui/button";
 import type { Lang } from "@/i18n/config";
-import {
-  calculateReservation,
-  listAccessories,
-  listAddons,
-  listAllOffers,
-  listServicePoints,
-} from "@/lib/rentcarsoft";
+import { fill, getMessages } from "@/i18n/messages";
+import { reservationHref } from "@/i18n/routes";
+import { listServicePoints } from "@/lib/rentcarsoft";
 import { getAccountDetails, getSession } from "@/lib/auth/dal";
-import { toOfferCards } from "@/lib/reservation/offers";
+import {
+  chosenExtras,
+  listOfferCards,
+  loadBookingChoices,
+  normalizePromo,
+  quoteFor,
+} from "@/lib/reservation/booking";
+import { monthlyAlternative } from "@/lib/reservation/monthly-hint";
 import { toPickupPlace, type PickupPlace } from "@/lib/reservation/places";
-import { toProtectionOptions } from "@/lib/reservation/protection";
 import { upsellOptions } from "@/lib/reservation/upsell";
-import { quoteQuery, toQuoteView, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
+import { quoteQuery, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
 import {
   droppedChoices,
   sanitizeSelection,
@@ -36,16 +41,13 @@ import {
   selectedAddonIds,
   selectionFromQuery,
   selectionToQuery,
-  toExtrasView,
   type ExtrasSelection,
 } from "@/lib/reservation/extras";
 import {
   QUERY_KEYS,
   bookingInProgressStart,
   draftFromQuery,
-  rentalPeriod,
   searchToQuery,
-  toRentCarSoftDateTime,
   validateSearch,
   type ReservationSearch,
   type ReservationTerm,
@@ -54,11 +56,6 @@ import {
 type BookingStep = "car" | "protection" | "extras" | "details";
 
 const BOOKING_STEPS: readonly BookingStep[] = ["protection", "extras", "details"];
-
-const TERM_COPY: Record<ReservationTerm, { badge: string; title: string }> = {
-  short: { badge: "NA DNI", title: "Wynajem krótkoterminowy" },
-  long: { badge: "NA MIESIĄCE", title: "Wynajem długoterminowy" },
-};
 
 /**
  * Body of a reservation page. Each rental term has its own page and URL
@@ -75,9 +72,10 @@ export function ReservationSearchPage({
 }) {
   return (
     <main className="flex flex-1 flex-col bg-surface">
-      <Suspense fallback={<SearchBand term={term} />}>
-        {searchParams.then(async (query) => (
-          <SearchSection lang={lang} term={term} query={query} places={await loadPlaces(lang)} />
+      <Suspense fallback={<SearchBand lang={lang} term={term} />}>
+        {/* The places load while the query is read. */}
+        {Promise.all([searchParams, loadPlaces(lang)]).then(([query, places]) => (
+          <SearchSection lang={lang} term={term} query={query} places={places} />
         ))}
       </Suspense>
     </main>
@@ -90,15 +88,19 @@ export function ReservationSearchPage({
  * band shrinks, so the results start on the first screen of a phone.
  */
 function SearchBand({
+  lang,
   term,
   compact,
   children,
 }: {
+  lang: Lang;
   term: ReservationTerm;
   compact?: CompactTrip;
   children?: ReactNode;
 }) {
-  const copy = TERM_COPY[term];
+  const t = getMessages(lang).booking;
+  const copy =
+    term === "short" ? { badge: t.badgeShort, title: t.titleShort } : { badge: t.badgeLong, title: t.titleLong };
   return (
     <div
       className={`bg-linear-to-br from-blue-medium to-blue-dark px-3 sm:px-6 ${compact ? "py-4 lg:py-8" : "py-8"}`}
@@ -154,10 +156,10 @@ async function SearchSection({
   const offerParam = query[QUERY_KEYS.offer];
   const selected = Number(Array.isArray(offerParam) ? offerParam[0] : offerParam) || null;
   const view = query[QUERY_KEYS.view] === "cars" ? "cars" : "classes";
-  // The protection step needs a chosen car; monthly rental has no such step yet.
+  // The later steps need a chosen car; daily and monthly rental share them.
   const stepParam = query[QUERY_KEYS.step];
   const step: BookingStep =
-    term === "short" && selected && BOOKING_STEPS.includes(stepParam as BookingStep)
+    selected && BOOKING_STEPS.includes(stepParam as BookingStep)
       ? (stepParam as BookingStep)
       : "car";
   const single = (key: string) => {
@@ -169,11 +171,11 @@ async function SearchSection({
     single(QUERY_KEYS.accessories),
     single(QUERY_KEYS.zone),
   );
-  const protection = Number(query[QUERY_KEYS.protection]) || null;
+  const protection = Number(single(QUERY_KEYS.protection)) || null;
 
   return (
     <>
-      <SearchBand term={term} compact={result.ok ? compactTrip(result.search, places) : undefined}>
+      <SearchBand lang={lang} term={term} compact={result.ok ? compactTrip(lang, result.search, places) : undefined}>
         {/* A new search replaces the URL; the key resets the widget to it. */}
         <ReservationPicker
           key={canonical}
@@ -186,7 +188,7 @@ async function SearchSection({
         />
       </SearchBand>
       <section className="mx-auto w-full max-w-7xl px-3 py-8 sm:px-6">
-        {!result.ok ? <CarStepHeading term={term} /> : null}
+        {!result.ok ? <CarStepHeading lang={lang} term={term} /> : null}
         {result.ok ? (
           <>
             <RememberSearch term={term} query={canonical} />
@@ -203,7 +205,8 @@ async function SearchSection({
                 step={step}
                 protection={protection}
                 extras={extras}
-                trip={tripSummary(result.search, places)}
+                promo={normalizePromo(single(QUERY_KEYS.promo))}
+                trip={tripSummary(lang, result.search, places)}
                 places={places}
               />
             </Suspense>
@@ -224,6 +227,7 @@ async function Offers({
   step,
   protection,
   extras,
+  promo,
   trip,
   places,
 }: {
@@ -234,46 +238,43 @@ async function Offers({
   step: BookingStep;
   protection: number | null;
   extras: ExtrasSelection;
+  /** Discount code from the URL; it travels inside `searchQuery` to every quote and to "Rezerwuj". */
+  promo: string | null;
   trip: TripSummary;
   places: PickupPlace[];
 }) {
-  const { start, end } = rentalPeriod(search);
-  const searchQuery = searchToQuery(search).toString();
-  const offers = toOfferCards(
-    await listAllOffers({
-      lang,
-      term: search.term,
-      servicePointIds: [search.pickup.id],
-      pickUpDate: toRentCarSoftDateTime(start),
-      returnDate: toRentCarSoftDateTime(end),
-      longTermQuote: search.term === "long" ? { months: search.months, monthlyKmLimit: search.km } : undefined,
-    }),
-  );
+  const t = getMessages(lang).booking;
+  const searchQuery = withPromo(searchToQuery(search), promo).toString();
+  // Started with the offers rather than after them: the last step's account
+  // data, and the quote for a car already chosen on the car step.
+  const account = step === "details" ? accountPrefill(lang) : null;
+  // Awaited only when the last step renders; a failure that is never awaited must not go unhandled.
+  account?.catch(() => null);
+  const carQuote =
+    step === "car" && selected !== null
+      ? serverQuote(lang, search, searchQuery, selected, [])
+      : null;
+  const offers = await listOfferCards(lang, search);
 
   if (offers.length === 0) {
     return (
-      <EmptyState icon={CarFront} title="Brak wolnych samochodów w tym terminie">
-        <p className="text-sm text-muted-dark">Zmień termin lub miejsce odbioru u góry strony i spróbuj ponownie.</p>
+      <EmptyState icon={CarFront} title={t.noCars}>
+        <p className="text-sm text-muted-dark">{t.noCarsHint}</p>
       </EmptyState>
     );
   }
 
   const car = step !== "car" ? offers.find((offer) => offer.id === selected) : undefined;
   if (car) {
-    const extrasInput = {
-      lang,
-      priceSegmentIds: car.segmentId ? [Number(car.segmentId)] : undefined,
-      pickUpDate: toRentCarSoftDateTime(start),
-      returnDate: toRentCarSoftDateTime(end),
-    };
-    const addons = await listAddons(extrasInput);
-    const options = toProtectionOptions(addons);
+    // The protection and extras steps start over for another car or search; not
+    // for a discount code, so the code box keeps its message when it drops one.
+    const stepKey = `${car.id}|${searchToQuery(search)}`;
+    const { options, extrasView } = await loadBookingChoices(lang, search, car);
     // No package is preselected: the customer picks one (the free one included).
     const chosen = options.find((option) => option.id === protection)?.id ?? null;
 
     // Extras need a package when there are any; without one the page stays on protection.
     if (step !== "protection" && (chosen !== null || options.length === 0)) {
-      const extrasView = toExtrasView(addons, await listAccessories(extrasInput));
       const selection = sanitizeSelection(extras, extrasView);
       // The extras depend on the car's segment and the dates; a change can leave some out.
       const dropped = droppedChoices(extras, selection);
@@ -281,33 +282,26 @@ async function Offers({
       const quote = await serverQuote(lang, search, searchQuery, car.id, addonIds, selectedAccessories(selection));
 
       // A choice that dropped out goes back to the extras step, which says so.
-      if (step === "details" && dropped === 0) {
-        const names = new Map(
-          [...extrasView.zones, ...extrasView.groups.flatMap((group) => group.items)].map((item) => [item.id, item.name]),
-        );
+      if (account && dropped === 0) {
+        const prefill = await account;
         return (
           <>
             <ReservationSteps current={3} />
             <CustomerStep
+              // Signing in or out on the form refreshes the page: start the form over with the new data.
+              key={prefill?.email ?? "guest"}
               lang={lang}
               searchQuery={searchQuery}
               car={car}
               protection={options.find((option) => option.id === chosen) ?? null}
-              extras={[
-                ...selectedAddonIds(selection).map((id) => ({ id, name: names.get(id) ?? "Dodatek", quantity: 1 })),
-                ...selectedAccessories(selection).map(({ id, quantity }) => ({
-                  id,
-                  name: names.get(id) ?? "Dodatek",
-                  quantity,
-                })),
-              ]}
+              extras={chosenExtras(selection, extrasView, getMessages(lang).quoteLines.item)}
               addonIds={addonIds}
               accessories={selectedAccessories(selection)}
               selectionQuery={selectionToQuery(selection)}
               initialQuote={quote}
               trip={trip}
               airport={places.find((place) => place.id === search.pickup.id)?.airport ?? false}
-              account={await accountPrefill(lang)}
+              account={prefill}
             />
           </>
         );
@@ -317,6 +311,7 @@ async function Offers({
         <>
           <ReservationSteps current={2} />
           <ExtrasStep
+            key={stepKey}
             lang={lang}
             searchQuery={searchQuery}
             car={car}
@@ -324,7 +319,7 @@ async function Offers({
             view={extrasView}
             initialSelection={selection}
             droppedCount={dropped}
-            upsell={upsellOptions(car, offers)}
+            upsell={upsellOptions(car, offers, undefined, search.term === "long" ? search.months : null)}
             initialQuote={quote}
             trip={trip}
           />
@@ -336,6 +331,7 @@ async function Offers({
       <>
         <ReservationSteps current={1} />
         <ProtectionStep
+          key={stepKey}
           lang={lang}
           searchQuery={searchQuery}
           car={car}
@@ -353,11 +349,12 @@ async function Offers({
   const lostCar = step !== "car" || (selected !== null && !offers.some((offer) => offer.id === selected));
   return (
     <>
-      {search.term === "short" ? <ReservationSteps current={0} /> : null}
-      <CarStepHeading term={search.term} />
+      <ReservationSteps current={0} />
+      <CarStepHeading lang={lang} term={search.term} />
+      <MonthlyHint lang={lang} search={search} />
       {lostCar ? (
         <p role="status" className="mb-4 rounded-xl bg-blue-light px-4 py-3 text-sm text-blue-dark">
-          Wybrane auto nie jest dostępne dla nowego miejsca lub terminu. Wybierz samochód ponownie.
+          {t.lostCar}
         </p>
       ) : null}
       <OfferList
@@ -368,11 +365,8 @@ async function Offers({
         trip={trip}
         lang={lang}
         searchQuery={searchQuery}
-        initialQuote={
-          search.term === "short" && selected !== null && !lostCar
-            ? await serverQuote(lang, search, searchQuery, selected, [])
-            : null
-        }
+        initialQuote={carQuote && !lostCar ? await carQuote : null}
+        lostCar={lostCar}
       />
     </>
   );
@@ -400,6 +394,14 @@ async function accountPrefill(lang: Lang): Promise<AccountPrefill | null> {
  * The first summary quote, rendered with the page so it needs no fetch. A
  * failed call yields `quote: null`; the panel then says the price is missing.
  */
+/** The search query plus the discount code, the form every step and quote request receives. */
+function withPromo(query: URLSearchParams, promo: string | null): URLSearchParams {
+  if (promo) {
+    query.set(QUERY_KEYS.promo, promo);
+  }
+  return query;
+}
+
 async function serverQuote(
   lang: string,
   search: ReservationSearch,
@@ -409,33 +411,45 @@ async function serverQuote(
   accessories: QuoteAccessory[] = [],
 ): Promise<{ request: string; quote: QuoteView | null }> {
   const request = quoteQuery(lang, searchQuery, offerId, addonIds, accessories);
-  const { start, end } = rentalPeriod(search);
+  const promo = new URLSearchParams(searchQuery).get(QUERY_KEYS.promo);
   try {
-    const quote = await calculateReservation({
-      offerId,
-      pickUpPointId: search.pickup.id,
-      returnPointId: (search.dropoff ?? search.pickup).id,
-      pickUpDate: toRentCarSoftDateTime(start),
-      returnDate: toRentCarSoftDateTime(end),
-      lang,
-      addonIds,
-      accessories,
-    });
-    return { request, quote: toQuoteView(quote) };
+    return { request, quote: await quoteFor(lang, search, offerId, addonIds, accessories, promo) };
   } catch {
     return { request, quote: null };
   }
 }
 
-function CarStepHeading({ term }: { term: ReservationTerm }) {
+/** "Wynajmujesz na 45 dni?" A link to the same pickup by the month (see `monthlyAlternative`). */
+function MonthlyHint({ lang, search }: { lang: Lang; search: ReservationSearch }) {
+  const hint = monthlyAlternative(search);
+  if (!hint) {
+    return null;
+  }
+  const t = getMessages(lang).booking.monthlyHint;
+  return (
+    <aside className="mb-6 flex flex-col gap-4 rounded-2xl border-2 border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
+      <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white text-green-medium">
+        <CalendarRange className="size-6" strokeWidth={1.75} aria-hidden />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-blue-dark">{fill(t.title, { days: formatDayCount(lang, hint.days) })}</p>
+        <p className="text-sm text-blue-dark/80">{t.text}</p>
+      </div>
+      <Link href={reservationHref(lang, "long", hint.query)} className={buttonClass("success", "md", "w-full sm:w-auto")}>
+        {fill(t.button, { months: formatMonths(lang, hint.months) })}
+        <ArrowRight className="size-4" aria-hidden />
+      </Link>
+    </aside>
+  );
+}
+
+function CarStepHeading({ lang, term }: { lang: Lang; term: ReservationTerm }) {
+  const t = getMessages(lang).booking;
   return (
     <>
-      <h2 className="text-center text-3xl font-semibold text-blue-dark">Wybierz samochód</h2>
+      <h2 className="text-center text-3xl font-semibold text-blue-dark">{t.chooseCar}</h2>
       {term === "short" ? (
-        <p className="mx-auto mt-2 mb-6 max-w-2xl text-center text-sm text-muted-dark">
-          Im dłuższy okres wynajmu, tym niższa cena za dobę. Rezerwację potwierdzi nasz zespół po
-          sprawdzeniu dostępności auta.
-        </p>
+        <p className="mx-auto mt-2 mb-6 max-w-2xl text-center text-sm text-muted-dark">{t.chooseCarIntro}</p>
       ) : (
         <div className="mb-6" />
       )}

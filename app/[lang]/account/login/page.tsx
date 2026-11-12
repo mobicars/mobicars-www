@@ -4,7 +4,7 @@ import { Suspense } from "react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
-import { accountCopy } from "@/i18n/account";
+import { accountCopy } from "@/i18n/panel-copy";
 import { isLang, type Lang } from "@/i18n/config";
 import { safeReturnPath } from "@/lib/auth/paths";
 

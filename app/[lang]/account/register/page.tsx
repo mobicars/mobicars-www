@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { RegisterForm } from "@/components/auth/register-form";
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { authFormsCopy } from "@/i18n/panel-copy";
 import { isLang } from "@/i18n/config";
 
 export async function generateMetadata({

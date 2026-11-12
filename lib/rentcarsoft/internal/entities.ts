@@ -31,6 +31,33 @@ export type OfferImage = {
   cover: boolean;
   webp: string | null;
   standard: string | null;
+  /** The `original` size, for a full-width gallery. Null when the payload has none. */
+  largeWebp: string | null;
+  largeStandard: string | null;
+};
+
+/** One row of the segment price list: price per day for a rental of `from`–`to` days. */
+export type OfferPriceBand = {
+  /** Null on the first band ("up to `to` days"). */
+  from: number | null;
+  /** Null on the last band ("`from` days and more"). */
+  to: number | null;
+  price: number | null;
+  /** The band's promotional price. Null without a promotion or when equal to `price`. */
+  promotionalPrice: number | null;
+};
+
+/**
+ * The segment's base price list from `cennik[segmentId]` on an undated
+ * short-term list or `getOffer`. Base prices only: a quote for real dates
+ * comes from `calculateReservation`.
+ */
+export type OfferPriceList = {
+  /** `kaucja`. 0 on the live catalog of 12 November 2026. */
+  deposit: number | null;
+  /** `monthly_price`: the segment's monthly price shown as "from" on the fleet pages. */
+  monthlyFrom: number | null;
+  bands: OfferPriceBand[];
 };
 
 export type OfferPromotion = {
@@ -79,6 +106,13 @@ export type Offer = {
   attributes: Record<string, FieldAttribute>;
   isPopular: boolean;
   gallery: OfferImage[];
+  /** Lowest and highest base price per day across the price bands (`minPrice`, `maxPrice`). */
+  minPrice: number | null;
+  maxPrice: number | null;
+  /** Equipment lines (`details`), trimmed. Object items use their `nazwa`. */
+  details: string[];
+  /** Short-term `cennik` of the offer's segment. Null on the long-term list and when absent. */
+  priceList: OfferPriceList | null;
 };
 
 export function parseOffers(
@@ -120,6 +154,68 @@ export function parseOffer(
     attributes,
     isPopular: popular?.valueId === asId(POPULAR_OFFER_VALUE),
     gallery: parseGallery(record.gallery),
+    minPrice: asNumber(record.minPrice),
+    maxPrice: asNumber(record.maxPrice),
+    details: parseDetails(record.details),
+    priceList: parsePriceList(record.cennik, record.segmentId),
+  };
+}
+
+/**
+ * The short-term `cennik` entry of the offer's segment. `GET /offer/{id}` has
+ * no `segmentId`, but its `cennik` has exactly one segment key, so a single
+ * entry is taken as the offer's own. The long-term flat object has none.
+ */
+function segmentPrices(cennik: unknown, segmentId: unknown): Record<string, unknown> | null {
+  if (!isRecord(cennik) || "cena_miesieczna" in cennik) {
+    return null;
+  }
+  const entries = Object.values(cennik);
+  const segment =
+    segmentId === undefined || segmentId === null
+      ? entries.length === 1 ? entries[0] : undefined
+      : cennik[String(segmentId)];
+  return isRecord(segment) ? segment : null;
+}
+
+function parseDetails(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((item) => {
+    const text = isRecord(item) ? asString(item.nazwa) : asString(item);
+    const trimmed = text?.replace(/\s+/g, " ").trim();
+    return trimmed ? [trimmed] : [];
+  });
+}
+
+function parsePriceList(cennik: unknown, segmentId: unknown): OfferPriceList | null {
+  const segment = segmentPrices(cennik, segmentId);
+  if (!segment) {
+    return null;
+  }
+  const bands = Array.isArray(segment.czasy)
+    ? segment.czasy.flatMap((band) => {
+        if (!isRecord(band)) {
+          return [];
+        }
+        const price = asNumber(band.cena);
+        const promotional = asNumber(band.promocja);
+        return [
+          {
+            from: asNumber(band.od),
+            to: asNumber(band.do),
+            price,
+            promotionalPrice: promotional !== null && promotional !== price ? promotional : null,
+          },
+        ];
+      })
+    : [];
+  bands.sort((left, right) => (left.from ?? 0) - (right.from ?? 0));
+  return {
+    deposit: asNumber(segment.kaucja),
+    monthlyFrom: asNumber(segment.monthly_price),
+    bands,
   };
 }
 
@@ -128,11 +224,8 @@ export function parseOffer(
  * name for a flat `{ cena_miesieczna, … }` object, which has no promotion.
  */
 function parsePromotion(cennik: unknown, segmentId: unknown, days: number | null): OfferPromotion | null {
-  if (!isRecord(cennik) || segmentId === undefined || segmentId === null) {
-    return null;
-  }
-  const segment = cennik[String(segmentId)];
-  if (!isRecord(segment) || asNumber(segment.is_promocja) !== 1) {
+  const segment = segmentPrices(cennik, segmentId);
+  if (!segment || asNumber(segment.is_promocja) !== 1) {
     return null;
   }
   return {
@@ -185,6 +278,7 @@ function parseGallery(value: unknown): OfferImage[] {
     const sized = isRecord(urls) ? urls["512"] ?? urls["384"] ?? urls.original : undefined;
     const webp = isRecord(sized) ? asString(sized.webp) : null;
     const standard = isRecord(sized) ? asString(sized.standard) : null;
+    const original = isRecord(urls) && isRecord(urls.original) ? urls.original : null;
     return [
       {
         alt: asString(item.altText) ?? "",
@@ -192,6 +286,8 @@ function parseGallery(value: unknown): OfferImage[] {
         cover: asBoolean(item.cover) ?? asBoolean(item.coverBig) ?? false,
         webp,
         standard,
+        largeWebp: original ? asString(original.webp) : null,
+        largeStandard: original ? asString(original.standard) : null,
       },
     ];
   });
@@ -587,7 +683,8 @@ function parseQuoteLines(value: unknown): QuoteLine[] {
         id: asId(item.id),
         price: asNumber(item.price),
         suggested: asNumber(item.suggested),
-        itemPrice: asNumber(item.itemPrice),
+        // Accessories send the per-unit price as `itemPriceMoi` (live API, long-term calculate).
+        itemPrice: asNumber(item.itemPrice) ?? asNumber(item.itemPriceMoi),
         isOneTime: asBoolean(item.isOneTime),
         name: asString(item.name),
         nameEn: asString(item.nameEn),

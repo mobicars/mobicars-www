@@ -1,26 +1,26 @@
 import { langFromPath, type Lang } from "./config";
 
 /**
- * Public URL segments of the customer panel. German and Ukrainian use the
- * English segments until their own are decided.
+ * Public URL segments of the customer panel, in each language. Ukrainian is
+ * transliterated to Latin letters, so every URL stays ASCII.
  * The app folders use the English segment (`app/[lang]/account/...`);
- * `proxy.ts` rewrites the Polish URL to that folder and redirects any mix.
+ * `proxy.ts` rewrites the localized URL to that folder and redirects any mix.
  */
-const ACCOUNT_ROOT: Record<Lang, string> = { pl: "konto", en: "account", de: "account", uk: "account" };
+const ACCOUNT_ROOT: Record<Lang, string> = { pl: "konto", en: "account", de: "konto", uk: "kabinet" };
 const INTERNAL_ROOT = "account";
 
 const ACCOUNT_PAGES = {
-  login: { pl: "logowanie", en: "login", de: "login", uk: "login" },
-  register: { pl: "rejestracja", en: "register", de: "register", uk: "register" },
-  forgotPassword: { pl: "odzyskaj-haslo", en: "forgot-password", de: "forgot-password", uk: "forgot-password" },
+  login: { pl: "logowanie", en: "login", de: "anmelden", uk: "vkhid" },
+  register: { pl: "rejestracja", en: "register", de: "registrieren", uk: "reyestratsiya" },
+  forgotPassword: { pl: "odzyskaj-haslo", en: "forgot-password", de: "passwort-vergessen", uk: "vidnovyty-parol" },
   /** Route Handler that ends a session the panel can no longer serve. */
-  session: { pl: "sesja", en: "session", de: "session", uk: "session" },
-  reservations: { pl: "rezerwacje", en: "reservations", de: "reservations", uk: "reservations" },
-  payments: { pl: "platnosci", en: "payments", de: "payments", uk: "payments" },
-  details: { pl: "dane", en: "details", de: "details", uk: "details" },
-  drivers: { pl: "kierowcy", en: "drivers", de: "drivers", uk: "drivers" },
-  security: { pl: "bezpieczenstwo", en: "security", de: "security", uk: "security" },
-  contact: { pl: "kontakt", en: "contact", de: "contact", uk: "contact" },
+  session: { pl: "sesja", en: "session", de: "sitzung", uk: "sesiya" },
+  reservations: { pl: "rezerwacje", en: "reservations", de: "buchungen", uk: "bronyuvannya" },
+  payments: { pl: "platnosci", en: "payments", de: "zahlungen", uk: "platezhi" },
+  details: { pl: "dane", en: "details", de: "daten", uk: "dani" },
+  drivers: { pl: "kierowcy", en: "drivers", de: "fahrer", uk: "vodii" },
+  security: { pl: "bezpieczenstwo", en: "security", de: "sicherheit", uk: "bezpeka" },
+  contact: { pl: "kontakt", en: "contact", de: "kontakt", uk: "kontakty" },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type AccountPage = keyof typeof ACCOUNT_PAGES;
@@ -114,9 +114,9 @@ export function resolveAccountPath(
  * Public URLs of the reservation flow, one page per rental term, like the old site:
  * `/pl/rezerwacja` (daily) and `/pl/rezerwacja/dlugoterminowa` (monthly).
  * The app folders are `app/[lang]/reservation` and `app/[lang]/reservation/long-term`;
- * `proxy.ts` rewrites the Polish URLs to them and redirects any mix.
+ * `proxy.ts` rewrites the localized URLs to them and redirects any mix.
  */
-const RESERVATION_ROOT: Record<Lang, string> = { pl: "rezerwacja", en: "reservation", de: "reservation", uk: "reservation" };
+const RESERVATION_ROOT: Record<Lang, string> = { pl: "rezerwacja", en: "reservation", de: "buchung", uk: "bronyuvannya" };
 const RESERVATION_INTERNAL = "reservation";
 
 type ReservationTerm = "short" | "long";
@@ -124,11 +124,11 @@ type ReservationTerm = "short" | "long";
 /** Segment after the root. The daily page sits at the root itself. */
 const RESERVATION_PAGES: Record<ReservationTerm, Record<Lang, string> | null> = {
   short: null,
-  long: { pl: "dlugoterminowa", en: "long-term", de: "long-term", uk: "long-term" },
+  long: { pl: "dlugoterminowa", en: "long-term", de: "langzeit", uk: "dovhostrokova" },
 };
 
 /** The thank-you page after a placed reservation. Not a search page: `term` is null. */
-const RESERVATION_DONE: Record<Lang, string> = { pl: "potwierdzenie", en: "confirmation", de: "confirmation", uk: "confirmation" };
+const RESERVATION_DONE: Record<Lang, string> = { pl: "potwierdzenie", en: "confirmation", de: "bestaetigung", uk: "pidtverdzhennya" };
 
 export function reservationDoneHref(lang: Lang): string {
   return `/${lang}/${RESERVATION_ROOT[lang]}/${RESERVATION_DONE[lang]}`;
@@ -201,9 +201,49 @@ export function resolveReservationPath(
 }
 
 /**
+ * Public URLs of the fleet: the list `/pl/flota` and one page per car,
+ * `/pl/flota/toyota-yaris-1219`. The app folder is `app/[lang]/fleet`; `proxy.ts` rewrites the
+ * localized URL to it and redirects any mix. The car slug is the same in every
+ * language (see `lib/fleet/slug.ts`).
+ */
+const FLEET_ROOT: Record<Lang, string> = { pl: "flota", en: "fleet", de: "flotte", uk: "avtopark" };
+const FLEET_INTERNAL = "fleet";
+
+/** Public URL of the fleet list, or of one car with its slug from `carSlug`. */
+export function fleetHref(lang: Lang, slug?: string): string {
+  const path = `/${lang}/${FLEET_ROOT[lang]}`;
+  return slug ? `${path}/${encodeURIComponent(slug)}` : path;
+}
+
+/**
+ * Resolves a fleet page for one language, like `resolveReservationPath`.
+ * `slug` is the raw car segment (the page itself checks it against the car).
+ * Deeper paths keep their tail so the app answers 404 under the internal path.
+ */
+export function resolveFleetPath(
+  lang: Lang,
+  pathname: string,
+): { canonical: string; internal: string; slug: string | null } | null {
+  const [, pathLang, root, ...rest] = pathname.split("/");
+  if (pathLang !== lang) {
+    return null;
+  }
+  if (root !== FLEET_ROOT[lang] && root !== FLEET_INTERNAL) {
+    return null;
+  }
+  const tail = rest.filter(Boolean);
+  const suffix = tail.length > 0 ? `/${tail.join("/")}` : "";
+  return {
+    canonical: `/${lang}/${FLEET_ROOT[lang]}${suffix}`,
+    internal: `/${lang}/${FLEET_INTERNAL}${suffix}`,
+    slug: tail.length === 1 ? tail[0] : null,
+  };
+}
+
+/**
  * The same page in another language, for the language switcher: a reservation
- * page keeps its term and search, a panel page its page and id, the thank-you
- * page stays itself. Any other path keeps everything after the language.
+ * page keeps its term and search, a panel page its page and id, a fleet page
+ * its car, the thank-you page stays itself. Any other path keeps everything after the language.
  * `search` is the current query string, with or without the leading `?`.
  */
 export function switchLangHref(pathname: string, search: string, target: Lang): string {
@@ -221,6 +261,12 @@ export function switchLangHref(pathname: string, search: string, target: Lang): 
       return reservationHref(target, reservation.term, query);
     }
     return reservation.canonical === reservationDoneHref(lang) ? reservationDoneHref(target) : `/${target}`;
+  }
+
+  const fleet = resolveFleetPath(lang, pathname);
+  if (fleet) {
+    // The car slug does not depend on the language.
+    return withQuery(fleetHref(target, fleet.slug ? decodeURIComponent(fleet.slug) : undefined));
   }
 
   const account = resolveAccountPath(lang, pathname);

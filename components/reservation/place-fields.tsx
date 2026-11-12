@@ -31,11 +31,17 @@ import {
 
 import { BarField, fieldHover, invalidField } from "@/components/reservation/bar-field";
 import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { intlLocales, type Lang } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import type { PickupPlace } from "@/lib/reservation/places";
 import type { PlaceRef, SearchDraft } from "@/lib/reservation/search";
 
 type PlaceField = "pickup" | "dropoff";
 type PlaceView = "search" | "address";
+/** What the place dialog asks for; picks its title and search placeholder. */
+type PlaceDialogKind = "pickup" | "pickupAndReturn" | "dropoff";
 
 type SavedAddress = {
   placeId: number;
@@ -64,18 +70,15 @@ export function PlaceFields({
   pickupRef?: Ref<HTMLButtonElement>;
   dropoffRef?: Ref<HTMLButtonElement>;
 }) {
+  const texts = useMessages().search;
   const [placeOpen, setPlaceOpen] = useState(false);
   const [activeField, setActiveField] = useState<PlaceField>("pickup");
   const place = resolveChoice(value.pickup, places);
   const returnPlace = value.differentReturn ? resolveChoice(value.dropoff, places) : null;
   const differentReturn = value.differentReturn;
-  const pickupModeLabel = differentReturn ? "Miejsce odbioru" : "Miejsce odbioru i zwrotu";
-  const dialogTitle =
-    activeField === "dropoff"
-      ? "Miejsce zwrotu"
-      : differentReturn
-        ? "Miejsce odbioru"
-        : "Miejsce odbioru i zwrotu";
+  const pickupModeLabel = texts.placeTitle[differentReturn ? "pickup" : "pickupAndReturn"];
+  const dialogKind: PlaceDialogKind =
+    activeField === "dropoff" ? "dropoff" : differentReturn ? "pickup" : "pickupAndReturn";
   const activeChoice = activeField === "dropoff" ? returnPlace : place;
   const savedAddress = activeChoice?.ownAddress
     ? { placeId: activeChoice.place.id, text: activeChoice.ownAddress }
@@ -93,7 +96,7 @@ export function PlaceFields({
           <BarField
             buttonRef={pickupRef}
             icon={differentReturn ? MapPinCheck : MapPin}
-            label={place ? pickupModeLabel : "Skąd odbierzesz auto?"}
+            label={place ? pickupModeLabel : texts.pickupPrompt}
             value={placeValue(place, pickupModeLabel)}
             onClick={() => openPlace("pickup")}
             invalid={invalid.pickup}
@@ -118,17 +121,17 @@ export function PlaceFields({
                 />
                 <span className="min-w-0">
                   <span className="block truncate text-xxs text-blue-dark/55">
-                    {returnPlace ? "Miejsce zwrotu" : "Gdzie zwrócisz auto?"}
+                    {returnPlace ? texts.placeTitle.dropoff : texts.dropoffPrompt}
                   </span>
                   <span className="block truncate text-xs font-bold text-blue-dark">
-                    {placeValue(returnPlace, "Miejsce zwrotu")}
+                    {placeValue(returnPlace, texts.placeTitle.dropoff)}
                   </span>
                 </span>
               </button>
               <button
                 type="button"
                 data-clear
-                aria-label="To samo miejsce zwrotu"
+                aria-label={texts.sameReturn}
                 onClick={() => onChange({ differentReturn: false, dropoff: null })}
                 className="mr-3 flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full bg-white text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-medium/10 motion-reduce:transition-none"
               >
@@ -145,7 +148,7 @@ export function PlaceFields({
               className={`flex min-h-16 w-full cursor-pointer items-center gap-3 px-4 py-3 text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-inset @5xl:px-5 ${fieldHover}`}
             >
               <Square className="size-5 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-              <span className="text-xs font-bold text-blue-dark">Inne miejsce zwrotu</span>
+              <span className="text-xs font-bold text-blue-dark">{texts.otherReturn}</span>
             </button>
           )}
         </div>
@@ -156,9 +159,9 @@ export function PlaceFields({
         className="h-dvh w-full max-w-none md:h-[calc(100dvh-2rem)] md:w-[48rem] md:max-w-[calc(100%-2rem)] md:rounded-2xl md:shadow-2xl"
       >
         <PlaceDialogBody
-          key={`${dialogTitle}:${savedAddress?.placeId ?? ""}:${savedAddress?.text ?? ""}`}
+          key={`${dialogKind}:${savedAddress?.placeId ?? ""}:${savedAddress?.text ?? ""}`}
           places={places}
-          title={dialogTitle}
+          kind={dialogKind}
           selectedId={activeChoice?.place.id ?? null}
           savedAddress={savedAddress}
           onOpenChange={setPlaceOpen}
@@ -174,19 +177,22 @@ export function PlaceFields({
 
 function PlaceDialogBody({
   places,
-  title,
+  kind,
   selectedId,
   savedAddress,
   onOpenChange,
   onSelect,
 }: {
   places: PickupPlace[];
-  title: string;
+  kind: PlaceDialogKind;
   selectedId: number | null;
   savedAddress: SavedAddress | null;
   onOpenChange: (open: boolean) => void;
   onSelect: (place: PickupPlace, ownAddress: string | null) => void;
 }) {
+  const lang = useLang();
+  const texts = useMessages().search;
+  const title = texts.placeTitle[kind];
   const restoredPlace = savedAddress
     ? (places.find((item) => item.id === savedAddress.placeId && item.customAddresses) ?? null)
     : null;
@@ -200,10 +206,10 @@ function PlaceDialogBody({
   const [addressPlace, setAddressPlace] = useState<PickupPlace | null>(restoredPlace);
   const [ownAddress, setOwnAddress] = useState(restoredPlace ? (savedAddress?.text ?? "") : "");
   const trimmedQuery = query.trim();
-  const cities = useMemo(() => uniqueCities(places), [places]);
+  const cities = useMemo(() => uniqueCities(lang, places), [lang, places]);
   const visiblePlaces = useMemo(
-    () => places.filter((item) => matchesPlace(item, trimmedQuery)),
-    [places, trimmedQuery],
+    () => places.filter((item) => matchesPlace(lang, item, trimmedQuery)),
+    [lang, places, trimmedQuery],
   );
 
   useEffect(() => {
@@ -252,9 +258,9 @@ function PlaceDialogBody({
         onSelectionChange={(key: Key) => setView(key === "address" ? "address" : "search")}
         className="flex min-h-0 flex-1 flex-col outline-none"
       >
-        <TabList aria-label="Widok miejsca" className="sr-only">
-          <Tab id="search">Wyszukiwarka</Tab>
-          <Tab id="address">Własny adres</Tab>
+        <TabList aria-label={texts.placeViews} className="sr-only">
+          <Tab id="search">{texts.placeSearchTab}</Tab>
+          <Tab id="address">{texts.ownAddress}</Tab>
         </TabList>
         <TabPanelCarousel>
           <TabPanel
@@ -265,7 +271,7 @@ function PlaceDialogBody({
           >
             <div className="shrink-0 px-4">
               <label className="relative block">
-                <span className="sr-only">Wyszukaj {title.toLocaleLowerCase("pl")}</span>
+                <span className="sr-only">{texts.placeSearch[kind]}</span>
                 <Search
                   className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-blue-medium"
                   aria-hidden
@@ -274,7 +280,7 @@ function PlaceDialogBody({
                   ref={searchRef}
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
-                  placeholder={`Wyszukaj ${title.toLocaleLowerCase("pl")}`}
+                  placeholder={texts.placeSearch[kind]}
                   className="h-12 w-full rounded-xl border border-blue-dark/15 bg-white pr-3 pl-11 text-base outline-none transition-[border-color,background-color] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:bg-blue-medium/5 motion-reduce:transition-none"
                 />
               </label>
@@ -282,7 +288,7 @@ function PlaceDialogBody({
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6">
               {trimmedQuery === "" ? (
                 <div className="mb-5">
-                  <h3 className="mb-3 text-sm font-semibold text-blue-medium">Popularne miasta</h3>
+                  <h3 className="mb-3 text-sm font-semibold text-blue-medium">{texts.popularCities}</h3>
                   <div className="flex flex-wrap gap-2">
                     {cities.map((city) => (
                       <button
@@ -299,7 +305,7 @@ function PlaceDialogBody({
               ) : null}
               {visiblePlaces.length === 0 ? (
                 <p className="text-sm text-blue-dark/70">
-                  {places.length === 0 ? "Brak miejsc odbioru." : `Brak miejsc dla „${trimmedQuery}”.`}
+                  {places.length === 0 ? texts.noPlaces : fill(texts.noPlacesFor, { query: trimmedQuery })}
                 </p>
               ) : (
                 <ul className="flex flex-col gap-2">
@@ -355,15 +361,13 @@ function PlaceDialogBody({
               className="-ml-2 mb-6 flex w-fit items-center gap-1 rounded-xl px-2 py-1.5 text-base font-semibold transition-colors duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--color-blue-dark)_4%,white)] motion-reduce:transition-none"
             >
               <ChevronLeft className="size-5" aria-hidden />
-              Powrót
+              {texts.back}
             </button>
             <p id={addressTitleId} className="text-lg font-semibold leading-snug">
-              {addressPlace?.city
-                ? `Wpisz własny adres w miejscowości ${addressPlace.city}`
-                : "Wpisz własny adres"}
+              {addressPlace?.city ? fill(texts.ownAddressIn, { city: addressPlace.city }) : texts.ownAddressTitle}
             </p>
             <label className="relative mt-4 block">
-              <span className="sr-only">Własny adres</span>
+              <span className="sr-only">{texts.ownAddress}</span>
               <Search
                 className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-blue-medium"
                 aria-hidden
@@ -372,7 +376,7 @@ function PlaceDialogBody({
                 ref={addressRef}
                 value={ownAddress}
                 onChange={(event) => setOwnAddress(event.target.value)}
-                placeholder="Wpisz adres..."
+                placeholder={texts.addressPlaceholder}
                 className="h-12 w-full rounded-xl border border-blue-dark/15 bg-white pr-4 pl-11 text-base outline-none transition-[border-color,background-color] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:bg-blue-medium/5 motion-reduce:transition-none"
               />
             </label>
@@ -382,28 +386,28 @@ function PlaceDialogBody({
               onClick={saveAddress}
               className="mt-4 h-12 w-full rounded-xl bg-blue-medium text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark disabled:opacity-40 disabled:hover:bg-blue-medium motion-reduce:transition-none"
             >
-              Zapisz adres
+              {texts.saveAddress}
             </button>
             <div className="mt-8 rounded-2xl bg-blue-medium/5 p-5">
-              <h3 className="text-lg font-semibold">Jak to działa?</h3>
+              <h3 className="text-lg font-semibold">{texts.howItWorks}</h3>
               <ol className="mt-4 flex flex-col gap-3 text-sm">
                 <li className="flex items-center gap-3">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-medium text-xs font-bold text-white">
                     1
                   </span>
-                  Wpisz swój adres
+                  {texts.howStep1}
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-medium text-xs font-bold text-white">
                     2
                   </span>
-                  Wybierz datę i godzinę podstawienia
+                  {texts.howStep2}
                 </li>
                 <li className="flex items-center gap-3">
                   <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-medium text-xs font-bold text-white">
                     3
                   </span>
-                  Dostarczymy auto pod same drzwi
+                  {texts.howStep3}
                 </li>
               </ol>
             </div>
@@ -478,7 +482,7 @@ function placeIcon(place: PickupPlace): LucideIcon {
   return CarFront;
 }
 
-function uniqueCities(places: PickupPlace[]): string[] {
+function uniqueCities(lang: Lang, places: PickupPlace[]): string[] {
   const cities = new Set<string>();
   for (const place of places) {
     const city = place.city?.trim();
@@ -486,15 +490,16 @@ function uniqueCities(places: PickupPlace[]): string[] {
       cities.add(city);
     }
   }
-  return [...cities].sort((left, right) => left.localeCompare(right, "pl"));
+  return [...cities].sort((left, right) => left.localeCompare(right, intlLocales[lang]));
 }
 
-function matchesPlace(place: PickupPlace, query: string): boolean {
+function matchesPlace(lang: Lang, place: PickupPlace, query: string): boolean {
   if (!query) {
     return true;
   }
-  const needle = query.toLocaleLowerCase("pl");
+  const locale = intlLocales[lang];
+  const needle = query.toLocaleLowerCase(locale);
   return [place.name, place.city, place.address].some((value) =>
-    value?.toLocaleLowerCase("pl").includes(needle),
+    value?.toLocaleLowerCase(locale).includes(needle),
   );
 }

@@ -6,11 +6,12 @@ import type { Offer } from "@/lib/rentcarsoft";
  * Ids checked on the live API on 11 November 2026, see `lib/rentcarsoft/docs/quirks.md`.
  */
 export const OFFER_CATEGORIES = [
-  { id: "small", key: "isSmallCar", yes: 83, label: "Małe" },
-  { id: "compact", key: "isCompactCar", yes: 85, label: "Kompaktowe" },
-  { id: "large", key: "isLargeCar", yes: 87, label: "Duże" },
-  { id: "eco", key: "isEcoCar", yes: 89, label: "Eko" },
-  { id: "delivery", key: "isDeliveryCar", yes: 182, label: "Dostawcze" },
+  // Labels are in messages/{lang}.json under `cars.categories.<id>`.
+  { id: "small", key: "isSmallCar", yes: 83 },
+  { id: "compact", key: "isCompactCar", yes: 85 },
+  { id: "large", key: "isLargeCar", yes: 87 },
+  { id: "eco", key: "isEcoCar", yes: 89 },
+  { id: "delivery", key: "isDeliveryCar", yes: 182 },
 ] as const;
 
 /** Value id of "Automatyczna" on the transmission key (13 is "Manualna"). */

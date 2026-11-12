@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { ChangePasswordForm } from "@/components/auth/password-forms";
-import { authFormsCopy } from "@/i18n/auth-forms";
+import { authFormsCopy } from "@/i18n/panel-copy";
 import { isLang, type Lang } from "@/i18n/config";
 import { requireSession } from "@/lib/auth/dal";
 

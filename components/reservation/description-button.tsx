@@ -5,6 +5,8 @@ import { Dialog } from "react-aria-components";
 import { Info } from "lucide-react";
 
 import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { fill } from "@/i18n/fill";
+import { useMessages } from "@/i18n/messages-context";
 
 /** "i" button that opens a dialog with an extra's description (plain text). */
 export function DescriptionButton({
@@ -17,13 +19,14 @@ export function DescriptionButton({
   /** `dark`: on the blue card header. `light`: on white. */
   tone?: "dark" | "light";
 }) {
+  const { steps } = useMessages();
   const titleId = useId();
   const [open, setOpen] = useState(false);
   return (
     <>
       <button
         type="button"
-        aria-label={`Szczegóły: ${title}`}
+        aria-label={fill(steps.detailsOf, { title })}
         onClick={() => setOpen(true)}
         className={`flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 ${
           tone === "dark"

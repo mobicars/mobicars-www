@@ -346,7 +346,9 @@ Checked on 11 November 2026:
 
 ## "Twoje dane" and placing the reservation
 
-`components/reservation/customer-step.tsx` (`step=details`). Texts are word for word from the old site's Strapi dictionary, in `customer-copy.tsx`, until the new CMS takes them over. The transfer consent is cut off in the CMS itself ("…dla mnie sa") and the two "akceptację" typos are there too; fix them in the CMS and here together.
+`components/reservation/customer-step.tsx` (`step=details`). Texts are in the `details` section of `messages/{lang}.json`: Polish and English word for word from the old site's Strapi dictionary (the two Polish "akceptację" typos included), German and Ukrainian translated for the new site. The Polish transfer consent was cut off in the CMS ("…dla mnie sa"); it ends "…dla mnie samochodu." as the English one shows.
+
+- **Sign-in on the form** (`account-box.tsx`): "Mam już mobikonto" opens e-mail and password right on the step, as on the old site; `loginInPlace` signs in without a redirect and the page refreshes with the account's data (the form remounts, keyed by the account). A signed-in client gets "Wyloguj" (`logoutInPlace`). "Konto z podanymi danymi istnieje" after "Rezerwuj" opens the same box.
 
 - **Summary first.** Odbiór i zwrot, the car, the protection and the extras, each with "Zmień" back to its step; then the quote lines (below `lg`; from `lg` they are in the side panel) and the deposit.
 - **Guest.** "Klient indywidualny" (first and last name) or "Klient firmowy" (company name, NIP, contact person with the KRS/CEIDG note), email, phone, password and its repeat. The booking creates the account, so the password follows the registration rules (8 to 256 characters). "Mam już mobikonto" goes to the login page with `next` set to this URL; `safeReturnPath` accepts canonical reservation URLs, so the client comes back to the same step, now signed in.
@@ -386,14 +388,45 @@ Deliberately different:
 - Sorting (popular first, by price) and the "all cars" view were added; the old site had neither.
 - No `order=pozycja` (it equals `order=default`, see quirks) and no `statusRez: 1219`. `paymentMethod: 1` is sent on create, as the old site did.
 
+## Languages
+
+Every text is in `messages/{pl,en,de,uk}.json`, one file per language, grouped by area (`search`, `cars`, `steps`, `protection`, `extras`, `upsell`, `summary`, `quoteLines`, `promo`, `details`, `confirmation`, `booking`, `layout`; the panel adds `account`, `auth`, `accountDetails`). `pl.json` is the source: `i18n/messages.ts` types the others against it, so a missing key fails `tsc`.
+
+- Server code: `getMessages(lang)`. Client code: `useMessages()` and `useLang()` (providers in `app/[lang]/layout.tsx`); only the page's language reaches the browser. In client files import `fill` from `i18n/fill`, never from `i18n/messages` (that file imports all four JSON files).
+- Placeholders `{name}` with `fill`; plural words as `{ one, few, many, other }` (all four keys in every language) with `plural` from `i18n/plural.ts`; links as `[text](href)` with `<RichText>`.
+- Add or change a section with `python3 scripts/merge-messages.py fragment.json` (`{"pl": {...}, "en": …}`); it locks the files, because several people write them.
+- Labels the server builds (protection rows, extras groups, categories, quote lines) are keys, not text: `ProtectionRow.key`, `ExtraGroup.id`, `cars.categories.<id>`, `QuoteLineView.kind` with `quoteLineLabel`.
+- Dates, money and the calendars follow `intlLocales[lang]`. RentCarSoft gets `lang`, so car, addon and place names come in the page's language.
+
+## Discount codes
+
+`promo=CODE` in the URL (`QUERY_KEYS.promo`).
+
+- "Masz kod rabatowy?" (`promo-code.tsx`) sits in the summary panel from the car step on, and on phones in the details step. A code is checked with `GET /api/reservation/promo?code=…&from=…` (`verifyPromoCode` for the pickup; 20 checks per IP in 15 minutes) and then put in the URL. A code that came with a link is checked again when the page opens; an invalid one leaves the URL with a message.
+- The page puts the code into the `searchQuery` every step receives, so every quote (`quoteQuery` copies it, the endpoint passes `promoCode` to calculate) and the "Rezerwuj" form carry it without extra props. The discount shows in the prices RentCarSoft returns; nothing is subtracted on the site.
+- `placeReservation` checks the code once more and stops with `promo` if it is no longer valid, then sends `promoCode` on calculate and create.
+- The code survives date or place changes and a new search (`KEPT_ON_CHANGE`, `KEPT_ON_RESTART`). It is not part of the step key, so dropping it does not reset the steps.
+
+## Monthly rental
+
+`/pl/rezerwacja/dlugoterminowa?pickup=…&from=…&months=3&km=2000`, then the same steps as daily rental: car, protection, extras, details, thank-you page.
+
+- The term comes from the query: `months` means monthly (`termOfQuery`).
+- Cars: `listOfferCards` (monthly price for the months and km limit).
+- Protection and extras: the long-term catalogue (`longTerm` for addons, `loadLongTerm` for accessories), priced by `monthlyPrice` per month or once (`oneTimeFee`). `forMonths` in `booking.ts` maps it to the shape the daily views read; `ExtraOption.unit` / `ProtectionOption.unit` is `"month"`, so cards say "/ mies.". Items without a monthly price are daily-only and left out.
+- Quote: calculate with `longTerm { months, monthlyKmLimit }`. `QuoteView.monthly` splits it like the old site's summary: "Co miesiąc" (rent and monthly extras, `razem_miesiecznie…`), "Jednorazowo" (fees and one-time extras), the km limit per month and in total with the price per km over it, and "Razem za 3 miesiące" (`total`). The phone bar leads with the monthly amount.
+- Upsell compares monthly prices (`upsellOptions(…, months)`).
+- Create sends `longTerm` with the same months and limit. Unlike the old site it does not send `mileageLimit: 1` or `statusRez: 1219`: the quote was verified without them and create must match it. Check the first real monthly reservation in RentCarSoft.
+- The thank-you page shows the long-term subtitle and the monthly split; the return date is the pickup plus the months.
+
+## Extras for the customer
+
+- **Dodaj do kalendarza** on the thank-you page: `GET /api/reservation/calendar?lang=…` returns an .ics file with the pickup and the return (`lib/reservation/calendar.ts`, times in UTC). It reads the same encrypted receipt as the page, so it only describes the visitor's own booking.
+- **Monthly hint**: a daily search of 28 days or more (`monthlyHintDays`) shows "Wynajmujesz na 45 dni?" on the car list with a link to monthly rental for the same pickup (`monthlyAlternative`: nearest offered month count rounded down, `monthlyHintKm`). One-way rentals get no hint.
+
 ## Not built yet
 
-These are the old flow's next steps, in order. The old components are in `mobicars-pl/components/reservation/`.
-
-The daily flow is complete up to the thank-you page. Still to do:
-
-1. **Monthly steps.** Protection, extras and details for `/pl/rezerwacja/dlugoterminowa` need `loadLongTerm` and `monthlyPrice`, and create with `longTerm`.
-2. **Promo code.** On the details step, checked with `verifyPromoCode`, sent on calculate and create.
-3. **Verify create live.** One real test reservation (comment "TEST - PROSZĘ ANULOWAĆ"), then read it back to settle the accessory key and `clientType` (see `lib/rentcarsoft/docs/quirks.md`).
+1. **Verify create live.** One real test reservation per term (comment "TEST - PROSZĘ ANULOWAĆ"), then read it back to settle the accessory key, `clientType` and the monthly fields (see `lib/rentcarsoft/docs/quirks.md`).
+2. **Translations review.** German and Ukrainian were written for the new site; a native speaker should read them, the consents above all.
 
 The old site had no minimum or maximum rental length check in the browser. `ServicePoint.minDays` / `maxDays` exist in the bridge if that rule is wanted.

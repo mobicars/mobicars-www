@@ -69,10 +69,10 @@ describe("protection options", () => {
 
   it("cleans rows and the description", () => {
     assert.deepEqual(options[0].rows, [
-      { label: "Szkoda z OC", value: "0 zł", covered: true },
-      { label: "Uszkodzenie zewnętrzne", value: "2000/ 3000 zł", covered: false },
-      { label: "Uszkodzenie kół", value: "100% kosztu naprawy", covered: false },
-      { label: "Auto zastępcze", value: "Bezpłatnie", covered: true },
+      { key: "thirdPartyInsuranceDamage", value: "0 zł", covered: true },
+      { key: "bodyworkDamage", value: "2000/ 3000 zł", covered: false },
+      { key: "tiresRimsDamage", value: "100% kosztu naprawy", covered: false },
+      { key: "replacementCar", value: "Bezpłatnie", covered: true },
     ]);
     assert.equal(options[0].description, "Ochrona Standard jest bezpłatna.");
   });

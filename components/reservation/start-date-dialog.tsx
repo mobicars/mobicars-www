@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Calendar, CalendarCell, Dialog, I18nProvider } from "react-aria-components";
+import { Calendar, CalendarCell, Dialog } from "react-aria-components";
 import { today, type CalendarDate } from "@internationalized/date";
 import { Timer } from "lucide-react";
 
@@ -21,6 +21,7 @@ import {
   type ClockTime,
   type SchedulePoint,
 } from "@/components/reservation/schedule";
+import { useMessages } from "@/i18n/messages-context";
 import { reservationConfig } from "@/lib/reservation/config";
 
 type StartDateDialogProps = {
@@ -45,6 +46,7 @@ export function StartDateDialog({ open, ...props }: StartDateDialogProps) {
 
 function StartDateBody({ start, onOpenChange, onConfirm }: Omit<StartDateDialogProps, "open">) {
   const titleId = useId();
+  const texts = useMessages().search;
   const [date, setDate] = useState<CalendarDate | null>(start?.date ?? null);
   const [time, setTime] = useState<ClockTime | null>(() => {
     if (!start) {
@@ -56,58 +58,56 @@ function StartDateBody({ start, onOpenChange, onConfirm }: Omit<StartDateDialogP
   const canAccept = Boolean(date && time && !isSlotPast(date, time));
 
   return (
-    <I18nProvider locale="pl-PL">
-      <Dialog
-        aria-labelledby={titleId}
-        className="grid h-full max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden outline-none"
+    <Dialog
+      aria-labelledby={titleId}
+      className="grid h-full max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] overflow-hidden outline-none"
+    >
+      <DialogHeader titleId={titleId} title={texts.pickupDateTime} />
+      <Calendar
+        aria-label={texts.pickupDate}
+        minValue={today(reservationConfig.timeZone)}
+        value={date}
+        onChange={(next) => {
+          setDate(next);
+          if (time && isSlotPast(next, time)) {
+            setTime(nextOpenSlot(next));
+          }
+        }}
+        className="mx-auto flex min-h-0 w-full flex-col overflow-hidden outline-none"
       >
-        <DialogHeader titleId={titleId} title="Data i godzina odbioru" />
-        <Calendar
-          aria-label="Data odbioru"
-          minValue={today(reservationConfig.timeZone)}
-          value={date}
-          onChange={(next) => {
-            setDate(next);
-            if (time && isSlotPast(next, time)) {
-              setTime(nextOpenSlot(next));
-            }
-          }}
-          className="mx-auto flex min-h-0 w-full flex-col overflow-hidden outline-none"
-        >
-          <CalendarNav />
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2">
-            <div className="mx-auto w-full max-w-[17.5rem]">
-              <MonthLabel />
-              <MonthGrid renderDay={(day) => <StartDay date={day} />} />
-            </div>
+        <CalendarNav />
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-2">
+          <div className="mx-auto w-full max-w-[17.5rem]">
+            <MonthLabel />
+            <MonthGrid renderDay={(day) => <StartDay date={day} />} />
           </div>
-        </Calendar>
-        <div className="flex shrink-0 flex-col gap-3 border-t border-blue-dark/10 bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
-          <div className="min-w-0 sm:flex-1">
-            <TimeField
-              label="Godzina odbioru"
-              icon={Timer}
-              date={date}
-              value={time}
-              onChange={setTime}
-              isBlocked={(slot) => (date ? isSlotPast(date, slot) : false)}
-            />
-          </div>
-          <ConfirmButton
-            disabled={!canAccept}
-            onClick={() => {
-              if (!date || !time) {
-                return;
-              }
-              onConfirm({ date, time });
-              onOpenChange(false);
-            }}
-          >
-            Zatwierdź wybór
-          </ConfirmButton>
         </div>
-      </Dialog>
-    </I18nProvider>
+      </Calendar>
+      <div className="flex shrink-0 flex-col gap-3 border-t border-blue-dark/10 bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
+        <div className="min-w-0 sm:flex-1">
+          <TimeField
+            label={texts.pickupTime}
+            icon={Timer}
+            date={date}
+            value={time}
+            onChange={setTime}
+            isBlocked={(slot) => (date ? isSlotPast(date, slot) : false)}
+          />
+        </div>
+        <ConfirmButton
+          disabled={!canAccept}
+          onClick={() => {
+            if (!date || !time) {
+              return;
+            }
+            onConfirm({ date, time });
+            onOpenChange(false);
+          }}
+        >
+          {texts.confirmChoice}
+        </ConfirmButton>
+      </div>
+    </Dialog>
   );
 }
 

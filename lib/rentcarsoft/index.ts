@@ -21,7 +21,7 @@ export {
 export type { Currency, Language, PaymentType } from "./internal/entities";
 
 export { getOffer, listAllOffers, listOffers } from "./modules/offers";
-export type { Offer, OfferImage, OfferPromotion } from "./internal/entities";
+export type { Offer, OfferImage, OfferPriceBand, OfferPriceList, OfferPromotion } from "./internal/entities";
 
 export {
   getDepartment,

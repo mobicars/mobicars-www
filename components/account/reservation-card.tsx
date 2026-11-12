@@ -1,7 +1,7 @@
 import { ArrowRight, Car, MapPin } from "lucide-react";
 import Link from "next/link";
 
-import { accountCopy } from "@/i18n/account";
+import { accountCopy } from "@/i18n/panel-copy";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import type { ClientReservation, ReservationStatus } from "@/lib/rentcarsoft";

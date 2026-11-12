@@ -7,12 +7,16 @@ import { Dialog } from "react-aria-components";
 import { ArrowLeft, Check, ShieldCheck } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
-import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
-import { ChooseButton, formatMoney } from "@/components/reservation/offer-parts";
+import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { formatMoney } from "@/components/reservation/format";
+import { ChooseButton } from "@/components/reservation/offer-parts";
 import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@/components/reservation/summary";
 import { Slider } from "@/components/reservation/slider";
 import { useQuote } from "@/components/reservation/use-quote";
-import { currentHrefWith, replaceParam } from "@/components/reservation/url";
+import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/reservation/url";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import type { OfferCard } from "@/lib/reservation/offers";
 import type { ProtectionOption, ProtectionTier } from "@/lib/reservation/protection";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
@@ -46,6 +50,7 @@ export function ProtectionStep({
   protectionDropped?: boolean;
 }) {
   const router = useRouter();
+  const t = useMessages().protection;
   const [selectedId, setSelectedId] = useState<number | null>(initialProtection);
   const quote = useQuote(
     quoteQuery(lang, searchQuery, car.id, selectedId === null ? [] : [selectedId]),
@@ -82,8 +87,8 @@ export function ProtectionStep({
   // A package must be chosen before the extras, unless the car has none to choose.
   const canContinue = selectedId !== null || options.length === 0;
   const action = {
-    label: "DALEJ",
-    hint: "Wybierz pakiet ochrony, aby przejść dalej.",
+    label: t.next,
+    hint: t.hint,
     onClick: canContinue
       ? () =>
           router.push(
@@ -96,15 +101,14 @@ export function ProtectionStep({
   };
   // Like the step bar: back to the list with every choice kept in the URL.
   const backToCarList = () => router.push(currentHrefWith({ [QUERY_KEYS.step]: null }), { scroll: false });
-  const backToCars = () =>
-    router.push(currentHrefWith({ [QUERY_KEYS.step]: null, [QUERY_KEYS.protection]: null }), { scroll: false });
+  const backToCars = () => router.push(restartCarChoice(), { scroll: false });
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-labelledby="protection-title" className="min-w-0">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <h2 id="protection-title" className="text-2xl font-semibold text-blue-dark">
-            Wybierz pakiet ochrony
+            {t.title}
           </h2>
           <button
             type="button"
@@ -112,17 +116,17 @@ export function ProtectionStep({
             className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Wróć do samochodu
+            {t.backToCar}
           </button>
         </div>
         {protectionDropped ? (
           <p role="status" className="mb-4 rounded-xl bg-blue-light px-4 py-3 text-sm text-blue-dark">
-            Wybrany wcześniej pakiet ochrony nie jest dostępny dla tego auta. Wybierz pakiet ponownie.
+            {t.dropped}
           </p>
         ) : null}
         {options.length === 0 ? (
           <p className="rounded-2xl bg-white p-6 text-sm text-blue-dark shadow-sm">
-            Dla tego auta nie ma pakietów ochrony do wyboru. Podstawowe ubezpieczenie jest w cenie.
+            {t.none}
           </p>
         ) : (
           <>
@@ -130,7 +134,7 @@ export function ProtectionStep({
             {/* Phones: one package per swipe, in the same order, opening on the chosen or recommended one. */}
             <div className="md:hidden">
               <Slider
-                label="Pakiety ochrony"
+                label={t.packages}
                 startIndex={Math.max(
                   0,
                   options.findIndex((option) => option.id === selectedId) >= 0
@@ -159,6 +163,7 @@ export function ProtectionStep({
         prices={quotePrices(quote)}
         action={action}
         onChangeCar={backToCars}
+        searchQuery={searchQuery}
       />
       <MobileSummaryBar car={car} prices={quotePrices(quote)} action={action} />
       <DowngradeDialog
@@ -188,6 +193,7 @@ function DowngradeDialog({
   onCancel: () => void;
   onConfirm: () => void;
 }) {
+  const t = useMessages().protection;
   const titleId = useId();
   return (
     <WidgetModal
@@ -196,34 +202,16 @@ function DowngradeDialog({
       className="w-[min(28rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
     >
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
-        <DialogHeader titleId={titleId} title="Zmienić pakiet ochrony?" className="pt-4 pb-1" />
+        <DialogHeader titleId={titleId} title={t.downgradeTitle} className="pt-4 pb-1" />
         <div className="flex flex-col items-center gap-4 px-5 pb-5 text-center">
           {from ? <Shield option={from} size="small" /> : null}
-          <p className="text-sm text-blue-dark/80">
-            Wszystko może się zdarzyć, a dobra ochrona to podstawa. Czy na pewno chcesz zmienić pakiet
-            ochrony?
-          </p>
+          <p className="text-sm text-blue-dark/80">{t.downgradeText}</p>
           {from && to ? (
             <p className="text-sm font-semibold text-blue-dark">
               {from.name} → {to.name}
             </p>
           ) : null}
-          <div className="flex w-full flex-col-reverse gap-2 sm:flex-row">
-            <button
-              type="button"
-              onClick={onCancel}
-              className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl border border-blue-dark/15 text-sm font-bold text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-dark/[0.04] motion-reduce:transition-none"
-            >
-              Anuluj
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              className="h-12 w-full shrink-0 sm:w-auto sm:flex-1 cursor-pointer rounded-xl bg-blue-medium text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
-            >
-              Tak, zmień
-            </button>
-          </div>
+          <DialogActions cancel={t.cancel} confirm={t.confirmDowngrade} onCancel={onCancel} onConfirm={onConfirm} />
         </div>
       </Dialog>
     </WidgetModal>
@@ -244,7 +232,9 @@ function ProtectionTable({
   selectedId: number | null;
   onChoose: (id: number) => void;
 }) {
-  const labels = [...new Set(options.flatMap((option) => option.rows.map((row) => row.label)))];
+  const t = useMessages().protection;
+  // Every cover any package lists, in the packages' order.
+  const keys = [...new Set(options.flatMap((option) => option.rows.map((row) => row.key)))];
   const head = "flex h-52 flex-col items-center justify-end gap-1 px-3 pb-4 text-center";
   const cell = "flex h-14 items-center border-t border-muted-light px-3 text-sm";
 
@@ -257,9 +247,9 @@ function ProtectionTable({
     >
       <div aria-hidden className="rounded-3xl bg-white shadow-sm">
         <div className={head} />
-        {labels.map((label) => (
-          <div key={label} className={`${cell} px-5 text-blue-dark/80`}>
-            {label}
+        {keys.map((key) => (
+          <div key={key} className={`${cell} px-5 text-blue-dark/80`}>
+            {t.rows[key]}
           </div>
         ))}
         <div className="h-20" />
@@ -283,7 +273,7 @@ function ProtectionTable({
                   selected ? "bg-green-medium" : "bg-blue-medium"
                 }`}
               >
-                Najczęściej wybierany
+                {t.recommended}
               </span>
             ) : null}
             {/* The frame is its own top layer, so the chosen column's border runs over the green tab. */}
@@ -299,13 +289,13 @@ function ProtectionTable({
                 {option.name}
                 {option.description ? <DescriptionButton title={option.name} description={option.description} tone="light" /> : null}
               </h3>
-              <HeadPrice option={option} />
+              <PackagePrice option={option} />
             </div>
-            {labels.map((label) => {
-              const row = option.rows.find((item) => item.label === label);
+            {keys.map((key) => {
+              const row = option.rows.find((item) => item.key === key);
               return (
-                <div key={label} className={`${cell} justify-center text-center font-semibold`}>
-                  <span className="sr-only">{label}: </span>
+                <div key={key} className={`${cell} justify-center text-center font-semibold`}>
+                  <span className="sr-only">{t.rows[key]}: </span>
                   {!row ? (
                     <span className="text-muted-dark">—</span>
                   ) : row.covered ? (
@@ -334,25 +324,32 @@ function ProtectionTable({
   );
 }
 
-/** Price under the package name: per day as the API sends it, "Darmowy" at 0. */
-function HeadPrice({ option }: { option: ProtectionOption }) {
-  if (!option.price) {
-    return (
-      <p className="flex flex-col items-center">
-        <span className="text-2xl font-bold text-green-medium">Darmowy</span>
-        <span className="text-xs text-muted-dark">w cenie wynajmu</span>
-        <span className="text-xxs text-muted-dark">{formatMoney(option.totalPrice ?? 0)} za cały wynajem</span>
-      </p>
-    );
-  }
+/**
+ * A package's price, the same in the table head and on the phone cards: per
+ * day (or once) as the API sends it, and the whole rental with the regular
+ * total struck through during a promotion. A free package reads "W cenie".
+ */
+function PackagePrice({ option }: { option: ProtectionOption }) {
+  const t = useMessages().protection;
+  const lang = useLang();
+  const free = !option.price;
   return (
-    <p className="flex flex-col items-center">
-      <span className="text-2xl font-bold text-blue-medium">{formatMoney(option.price)}</span>
-      <span className="text-xs text-muted-dark">{option.oneTime ? "jednorazowo" : "/ doba"}</span>
-      {!option.oneTime && option.totalPrice !== null ? (
-        <span className="text-xxs text-muted-dark">{formatMoney(option.totalPrice)} za cały wynajem</span>
+    <div className="flex flex-col items-center text-center">
+      <p className={`text-2xl font-bold ${free ? "text-green-medium" : "text-blue-medium"}`}>
+        {option.price ? formatMoney(lang, option.price) : t.included}
+      </p>
+      {option.price ? (
+        <p className="text-xs font-semibold text-muted-dark">
+          {t.gross} {option.oneTime ? t.oneTime : option.unit === "month" ? t.perMonth : t.perDay}
+        </p>
       ) : null}
-    </p>
+      {free || (!option.oneTime && option.totalPrice !== null) ? (
+        <p className="text-xxs text-muted-dark">
+          {option.regularTotalPrice ? <s className="mr-1">{formatMoney(lang, option.regularTotalPrice)}</s> : null}
+          {fill(t.wholeRental, { price: formatMoney(lang, option.totalPrice ?? 0) })}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -365,6 +362,7 @@ function ProtectionCard({
   selected: boolean;
   onChoose: () => void;
 }) {
+  const t = useMessages().protection;
   return (
     <article
       className={`relative flex w-full flex-col rounded-2xl border-2 bg-white shadow-sm transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
@@ -377,7 +375,7 @@ function ProtectionCard({
             selected ? "bg-green-medium" : "bg-blue-medium"
           }`}
         >
-          Najczęściej wybierany
+          {t.recommended}
         </span>
       ) : null}
       <header className="flex items-center justify-center gap-2 rounded-t-[14px] bg-blue-medium px-4 py-3 text-white">
@@ -392,8 +390,8 @@ function ProtectionCard({
 
       <dl className="flex flex-col px-4 text-sm">
         {option.rows.map((row) => (
-          <div key={row.label} className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-muted-light py-2">
-            <dt className="text-xs text-muted-dark">{row.label}</dt>
+          <div key={row.key} className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-muted-light py-2">
+            <dt className="text-xs text-muted-dark">{t.rows[row.key]}</dt>
             <dd className={`flex items-center gap-1 text-right font-semibold ${row.covered ? "text-green-dark" : "text-blue-dark"}`}>
               {row.covered ? <Check className="size-4 shrink-0" aria-hidden /> : null}
               {row.value}
@@ -403,35 +401,10 @@ function ProtectionCard({
       </dl>
 
       <div className="mt-auto flex flex-col gap-3 p-4">
-        <ProtectionPrice option={option} />
+        <PackagePrice option={option} />
         <ChooseButton selected={selected} onClick={onChoose} className="w-full" />
       </div>
     </article>
-  );
-}
-
-function ProtectionPrice({ option }: { option: ProtectionOption }) {
-  if (!option.price) {
-    return (
-      <div className="text-center">
-        <p className="text-2xl font-bold text-green-medium">W cenie</p>
-        <p className="text-xxs text-muted-dark">{formatMoney(option.totalPrice ?? 0)} za cały wynajem</p>
-      </div>
-    );
-  }
-  return (
-    <div className="text-center">
-      <p>
-        <span className="text-2xl font-bold text-blue-medium">{formatMoney(option.price)}</span>
-        <span className="text-xs font-semibold text-muted-dark"> brutto{option.oneTime ? " jednorazowo" : " / doba"}</span>
-      </p>
-      {!option.oneTime && option.totalPrice !== null ? (
-        <p className="text-xxs text-muted-dark">
-          {option.regularTotalPrice ? <s className="mr-1">{formatMoney(option.regularTotalPrice)}</s> : null}
-          {formatMoney(option.totalPrice)} za cały wynajem
-        </p>
-      ) : null}
-    </div>
   );
 }
 

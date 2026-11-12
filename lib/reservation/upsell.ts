@@ -7,7 +7,8 @@ import type { OfferCard } from "./offers";
  *
  * 1. Same family: a delivery van (`isDeliveryCar`) is never offered to a car
  *    customer, nor the other way round.
- * 2. Always dearer: the period price (with promotions) is higher.
+ * 2. Always dearer: the period price (with promotions) is higher. Monthly
+ *    rental compares the monthly prices instead.
  * 3. Not a step down: at least as many seats; an automatic stays automatic.
  * 4. Another class, one car per class, free for the dates, popular first.
  * 5. The smallest price increases first: a reasonable step up. The page shows
@@ -16,8 +17,9 @@ import type { OfferCard } from "./offers";
 
 export type UpsellOption = {
   car: OfferCard;
-  /** Per day, from the two cars' API daily prices. Always above 0. */
-  dailyIncrease: number;
+  /** Per `unit`, from the two cars' API prices (daily or monthly). Always above 0. */
+  increase: number;
+  unit: "day" | "month";
   /** For the whole period, from the two cars' API period prices. */
   totalIncrease: number;
 };
@@ -25,12 +27,24 @@ export type UpsellOption = {
 /** Most suggestions shown. */
 export const UPSELL_COUNT = 4;
 
-export function upsellOptions(current: OfferCard, offers: OfferCard[], count = UPSELL_COUNT): UpsellOption[] {
-  if (current.totalPrice === null || current.dailyPrice === null) {
+/**
+ * `months`: monthly rental, priced by `monthlyPrice` (the period is that times
+ * the months). Without it, daily rental by `dailyPrice` and `totalPrice`.
+ */
+export function upsellOptions(
+  current: OfferCard,
+  offers: OfferCard[],
+  count = UPSELL_COUNT,
+  months: number | null = null,
+): UpsellOption[] {
+  const unitPrice = (car: OfferCard) => (months ? car.monthlyPrice : car.dailyPrice);
+  const periodPrice = (car: OfferCard) =>
+    months ? (car.monthlyPrice === null ? null : car.monthlyPrice * months) : car.totalPrice;
+  const currentTotal = periodPrice(current);
+  const currentUnit = unitPrice(current);
+  if (currentTotal === null || currentUnit === null) {
     return [];
   }
-  const currentTotal = current.totalPrice;
-  const currentDaily = current.dailyPrice;
   const family = isDelivery(current);
   const seats = seatCount(current);
   const perClass = new Map<string, OfferCard>();
@@ -39,9 +53,9 @@ export function upsellOptions(current: OfferCard, offers: OfferCard[], count = U
     if (
       classKey(offer) === classKey(current) ||
       !offer.available ||
-      offer.totalPrice === null ||
-      offer.dailyPrice === null ||
-      offer.totalPrice <= currentTotal ||
+      periodPrice(offer) === null ||
+      unitPrice(offer) === null ||
+      periodPrice(offer)! <= currentTotal ||
       isDelivery(offer) !== family ||
       (current.automatic === true && offer.automatic !== true) ||
       seatCount(offer) < seats
@@ -58,10 +72,11 @@ export function upsellOptions(current: OfferCard, offers: OfferCard[], count = U
   return [...perClass.values()]
     .map((car) => ({
       car,
-      dailyIncrease: cents(car.dailyPrice! - currentDaily),
-      totalIncrease: cents(car.totalPrice! - currentTotal),
+      increase: cents(unitPrice(car)! - currentUnit),
+      unit: months ? ("month" as const) : ("day" as const),
+      totalIncrease: cents(periodPrice(car)! - currentTotal),
     }))
-    .filter((option) => option.dailyIncrease > 0)
+    .filter((option) => option.increase > 0)
     .toSorted((left, right) => left.totalIncrease - right.totalIncrease)
     .slice(0, shownCount(count, perClass.size));
 }

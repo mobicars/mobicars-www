@@ -15,6 +15,10 @@ import {
 import type { CalendarDate } from "@internationalized/date";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 
+import { buttonClass } from "@/components/ui/button";
+import { intlLocales } from "@/i18n/config";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import { reservationConfig } from "@/lib/reservation/config";
 
 /** Building blocks shared by the widget dialogs: place, dates, start date, options. */
@@ -56,6 +60,7 @@ export function DialogHeader({
   title: string;
   className?: string;
 }) {
+  const texts = useMessages().search;
   return (
     <div className={`relative shrink-0 px-12 ${className}`}>
       <h2 id={titleId} className="text-center text-lg font-semibold">
@@ -63,7 +68,7 @@ export function DialogHeader({
       </h2>
       <Button
         slot="close"
-        aria-label="Zamknij"
+        aria-label={texts.close}
         className="absolute top-3.5 right-4 flex size-8 cursor-pointer items-center justify-center rounded-full bg-muted-light text-muted-dark transition-colors duration-200 ease-out hover:bg-muted motion-reduce:transition-none"
       >
         <X className="size-4" aria-hidden />
@@ -77,12 +82,13 @@ const navButton =
 
 /** Previous and next month. Must sit inside a `Calendar` or `RangeCalendar`. */
 export function CalendarNav() {
+  const texts = useMessages().search;
   return (
     <div className="flex shrink-0 justify-end gap-2 px-5 pb-2">
-      <Button slot="previous" aria-label="Poprzedni miesiąc" className={navButton}>
+      <Button slot="previous" aria-label={texts.previousMonth} className={navButton}>
         <ChevronLeft className="size-4" aria-hidden />
       </Button>
-      <Button slot="next" aria-label="Następny miesiąc" className={navButton}>
+      <Button slot="next" aria-label={texts.nextMonth} className={navButton}>
         <ChevronRight className="size-4" aria-hidden />
       </Button>
     </div>
@@ -93,12 +99,13 @@ export function CalendarNav() {
 export function MonthLabel({ offsetMonths = 0 }: { offsetMonths?: number }) {
   const range = useContext(RangeCalendarStateContext);
   const single = useContext(CalendarStateContext);
+  const lang = useLang();
   const state = range ?? single;
   if (!state) {
     return null;
   }
   const date = state.visibleRange.start.add({ months: offsetMonths });
-  const name = new Intl.DateTimeFormat("pl-PL", {
+  const name = new Intl.DateTimeFormat(intlLocales[lang], {
     month: "long",
     timeZone: reservationConfig.timeZone,
   }).format(date.toDate(reservationConfig.timeZone));
@@ -205,13 +212,35 @@ export function ConfirmButton({
   children: ReactNode;
 }) {
   return (
-    <button
-      type="button"
-      disabled={disabled}
-      onClick={onClick}
-      className="h-12 shrink-0 cursor-pointer rounded-xl bg-blue-medium px-6 text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark disabled:cursor-default disabled:opacity-40 disabled:hover:bg-blue-medium motion-reduce:transition-none md:px-8"
-    >
+    <button type="button" disabled={disabled} onClick={onClick} className={buttonClass("primary", "md", "md:px-8")}>
       {children}
     </button>
+  );
+}
+
+/**
+ * The cancel/confirm pair at the bottom of a question dialog. Full width and
+ * stacked on phones (confirm on top), side by side from `sm`.
+ */
+export function DialogActions({
+  cancel,
+  confirm,
+  onCancel,
+  onConfirm,
+}: {
+  cancel: ReactNode;
+  confirm: ReactNode;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  return (
+    <div className="flex w-full flex-col-reverse gap-2 sm:flex-row">
+      <button type="button" onClick={onCancel} className={buttonClass("secondary", "md", "w-full sm:w-auto sm:flex-1")}>
+        {cancel}
+      </button>
+      <button type="button" onClick={onConfirm} className={buttonClass("primary", "md", "w-full sm:w-auto sm:flex-1")}>
+        {confirm}
+      </button>
+    </div>
   );
 }

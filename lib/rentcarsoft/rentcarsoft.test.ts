@@ -327,6 +327,43 @@ describe("normalization", () => {
       2650,
     );
 
+    const single = parseOffer({
+      id: 1219,
+      minPrice: 109,
+      maxPrice: "199",
+      details: [" Bluetooth ", "", { fk_oferta: 1219, nazwa: "Tempomat" }],
+      gallery: [{ urls: { 512: { webp: "s.webp" }, original: { webp: "o.webp", standard: "o.png" } } }],
+      cennik: {
+        1463: {
+          kaucja: "0.00",
+          monthly_price: "1500.00",
+          is_promocja: 0,
+          czasy: [
+            { od: "2", do: "3", cena: "149.00", promocja: null },
+            { od: null, do: "1", cena: "199.00", promocja: "199.00" },
+            { od: "30", do: null, cena: "109.00", promocja: "99.00" },
+          ],
+        },
+      },
+    });
+    assert.equal(single.minPrice, 109);
+    assert.equal(single.maxPrice, 199);
+    assert.deepEqual(single.details, ["Bluetooth", "Tempomat"]);
+    assert.deepEqual([single.gallery[0].largeWebp, single.gallery[0].largeStandard], ["o.webp", "o.png"]);
+    assert.deepEqual(single.priceList, {
+      deposit: 0,
+      monthlyFrom: 1500,
+      bands: [
+        { from: null, to: 1, price: 199, promotionalPrice: null },
+        { from: 2, to: 3, price: 149, promotionalPrice: null },
+        { from: 30, to: null, price: 109, promotionalPrice: 99 },
+      ],
+    });
+    assert.equal(
+      parseOffer({ id: 2, cennik: { cena_miesieczna: 2650 } }).priceList,
+      null,
+    );
+
     const fuelDictionary = [
       {
         id: 9,

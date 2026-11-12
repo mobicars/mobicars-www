@@ -1,5 +1,6 @@
 import type { Extra, ExtraPresentation } from "@/lib/rentcarsoft";
 
+import type { PriceUnit } from "./extras";
 import { plainText } from "./text";
 
 /** `Extra.type` of the insurance addons ("Ubezpieczenia"). */
@@ -8,8 +9,18 @@ export const INSURANCE_TYPE = 1;
 /** Shield colour for the fallback icon, by price rank: cheapest bronze, dearest gold. */
 export type ProtectionTier = "bronze" | "silver" | "gold";
 
+/** Which cover a row describes; its label is `protection.rows.<key>` in messages/{lang}.json. */
+export type ProtectionRowKey =
+  | "thirdPartyInsuranceDamage"
+  | "bodyworkDamage"
+  | "tiresRimsDamage"
+  | "glassDamage"
+  | "totalLoss"
+  | "theft"
+  | "replacementCar";
+
 export type ProtectionRow = {
-  label: string;
+  key: ProtectionRowKey;
   value: string;
   /** Nothing to pay: "0 zł" or a free replacement car. */
   covered: boolean;
@@ -18,6 +29,8 @@ export type ProtectionRow = {
 /** What a protection card shows. Built on the server from the dated addon list. */
 export type ProtectionOption = {
   id: number;
+  /** `price` is per rental day or per month, unless `oneTime`. */
+  unit: PriceUnit;
   name: string;
   /** Shield picture managed in RentCarSoft, as the old site showed. */
   image: string | null;
@@ -36,22 +49,25 @@ export type ProtectionOption = {
   recommended: boolean;
 };
 
-/** Row labels in the old site's order. */
-const ROWS: { key: keyof ExtraPresentation; label: string }[] = [
-  { key: "thirdPartyInsuranceDamage", label: "Szkoda z OC" },
-  { key: "bodyworkDamage", label: "Uszkodzenie zewnętrzne" },
-  { key: "tiresRimsDamage", label: "Uszkodzenie kół" },
-  { key: "glassDamage", label: "Uszkodzenie szyby" },
-  { key: "totalLoss", label: "Szkoda całkowita" },
-  { key: "theft", label: "Kradzież" },
-  { key: "replacementCar", label: "Auto zastępcze" },
+/** Rows in the old site's order. */
+const ROWS: (ProtectionRowKey & keyof ExtraPresentation)[] = [
+  "thirdPartyInsuranceDamage",
+  "bodyworkDamage",
+  "tiresRimsDamage",
+  "glassDamage",
+  "totalLoss",
+  "theft",
+  "replacementCar",
 ];
+
+/** Values RentCarSoft writes for "nothing to pay", in the languages it answers in. */
+const COVERED = new Set(["0 zł", "0 pln", "bezpłatnie", "free", "free of charge", "kostenlos", "безкоштовно"]);
 
 /**
  * Insurance packages from a dated addon list, cheapest first. The dearest one
  * is marked recommended. Other addon groups are left for the extras step.
  */
-export function toProtectionOptions(extras: Extra[]): ProtectionOption[] {
+export function toProtectionOptions(extras: Extra[], unit: PriceUnit = "day"): ProtectionOption[] {
   const insurance = extras
     .filter((extra) => extra.type === INSURANCE_TYPE)
     .toSorted((left, right) => total(left) - total(right));
@@ -61,6 +77,7 @@ export function toProtectionOptions(extras: Extra[]): ProtectionOption[] {
     const discounted = extra.isDiscounted ? extra.discountedCalculatedPrice : null;
     return {
       id: extra.id,
+      unit,
       name: extra.name,
       image: extra.image,
       description: extra.description ? plainText(extra.description) : null,
@@ -83,12 +100,11 @@ function rows(presentation: ExtraPresentation | null): ProtectionRow[] {
   if (!presentation) {
     return [];
   }
-  return ROWS.flatMap(({ key, label }) => {
+  return ROWS.flatMap((key) => {
     const value = presentation[key]?.replace(/\s+/g, " ").trim();
     if (!value) {
       return [];
     }
-    const lower = value.toLocaleLowerCase("pl");
-    return [{ label, value, covered: lower === "0 zł" || lower === "bezpłatnie" }];
+    return [{ key, value, covered: COVERED.has(value.toLocaleLowerCase()) }];
   });
 }

@@ -7,6 +7,10 @@ import type { ReactNode } from "react";
 
 import { formatDateTime } from "@/components/account/format";
 import { formatDayCount, formatMoney } from "@/components/reservation/format";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
+import { plural } from "@/i18n/plural";
 import type { OfferCard } from "@/lib/reservation/offers";
 import type { ReservationTerm } from "@/lib/reservation/search";
 
@@ -14,9 +18,13 @@ import type { ReservationTerm } from "@/lib/reservation/search";
 
 /** Seats, gearbox and fuel in one row: icons carry the meaning, so seats is just the number. */
 export function SpecList({ offer, className = "" }: { offer: OfferCard; className?: string }) {
+  const lang = useLang();
+  const { cars } = useMessages();
+  // `seats` is the API's text; a non-number still gets the general form.
+  const seats = offer.seats ? `${offer.seats} ${plural(lang, Number(offer.seats), cars.seats)}` : undefined;
   return (
     <ul className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-blue-dark/80 ${className}`}>
-      <Spec icon={Users} value={offer.seats} label={offer.seats ? `${offer.seats} miejsc` : undefined} />
+      <Spec icon={Users} value={offer.seats} label={seats} />
       <Spec icon={Settings2} value={offer.transmission} />
       <Spec icon={Fuel} value={offer.fuelType} />
     </ul>
@@ -36,6 +44,7 @@ export function ChooseButton({
   /** Inside a `radiogroup` (the protection table): a radio named after the option. */
   radio?: { label: string };
 }) {
+  const { cars } = useMessages();
   return (
     <button
       type="button"
@@ -50,7 +59,7 @@ export function ChooseButton({
       } ${className}`}
     >
       {selected ? <SquareCheck className="size-4" aria-hidden /> : <Square className="size-4" aria-hidden />}
-      {selected ? "Wybrany" : "Wybierz"}
+      {selected ? cars.chosen : cars.choose}
     </button>
   );
 }
@@ -62,7 +71,7 @@ function Spec({ icon: Icon, value, label }: { icon: LucideIcon; value: string | 
   return (
     <li className="flex min-w-0 items-center gap-1">
       <Icon className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-      {/* A bare "4" next to the people icon; screen readers still hear "4 miejsc". */}
+      {/* A bare "4" next to the people icon; screen readers still hear "4 seats". */}
       {label ? (
         <>
           <span aria-hidden>{value}</span>
@@ -79,39 +88,41 @@ function Spec({ icon: Icon, value, label }: { icon: LucideIcon; value: string | 
 const VAT = 1.23;
 
 export function Price({ offer, term }: { offer: OfferCard; term: ReservationTerm }) {
+  const lang = useLang();
+  const { cars } = useMessages();
   // Only a real deposit is worth a line; "Bez kaucji" was noise.
   const deposit = offer.deposit ? (
-    <p className="text-xxs text-muted-dark">Kaucja {formatMoney(offer.deposit)}</p>
+    <p className="text-xxs text-muted-dark">{fill(cars.deposit, { amount: formatMoney(lang, offer.deposit) })}</p>
   ) : null;
   if (term === "long") {
     if (offer.monthlyPrice === null) {
-      return <p className="text-xs text-muted-dark">Cenę wyliczymy w następnym kroku</p>;
+      return <p className="text-xs text-muted-dark">{cars.priceLater}</p>;
     }
     return (
       <div className="min-w-0">
         <p className="text-xl font-bold text-blue-dark">
-          {formatMoney(offer.monthlyPrice)}
-          <span className="text-xs font-semibold"> / mies.</span>
+          {formatMoney(lang, offer.monthlyPrice)}
+          <span className="text-xs font-semibold"> {cars.perMonth}</span>
         </p>
-        <p className="text-xxs text-muted-dark">{formatMoney(offer.monthlyPrice / VAT)} netto</p>
+        <p className="text-xxs text-muted-dark">{fill(cars.net, { amount: formatMoney(lang, offer.monthlyPrice / VAT) })}</p>
         {deposit}
       </div>
     );
   }
   if (offer.totalPrice === null) {
-    return <p className="text-xs text-muted-dark">Cenę wyliczymy w następnym kroku</p>;
+    return <p className="text-xs text-muted-dark">{cars.priceLater}</p>;
   }
   return (
     <div className="min-w-0">
       {offer.regularTotalPrice !== null ? (
         <p className="text-xs text-muted-dark">
-          <span className="sr-only">Cena regularna: </span>
-          <s>{formatMoney(offer.regularTotalPrice)}</s>
+          <span className="sr-only">{cars.regularPrice} </span>
+          <s>{formatMoney(lang, offer.regularTotalPrice)}</s>
         </p>
       ) : null}
       <p className={`text-xl font-bold whitespace-nowrap ${offer.promotion ? "text-green-medium" : "text-blue-dark"}`}>
-        {offer.promotion ? <span className="sr-only">Cena promocyjna: </span> : null}
-        {formatMoney(offer.totalPrice)}
+        {offer.promotion ? <span className="sr-only">{cars.promoPrice} </span> : null}
+        {formatMoney(lang, offer.totalPrice)}
         <DaysSuffix days={offer.days} />
       </p>
       {deposit}
@@ -121,7 +132,8 @@ export function Price({ offer, term }: { offer: OfferCard; term: ReservationTerm
 
 /** " / 2 dni" after a total: the price is for the whole rental. */
 function DaysSuffix({ days }: { days: number | null }) {
-  return days ? <span className="text-xs font-semibold text-muted-dark"> / {formatDayCount(days)}</span> : null;
+  const lang = useLang();
+  return days ? <span className="text-xs font-semibold text-muted-dark"> / {formatDayCount(lang, days)}</span> : null;
 }
 
 /**
@@ -140,10 +152,12 @@ export function PromotionLine({
   divider?: boolean;
   className?: string;
 }) {
+  const lang = useLang();
+  const { cars } = useMessages();
   if (!offer.promotion) {
     return null;
   }
-  const endsAt = formatDateTime("pl", offer.promotion.endsAt);
+  const endsAt = formatDateTime(lang, offer.promotion.endsAt);
   return (
     <p
       className={`flex items-start gap-1.5 text-xs leading-snug text-blue-dark ${
@@ -152,19 +166,18 @@ export function PromotionLine({
     >
       <BadgePercent className="mt-px size-4 shrink-0 text-green-medium" aria-hidden />
       <span className="min-w-0">
-        <span className="block font-bold">{offer.promotion.name ?? "Promocja"}</span>
+        <span className="block font-bold">{offer.promotion.name ?? cars.promotion}</span>
         {/* Its own line and never split, so "do 18 gru 2026, 20:00" is read in one piece. */}
         {endsAt ? (
           <span className="block whitespace-nowrap text-muted-dark">
-            <span className="sr-only">Cena obowiązuje przy odbiorze auta </span>do {endsAt}
+            <span className="sr-only">{cars.promotionValid} </span>
+            {fill(cars.promotionUntil, { date: endsAt })}
           </span>
         ) : null}
       </span>
     </p>
   );
 }
-
-export { formatMoney };
 
 /** The price a card leads with: the whole rental by the day, or one month. */
 export function priceOf(offer: OfferCard, term: ReservationTerm): number | null {
@@ -185,6 +198,7 @@ export function CompactOfferCard({
   selected,
   highlighted = selected,
   onChoose,
+  preload = false,
   children,
 }: {
   offer: OfferCard;
@@ -195,9 +209,13 @@ export function CompactOfferCard({
   /** Green frame: the chosen car is in this card (a class may preview another one). */
   highlighted?: boolean;
   onChoose: () => void;
+  /** The first card of the list: its photo is the page's largest paint. */
+  preload?: boolean;
   /** Extra row, e.g. the other cars of a class. */
   children?: ReactNode;
 }) {
+  const lang = useLang();
+  const { cars } = useMessages();
   const price = priceOf(offer, term);
   return (
     <article
@@ -208,11 +226,11 @@ export function CompactOfferCard({
       <div className="flex gap-3">
         <span className="relative block h-20 w-32 shrink-0">
           {offer.image ? (
-            <Image src={offer.image.src} alt={offer.image.alt} fill sizes="128px" className="object-contain" />
+            <Image src={offer.image.src} alt="" fill sizes="128px" preload={preload} className="object-contain" />
           ) : null}
           {offer.popular ? (
             <span className="absolute -top-1 -left-1 rounded-full bg-green-light px-2 py-0.5 text-xxs font-bold text-green-dark">
-              Popularny
+              {cars.popular}
             </span>
           ) : null}
         </span>
@@ -228,22 +246,22 @@ export function CompactOfferCard({
       {term === "short" ? <PromotionLine offer={offer} /> : null}
       <div className="flex items-center justify-between gap-3 border-t border-muted-light pt-3">
         {price === null ? (
-          <p className="text-xs text-muted-dark">Cenę wyliczymy w następnym kroku</p>
+          <p className="text-xs text-muted-dark">{cars.priceLater}</p>
         ) : (
           <div className="flex min-w-0 flex-col items-start gap-1">
             <p className="flex flex-wrap items-baseline gap-x-2">
               {term === "short" && offer.regularTotalPrice !== null ? (
                 <s className="text-xxs text-muted-dark">
-                  <span className="sr-only">Cena regularna: </span>
-                  {formatMoney(offer.regularTotalPrice)}
+                  <span className="sr-only">{cars.regularPrice} </span>
+                  {formatMoney(lang, offer.regularTotalPrice)}
                 </s>
               ) : null}
               <span className={`text-lg font-bold whitespace-nowrap ${term === "short" && offer.promotion ? "text-green-medium" : "text-blue-dark"}`}>
-                {formatMoney(price)}
-                {term === "long" ? <span className="text-xs font-semibold"> / mies.</span> : <DaysSuffix days={offer.days} />}
+                {formatMoney(lang, price)}
+                {term === "long" ? <span className="text-xs font-semibold"> {cars.perMonth}</span> : <DaysSuffix days={offer.days} />}
               </span>
             </p>
-            {offer.deposit ? <p className="text-xxs text-muted-dark">Kaucja {formatMoney(offer.deposit)}</p> : null}
+            {offer.deposit ? <p className="text-xxs text-muted-dark">{fill(cars.deposit, { amount: formatMoney(lang, offer.deposit) })}</p> : null}
           </div>
         )}
         <ChooseButton selected={selected} onClick={onChoose} />

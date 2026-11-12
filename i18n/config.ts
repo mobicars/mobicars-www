@@ -11,6 +11,9 @@ export const languages: readonly { lang: Lang; label: string }[] = [
   { lang: "uk", label: "Українська" },
 ];
 
+/** BCP 47 locale for `Intl` and react-aria, per site language. */
+export const intlLocales: Record<Lang, string> = { pl: "pl-PL", en: "en-GB", de: "de-DE", uk: "uk-UA" };
+
 export function isLang(value: string): value is Lang {
   return (langs as readonly string[]).includes(value);
 }

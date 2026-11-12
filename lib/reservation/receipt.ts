@@ -4,7 +4,8 @@ import { EncryptJWT, jwtDecrypt } from "jose";
 import { cookies } from "next/headers";
 
 import type { TripSummary } from "@/components/reservation/summary";
-import type { QuoteLineView } from "@/lib/reservation/quote";
+import type { MonthlyQuote, QuoteLineView } from "@/lib/reservation/quote";
+import type { ReservationTerm } from "@/lib/reservation/search";
 
 /**
  * What the thank-you page shows about the reservation just placed: what was
@@ -21,12 +22,19 @@ export type BookingReceipt = {
   /** Where the confirmation goes: the account's email or the one typed. */
   email: string | null;
   signedIn: boolean;
+  /** Picks the thank-you subtitle (short- or long-term rental). */
+  term: ReservationTerm;
   car: { name: string; segment: string; image: string | null };
   trip: TripSummary;
+  /** Pickup and return as `YYYY-MM-DDTHH:mm`, Warsaw wall time, for "Dodaj do kalendarza". */
+  at?: { pickup: string; return: string };
   protection: string | null;
   extras: { name: string; quantity: number }[];
+  /** Kinds, names and days, not labels: the thank-you page labels them in its own language. */
   lines: QuoteLineView[];
   total: number;
+  /** Monthly rental: the per-month and one-time parts, shown like the summary. */
+  monthly?: MonthlyQuote;
   deposit: number | null;
 };
 
@@ -68,10 +76,10 @@ export async function saveReceipt(receipt: BookingReceipt): Promise<void> {
   const expiresAt = new Date(Date.now() + TTL_MS);
   let token = await seal(receipt, expiresAt);
   if (token.length > MAX_TOKEN_LENGTH) {
-    token = await seal({ ...receipt, lines: [] }, expiresAt);
+    token = await seal({ ...receipt, lines: [], monthly: undefined }, expiresAt);
   }
   if (token.length > MAX_TOKEN_LENGTH) {
-    token = await seal({ ...receipt, lines: [], extras: [] }, expiresAt);
+    token = await seal({ ...receipt, lines: [], monthly: undefined, extras: [] }, expiresAt);
   }
   (await cookies()).set(COOKIE, token, {
     httpOnly: true,

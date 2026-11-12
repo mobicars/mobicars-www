@@ -1,11 +1,19 @@
 "use client";
 
+import { useId } from "react";
 import Image from "next/image";
 import { ArrowRight, CalendarDays, LoaderCircle, MapPin } from "lucide-react";
 
-import { formatMoney } from "@/components/reservation/offer-parts";
+import { formatMoney } from "@/components/reservation/format";
+import { PromoCode } from "@/components/reservation/promo-code";
+import { QuoteLines, Spinner } from "@/components/reservation/quote-lines";
 import type { QuoteState } from "@/components/reservation/use-quote";
+import { buttonClass } from "@/components/ui/button";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import type { OfferCard } from "@/lib/reservation/offers";
+import type { MonthlyQuote, QuoteLineView } from "@/lib/reservation/quote";
 
 /**
  * Booking summary beside the steps, like carfree.pl: a sticky panel on the
@@ -23,17 +31,11 @@ export type TripSummary = {
   end: string;
 };
 
-export type SummaryLine = {
-  label: string;
-  /** 0 shows "w cenie". */
-  amount: number;
-  /** Price before a promotion, struck through. */
-  regular?: number | null;
-};
-
 export type SummaryPrices = {
-  lines: SummaryLine[];
+  lines: QuoteLineView[];
   total: number | null;
+  /** Monthly rental: the per-month and one-time parts of the quote. */
+  monthly?: MonthlyQuote;
   /** Suffix after the total, e.g. "/ mies.". */
   totalSuffix?: string;
   /** A newer quote is on its way; the lines shown are the previous ones. */
@@ -63,6 +65,8 @@ type SummaryProps = {
   action?: SummaryAction;
   /** Shows "Zmień" next to the car, like carfree.pl's "Edytuj". */
   onChangeCar?: () => void;
+  /** The step's search query; with it the panel offers "Masz kod rabatowy?" once a car is chosen. */
+  searchQuery?: string;
 };
 
 /** Summary prices from a calculate quote. */
@@ -70,6 +74,7 @@ export function quotePrices(state: QuoteState): SummaryPrices {
   return {
     lines: state.quote?.lines ?? [],
     total: state.quote?.total ?? null,
+    monthly: state.quote?.monthly,
     loading: state.loading,
     failed: state.failed,
     error: state.error,
@@ -77,25 +82,26 @@ export function quotePrices(state: QuoteState): SummaryPrices {
   };
 }
 
-export function SummaryPanel({ trip, car, prices, action, onChangeCar }: SummaryProps) {
+export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQuery }: SummaryProps) {
+  const t = useMessages().summary;
   const loading = prices?.loading ?? false;
   return (
-    <aside aria-label="Twoja rezerwacja" aria-busy={loading} className="hidden lg:block">
+    <aside aria-label={t.title} aria-busy={loading} className="hidden lg:block">
       <div className="sticky top-4 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-blue-dark">Twoja rezerwacja</h2>
+        <h2 className="text-lg font-semibold text-blue-dark">{t.title}</h2>
         <dl className="flex flex-col gap-2 text-xs text-blue-dark/80">
           <div className="flex gap-2">
             <MapPin className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
             <div className="min-w-0">
-              <dt className="sr-only">Miejsce</dt>
+              <dt className="sr-only">{t.place}</dt>
               <dd>{trip.pickup}</dd>
-              {trip.dropoff ? <dd className="text-muted-dark">Zwrot: {trip.dropoff}</dd> : null}
+              {trip.dropoff ? <dd className="text-muted-dark">{fill(t.returnAt, { place: trip.dropoff })}</dd> : null}
             </div>
           </div>
           <div className="flex gap-2">
             <CalendarDays className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
             <div>
-              <dt className="sr-only">Termin</dt>
+              <dt className="sr-only">{t.dates}</dt>
               <dd>
                 {trip.start} – {trip.end}
               </dd>
@@ -108,7 +114,7 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar }: Summary
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-semibold text-blue-dark">{car.name}</p>
-                <p className="text-xs text-muted-dark">lub podobny · {car.segment}</p>
+                <p className="text-xs text-muted-dark">{fill(t.orSimilar, { segment: car.segment })}</p>
               </div>
               {onChangeCar ? (
                 <button
@@ -116,7 +122,7 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar }: Summary
                   onClick={onChangeCar}
                   className="shrink-0 cursor-pointer rounded-full border border-blue-dark/20 px-3 py-1 text-xs font-semibold text-blue-dark transition-colors duration-200 ease-out hover:border-blue-medium hover:text-blue-medium motion-reduce:transition-none"
                 >
-                  Zmień
+                  {t.change}
                 </button>
               ) : null}
             </div>
@@ -128,10 +134,15 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar }: Summary
           </div>
         ) : (
           <p className="border-t border-muted-light pt-4 text-sm text-muted-dark">
-            Wybierz samochód z listy.
+            {t.chooseCar}
           </p>
         )}
 
+        {car && searchQuery !== undefined ? (
+          <div className="border-t border-muted-light pt-4">
+            <PromoCode searchQuery={searchQuery} />
+          </div>
+        ) : null}
         {car && prices ? <PriceLines prices={prices} /> : null}
 
         {action ? (
@@ -149,23 +160,22 @@ function actionable(action: SummaryAction): boolean {
 
 /** Quote lines and total; also used by the last step's summary on small screens. */
 export function PriceLines({ prices }: { prices: SummaryPrices }) {
+  const messages = useMessages();
+  const lang = useLang();
+  const t = messages.summary;
   if (prices.failed) {
     // A passed pickup time is the customer's to fix; anything else may pass on a retry.
     const expired = prices.error === "invalid_search";
     return (
       <div role="alert" className="flex flex-col items-start gap-2 border-t border-muted-light pt-4 text-sm text-red-700">
-        <p>
-          {expired
-            ? "Ten termin odbioru jest już niedostępny. Zmień datę odbioru u góry strony."
-            : "Nie udało się pobrać ceny."}
-        </p>
+        <p>{expired ? t.expired : t.failed}</p>
         {!expired && prices.onRetry ? (
           <button
             type="button"
             onClick={prices.onRetry}
             className="cursor-pointer font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
-            Spróbuj ponownie
+            {t.retry}
           </button>
         ) : null}
       </div>
@@ -183,42 +193,17 @@ export function PriceLines({ prices }: { prices: SummaryPrices }) {
   }
   // While a newer quote loads, the amounts give way to placeholders and the
   // total to a spinner, so no stale price stays on screen (as on carfree.pl).
-  const loading = prices.loading ?? false;
   return (
-    <dl className="flex flex-col gap-1.5 border-t border-muted-light pt-4 text-sm">
-      {prices.lines.map((line, index) =>
-        loading ? (
-          // The previous quote's labels may no longer match the choice: placeholders only.
-          <div key={index} aria-hidden className="flex h-5 items-center justify-between gap-3">
-            <span className="h-3.5 w-28 animate-pulse rounded bg-muted-light motion-reduce:animate-none" />
-            <span className="h-3.5 w-14 animate-pulse rounded bg-muted-light motion-reduce:animate-none" />
-          </div>
-        ) : (
-          <div key={line.label} className="flex items-baseline justify-between gap-3">
-            <dt className="text-blue-dark/80">{line.label}</dt>
-            <dd className="shrink-0 text-right font-semibold text-blue-dark">
-              {line.regular ? (
-                <s className="mr-1.5 text-xs font-normal text-muted-dark">{formatMoney(line.regular)}</s>
-              ) : null}
-              {line.amount ? formatMoney(line.amount) : "w cenie"}
-            </dd>
-          </div>
-        ),
-      )}
-      <div className="mt-2 flex min-h-11 items-center justify-between gap-3 border-t border-muted-light pt-3">
-        <dt className="font-semibold text-blue-dark">Razem</dt>
-        <dd className="text-xl font-bold text-blue-dark">
-          {loading || prices.total === null ? (
-            <Spinner label="Liczymy cenę" />
-          ) : (
-            <>
-              {formatMoney(prices.total)}
-              {prices.totalSuffix ? <span className="text-xs font-semibold"> {prices.totalSuffix}</span> : null}
-            </>
-          )}
-        </dd>
-      </div>
-    </dl>
+    <QuoteLines
+      lines={prices.lines}
+      total={prices.total}
+      totalSuffix={prices.totalSuffix}
+      monthly={prices.monthly}
+      loading={prices.loading}
+      messages={messages}
+      lang={lang}
+      className="border-t border-muted-light pt-4"
+    />
   );
 }
 
@@ -228,6 +213,9 @@ export function MobileSummaryBar({
   prices,
   action,
 }: Pick<SummaryProps, "car" | "prices" | "action">) {
+  const messages = useMessages();
+  const t = messages.summary;
+  const lang = useLang();
   if (!car || !action) {
     return null;
   }
@@ -241,16 +229,19 @@ export function MobileSummaryBar({
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate text-xxs text-muted-dark">{car.name} lub podobny</p>
+          <p className="truncate text-xxs text-muted-dark">{fill(t.carOrSimilar, { name: car.name })}</p>
           <p className="flex h-6 items-center text-base font-bold text-blue-dark">
             {prices?.failed ? (
-              <span className="text-xs font-semibold text-red-700">Brak ceny</span>
+              <span className="text-xs font-semibold text-red-700">{t.noPrice}</span>
             ) : loading || prices?.total == null ? (
-              <Spinner label="Liczymy cenę" />
+              <Spinner label={t.calculating} />
             ) : (
               <>
-                {formatMoney(prices.total)}
-                {prices.totalSuffix ? <span className="text-xs font-semibold"> {prices.totalSuffix}</span> : null}
+                {/* Monthly rental: the bar leads with the monthly amount, the figure people compare. */}
+                {formatMoney(lang, prices.monthly ? prices.monthly.perMonth : prices.total)}
+                {prices.monthly || prices.totalSuffix ? (
+                  <span className="text-xs font-semibold"> {prices.monthly ? messages.quoteLines.perMonth : prices.totalSuffix}</span>
+                ) : null}
               </>
             )}
           </p>
@@ -258,15 +249,6 @@ export function MobileSummaryBar({
         <ActionButton action={action} disabled={!actionable(action) || loading} />
       </div>
     </div>
-  );
-}
-
-function Spinner({ label }: { label: string }) {
-  return (
-    <span role="status" className="flex items-center text-blue-medium">
-      <LoaderCircle className="size-5 animate-spin motion-reduce:animate-none" aria-hidden />
-      <span className="sr-only">{label}</span>
-    </span>
   );
 }
 
@@ -279,6 +261,8 @@ function ActionButton({
   disabled: boolean;
   className?: string;
 }) {
+  const hintId = useId();
+  const hint = disabled && action.hint ? action.hint : null;
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       <button
@@ -286,8 +270,8 @@ function ActionButton({
         form={action.form}
         disabled={disabled}
         onClick={action.onClick}
-        title={disabled ? action.hint : undefined}
-        className="flex h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-green-medium px-5 text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-green-dark disabled:cursor-default disabled:bg-muted disabled:text-muted-dark motion-reduce:transition-none"
+        aria-describedby={hint ? hintId : undefined}
+        className={buttonClass("success", "md", "w-full")}
       >
         {action.label}
         {action.busy ? (
@@ -296,8 +280,11 @@ function ActionButton({
           <ArrowRight className="size-4" aria-hidden />
         )}
       </button>
-      {disabled && action.hint ? (
-        <p className="hidden text-center text-xxs text-muted-dark lg:block">{action.hint}</p>
+      {/* Visible on every screen, so a phone shows why the button is grey too; narrow enough for the bottom bar. */}
+      {hint ? (
+        <p id={hintId} className="max-w-56 self-center text-center text-xxs text-muted-dark">
+          {hint}
+        </p>
       ) : null}
     </div>
   );

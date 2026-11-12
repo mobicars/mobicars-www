@@ -1,20 +1,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Banknote, Car, CircleCheck, Mail, MapPin, Package, ShieldCheck } from "lucide-react";
+import { Banknote, CalendarPlus, Car, CircleCheck, Mail, MapPin, Package, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { ClearSearch } from "@/components/reservation/clear-search";
-import { customerCopy } from "@/components/reservation/customer-copy";
 import { formatMoney } from "@/components/reservation/format";
+import { QuoteLines } from "@/components/reservation/quote-lines";
+import { buttonClass } from "@/components/ui/button";
 import type { Lang } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 import { accountHref, reservationHref } from "@/i18n/routes";
 import { readReceipt } from "@/lib/reservation/receipt";
 
-const t = customerCopy.success;
-
 /**
- * Thank-you page after "Rezerwuj": the old site's texts, then what was booked,
+ * Thank-you page after booking: the old site's texts, then what was booked,
  * where and when. The details come from the receipt cookie the Server Action
  * wrote; without one (expired, another browser, typed URL) there is nothing to
  * thank for, so the visitor goes to the reservation page.
@@ -24,6 +24,10 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
   if (!receipt) {
     redirect(reservationHref(lang));
   }
+  const messages = getMessages(lang);
+  const t = messages.confirmation;
+  const d = messages.details;
+  const [emailBefore, emailAfter = ""] = t.emailNotice.split("{email}");
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-3 py-10 sm:px-6">
@@ -33,10 +37,10 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
           <CircleCheck className="size-9" strokeWidth={1.75} aria-hidden />
         </span>
         <h1 className="text-3xl font-semibold text-blue-dark sm:text-4xl">{t.title}</h1>
-        <p className="max-w-xl text-blue-dark/80">{t.subtitle}</p>
+        <p className="max-w-xl text-blue-dark/80">{receipt.term === "long" ? t.subtitleLong : t.subtitle}</p>
         {receipt.id ? (
           <p className="rounded-full bg-white px-4 py-1.5 text-sm text-blue-dark shadow-sm">
-            Numer zamówienia: <span className="font-bold">{receipt.id}</span>
+            {t.orderNumber}: <span className="font-bold">{receipt.id}</span>
           </p>
         ) : null}
       </header>
@@ -49,7 +53,9 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
           <p className="flex items-center gap-2 text-blue-dark">
             <Mail className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
             <span>
-              Wiadomości wyślemy na adres <span className="font-semibold">{receipt.email}</span>.
+              {emailBefore}
+              <span className="font-semibold">{receipt.email}</span>
+              {emailAfter}
             </span>
           </p>
         ) : null}
@@ -58,9 +64,9 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
       {(
         <section aria-labelledby="receipt-title" className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:p-6">
           <h2 id="receipt-title" className="text-xl font-semibold text-blue-dark">
-            Twoja rezerwacja
+            {t.reservationTitle}
           </h2>
-          <Row icon={Car} title="Samochód">
+          <Row icon={Car} title={d.car}>
             <div className="flex items-center gap-4">
               {receipt.car.image ? (
                 <span className="relative block h-20 w-36 shrink-0">
@@ -69,28 +75,28 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
               ) : null}
               <div className="min-w-0">
                 <p className="text-lg font-semibold text-blue-dark">{receipt.car.name}</p>
-                <p className="text-xs text-muted-dark">lub podobny · {receipt.car.segment}</p>
+                <p className="text-xs text-muted-dark">{d.orSimilar} · {receipt.car.segment}</p>
               </div>
             </div>
           </Row>
-          <Row icon={MapPin} title="Odbiór i zwrot">
+          <Row icon={MapPin} title={d.trip}>
             <dl className="grid gap-3 sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-dark">Odbiór</dt>
+                <dt className="text-xs text-muted-dark">{d.pickup}</dt>
                 <dd className="font-semibold text-blue-dark">{receipt.trip.start}</dd>
                 <dd className="text-sm text-blue-dark/80">{receipt.trip.pickup}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-dark">Zwrot</dt>
+                <dt className="text-xs text-muted-dark">{d.return}</dt>
                 <dd className="font-semibold text-blue-dark">{receipt.trip.end}</dd>
                 <dd className="text-sm text-blue-dark/80">{receipt.trip.dropoff ?? receipt.trip.pickup}</dd>
               </div>
             </dl>
           </Row>
-          <Row icon={ShieldCheck} title="Ochrona">
-            <p className="text-sm font-semibold text-blue-dark">{receipt.protection ?? "Bez pakietu ochrony"}</p>
+          <Row icon={ShieldCheck} title={d.protection}>
+            <p className="text-sm font-semibold text-blue-dark">{receipt.protection ?? d.noProtection}</p>
           </Row>
-          <Row icon={Package} title="Dodatki">
+          <Row icon={Package} title={d.extras}>
             {receipt.extras.length > 0 ? (
               <ul className="flex flex-col gap-1 text-sm text-blue-dark">
                 {receipt.extras.map((extra, index) => (
@@ -101,48 +107,53 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
                 ))}
               </ul>
             ) : (
-              <p className="text-sm text-muted-dark">Bez dodatków</p>
+              <p className="text-sm text-muted-dark">{d.noExtras}</p>
             )}
           </Row>
 
-          <dl className="flex flex-col gap-1.5 text-sm">
-            {receipt.lines.map((line, index) => (
-              <div key={index} className="flex items-baseline justify-between gap-3">
-                <dt className="text-blue-dark/80">{line.label}</dt>
-                <dd className="shrink-0 text-right font-semibold text-blue-dark">
-                  {line.regular ? (
-                    <s className="mr-1.5 text-xs font-normal text-muted-dark">{formatMoney(line.regular)}</s>
-                  ) : null}
-                  {line.amount ? formatMoney(line.amount) : "w cenie"}
-                </dd>
-              </div>
-            ))}
-            <div className="mt-2 flex items-center justify-between gap-3 border-t border-muted-light pt-3">
-              <dt className="font-semibold text-blue-dark">Razem</dt>
-              <dd className="text-2xl font-bold text-blue-dark">{formatMoney(receipt.total)}</dd>
-            </div>
-          </dl>
+          <QuoteLines
+            lines={receipt.lines}
+            total={receipt.total}
+            monthly={receipt.monthly}
+            messages={messages}
+            lang={lang}
+          />
           {receipt.deposit ? (
             <p className="flex items-center gap-2 text-xs text-muted-dark">
               <Banknote className="size-4 text-blue-medium" strokeWidth={1.75} aria-hidden />
-              Kaucja: <span className="font-semibold text-blue-dark">{formatMoney(receipt.deposit)}</span>
+              {d.deposit}: <span className="font-semibold text-blue-dark">{formatMoney(lang, receipt.deposit)}</span>
             </p>
           ) : null}
         </section>
       )}
 
+      {receipt.at ? (
+        // A plain download link: the file comes from the same encrypted receipt as this page.
+        <div className="flex flex-col items-center gap-1.5 text-center">
+          <a
+            href={`/api/reservation/calendar?lang=${lang}`}
+            download
+            className={buttonClass("success", "md", "px-6")}
+          >
+            <CalendarPlus className="size-5" aria-hidden />
+            {t.calendar.button}
+          </a>
+          <p className="text-xs text-muted-dark">{t.calendar.hint}</p>
+        </div>
+      ) : null}
+
       <div className="flex flex-col justify-center gap-3 sm:flex-row">
         <Link
           href={receipt.signedIn ? accountHref(lang, "reservations") : accountHref(lang, "login")}
-          className="flex h-12 items-center justify-center rounded-xl bg-blue-medium px-6 text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
+          className={buttonClass("primary", "md", "px-6")}
         >
-          {receipt.signedIn ? "Moje rezerwacje" : "Zaloguj się do panelu klienta"}
+          {receipt.signedIn ? t.myReservations : t.loginToPanel}
         </Link>
         <Link
           href={reservationHref(lang)}
-          className="flex h-12 items-center justify-center rounded-xl border border-blue-dark/15 bg-white px-6 text-sm font-bold text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-dark/[0.04] motion-reduce:transition-none"
+          className={buttonClass("secondary", "md", "px-6")}
         >
-          Nowa rezerwacja
+          {t.newReservation}
         </Link>
       </div>
     </div>

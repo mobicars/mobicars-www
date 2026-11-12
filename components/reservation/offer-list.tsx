@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dialog } from "react-aria-components";
@@ -26,6 +26,12 @@ import {
 } from "@/components/reservation/summary";
 import { useQuote } from "@/components/reservation/use-quote";
 import { currentHrefWith, replaceParam } from "@/components/reservation/url";
+import { buttonClass } from "@/components/ui/button";
+import { fill } from "@/i18n/fill";
+import type { Lang } from "@/i18n/config";
+import { useMessages } from "@/i18n/messages-context";
+import type { Messages } from "@/i18n/messages";
+import { plural } from "@/i18n/plural";
 import { OFFER_CATEGORIES, type OfferCard, type OfferCategory } from "@/lib/reservation/offers";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS, type ReservationTerm } from "@/lib/reservation/search";
@@ -34,21 +40,25 @@ type Sort = "popular" | "priceAsc" | "priceDesc";
 export type OfferView = "classes" | "cars";
 type Gearbox = "manual" | "automatic";
 
-const GEARBOXES: { id: Gearbox; label: string }[] = [
-  { id: "manual", label: "Manualna" },
-  { id: "automatic", label: "Automatyczna" },
+// Labels are in messages under `cars.gearboxes`, `cars.views` and `cars.sorts`.
+const GEARBOXES: Gearbox[] = ["manual", "automatic"];
+
+const VIEWS: { id: OfferView; icon: LucideIcon }[] = [
+  { id: "classes", icon: Rows3 },
+  { id: "cars", icon: LayoutGrid },
 ];
 
-const VIEWS: { id: OfferView; label: string; icon: LucideIcon }[] = [
-  { id: "classes", label: "Klasy", icon: Rows3 },
-  { id: "cars", label: "Wszystkie auta", icon: LayoutGrid },
-];
+const SORTS: Sort[] = ["popular", "priceAsc", "priceDesc"];
 
-const SORTS: { id: Sort; label: string }[] = [
-  { id: "popular", label: "Popularne" },
-  { id: "priceAsc", label: "Od najtańszych" },
-  { id: "priceDesc", label: "Od najdroższych" },
-];
+/** Booking choices made after the car; they mean nothing once the car is gone. */
+const AFTER_CAR = [
+  QUERY_KEYS.offer,
+  QUERY_KEYS.step,
+  QUERY_KEYS.protection,
+  QUERY_KEYS.zone,
+  QUERY_KEYS.extras,
+  QUERY_KEYS.accessories,
+] as const;
 
 /**
  * Car step. The chosen car (`offer=`) and the daily layout (`view=`) go into
@@ -64,19 +74,26 @@ export function OfferList({
   lang,
   searchQuery,
   initialQuote,
+  lostCar,
 }: {
   offers: OfferCard[];
   term: ReservationTerm;
   initialSelected: number | null;
   initialView: OfferView;
   trip: TripSummary;
-  lang: string;
+  lang: Lang;
   /** The search's canonical query, for the quote request. */
   searchQuery: string;
   /** Daily: the server's quote for `initialSelected`, if any. */
   initialQuote: { request: string; quote: QuoteView | null } | null;
+  /**
+   * The car in the URL is no longer offered (a changed place or date). By
+   * default only `initialSelected` missing from `offers` counts.
+   */
+  lostCar?: boolean;
 }) {
   const router = useRouter();
+  const { cars } = useMessages();
   const [sort, setSort] = useState<Sort>("popular");
   const [view, setView] = useState<OfferView>(initialView);
   // One choice per group; the two groups narrow each other down ("Automatyczna" and "Eko").
@@ -87,6 +104,19 @@ export function OfferList({
     offers.some((offer) => offer.id === initialSelected) ? initialSelected : null,
   );
   const selected = offers.find((offer) => offer.id === selectedId) ?? null;
+  const lost = lostCar ?? (initialSelected !== null && !offers.some((offer) => offer.id === initialSelected));
+
+  // A lost car takes its protection and extras with it: drop them from the URL,
+  // so a refresh or "Wybierz" does not carry them over to another car.
+  useEffect(() => {
+    if (lost) {
+      for (const key of AFTER_CAR) {
+        replaceParam(key, null);
+      }
+    }
+    // Only on mount: later choices write the URL themselves.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const offeredCategories = OFFER_CATEGORIES.filter((category) =>
     offers.some((offer) => offer.categories.includes(category.id)),
   );
@@ -110,30 +140,26 @@ export function OfferList({
     setGearbox(null);
     setCategory(null);
   }
-  const countText = countLabel(visible.length, segments?.length ?? null);
+  const countText = countLabel(lang, cars, visible.length, segments?.length ?? null);
 
   const filterRows = (
     <>
-      <FilterRow label="Skrzynia biegów">
-        {GEARBOXES.map((option) => (
-          <Chip
-            key={option.id}
-            pressed={gearbox === option.id}
-            onClick={() => setGearbox(gearbox === option.id ? null : option.id)}
-          >
-            {option.label}
+      <FilterRow label={cars.gearbox}>
+        {GEARBOXES.map((id) => (
+          <Chip key={id} pressed={gearbox === id} onClick={() => setGearbox(gearbox === id ? null : id)}>
+            {cars.gearboxes[id]}
           </Chip>
         ))}
       </FilterRow>
       {offeredCategories.length > 0 ? (
-        <FilterRow label="Kategoria">
+        <FilterRow label={cars.category}>
           {offeredCategories.map((option) => (
             <Chip
               key={option.id}
               pressed={category === option.id}
               onClick={() => setCategory(category === option.id ? null : option.id)}
             >
-              {option.label}
+              {cars.categories[option.id]}
             </Chip>
           ))}
         </FilterRow>
@@ -141,55 +167,35 @@ export function OfferList({
     </>
   );
 
-  /**
-   * Daily: choosing a car goes straight to the protection step. Monthly has no
-   * next step yet, so there the click only marks the car (again to unmark).
-   */
+  /** Choosing a car goes straight to the protection step, for daily and monthly rental alike. */
   function choose(id: number) {
-    if (term === "short") {
-      setSelectedId(id);
-      router.push(currentHrefWith({ [QUERY_KEYS.offer]: String(id), [QUERY_KEYS.step]: "protection" }), { scroll: false });
-      return;
-    }
-    const next = id === selectedId ? null : id;
-    setSelectedId(next);
-    replaceParam(QUERY_KEYS.offer, next === null ? null : String(next));
+    setSelectedId(id);
+    router.push(currentHrefWith({ [QUERY_KEYS.offer]: String(id), [QUERY_KEYS.step]: "protection" }), { scroll: false });
   }
 
-  // Daily prices in the summary come from a calculate quote. Monthly shows the
-  // list's monthly price as sent; it has no quote step yet.
-  const quote = useQuote(
-    term === "short" && selected ? quoteQuery(lang, searchQuery, selected.id, []) : null,
-    initialQuote,
-  );
-  const prices: SummaryPrices | null = !selected
-    ? null
-    : term === "short"
-      ? quotePrices(quote)
-      : {
-          lines: selected.monthlyPrice === null ? [] : [{ label: "Rata miesięczna", amount: selected.monthlyPrice }],
-          total: selected.monthlyPrice,
-          totalSuffix: "/ mies.",
-        };
-  // Daily: "Wybierz" already moves on, so the panel offers "DALEJ" only
-  // for a car chosen before (after "Zmień samochód" on the next step).
+  // Summary prices come from a calculate quote (monthly: with the months and km limit).
+  const quote = useQuote(selected ? quoteQuery(lang, searchQuery, selected.id, []) : null, initialQuote);
+  const prices: SummaryPrices | null = selected ? quotePrices(quote) : null;
+  // "Wybierz" already moves on, so the panel offers "DALEJ" only for a car
+  // chosen before (after "Zmień samochód" on the next step).
   const action: SummaryAction | undefined = !selected
     ? undefined
-    : term === "short"
-      ? {
-          label: "DALEJ",
-          onClick: () =>
-            router.push(
-              currentHrefWith({ [QUERY_KEYS.offer]: String(selected.id), [QUERY_KEYS.step]: "protection" }), { scroll: false }
-            ),
-        }
-      : { label: "DALEJ", hint: "Kolejny krok wynajmu długoterminowego jest w przygotowaniu." };
+    : {
+        label: cars.next,
+        onClick: () =>
+          router.push(currentHrefWith({ [QUERY_KEYS.offer]: String(selected.id), [QUERY_KEYS.step]: "protection" }), {
+            scroll: false,
+          }),
+      };
 
   /** Another car of the already chosen class becomes the choice, without leaving the list. */
   function swap(id: number) {
     setSelectedId(id);
     replaceParam(QUERY_KEYS.offer, String(id));
   }
+
+  const viewOptions = VIEWS.map((option) => ({ ...option, label: cars.views[option.id] }));
+  const sortOptions = SORTS.map((id) => ({ id, label: cars.sorts[id] }));
 
   function changeView(next: OfferView) {
     setView(next);
@@ -204,10 +210,10 @@ export function OfferList({
         <button
           type="button"
           onClick={() => setFiltersOpen(true)}
-          className="flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full bg-white px-4 text-sm font-bold text-blue-dark shadow-sm"
+          className={buttonClass("secondary", "md", "px-4")}
         >
           <SlidersHorizontal className="size-4 text-blue-medium" aria-hidden />
-          Filtry
+          {cars.filters}
           {activeFilters > 0 ? (
             <span className="flex size-5 items-center justify-center rounded-full bg-blue-medium text-xxs text-white">
               {activeFilters}
@@ -222,20 +228,20 @@ export function OfferList({
       <FilterSheet
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        resultLabel={`${visible.length} ${plural(visible.length, "samochód", "samochody", "samochodów")}`}
+        resultLabel={carCount(lang, cars, visible.length)}
         onClear={activeFilters > 0 ? clearFilters : null}
       >
         {term === "short" ? (
-          <FilterRow label="Widok">
-            {VIEWS.map((option) => (
+          <FilterRow label={cars.view}>
+            {viewOptions.map((option) => (
               <Chip key={option.id} pressed={view === option.id} onClick={() => changeView(option.id)}>
                 {option.label}
               </Chip>
             ))}
           </FilterRow>
         ) : null}
-        <FilterRow label="Sortowanie">
-          {SORTS.map((option) => (
+        <FilterRow label={cars.sort}>
+          {sortOptions.map((option) => (
             <Chip key={option.id} pressed={sort === option.id} onClick={() => setSort(option.id)}>
               {option.label}
             </Chip>
@@ -258,41 +264,49 @@ export function OfferList({
         </p>
         <div className="flex flex-wrap items-center gap-2">
           {term === "short" ? (
-            <Segmented label="Widok" options={VIEWS} value={view} onChange={changeView} />
+            <Segmented label={cars.view} options={viewOptions} value={view} onChange={changeView} />
           ) : null}
-          <Segmented label="Sortowanie" options={SORTS} value={sort} onChange={setSort} />
+          <Segmented label={cars.sort} options={sortOptions} value={sort} onChange={setSort} />
         </div>
       </div>
       {visible.length === 0 ? (
         <div className="rounded-2xl bg-white p-6 text-center text-sm text-blue-dark shadow-sm">
-          <p>Żaden samochód nie pasuje do wybranych filtrów.</p>
+          <p>{cars.noMatch}</p>
           <button
             type="button"
             onClick={clearFilters}
             className="mt-3 cursor-pointer font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
-            Wyczyść filtry
+            {cars.clearFilters}
           </button>
         </div>
       ) : null}
       {segments ? (
         <div className="@container flex flex-col gap-4">
-          {segments.map((segment) => (
-            <SegmentRow key={segment.key} segment={segment} selectedId={selectedId} onChoose={choose} onSwap={swap} />
+          {segments.map((segment, index) => (
+            <SegmentRow
+              key={segment.key}
+              segment={segment}
+              selectedId={selectedId}
+              onChoose={choose}
+              onSwap={swap}
+              preload={index === 0}
+            />
           ))}
         </div>
       ) : (
         <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {visible.map((offer) => (
+          {visible.map((offer, index) => (
             <li key={offer.id}>
               <div className="sm:hidden">
                 <CompactOfferCard
                   offer={offer}
                   term={term}
                   title={offer.name}
-                  subtitle={`lub podobny · ${offer.segment}`}
+                  subtitle={`${cars.orSimilar} · ${offer.segment}`}
                   selected={offer.id === selectedId}
                   onChoose={() => choose(offer.id)}
+                  preload={index === 0}
                 />
               </div>
               <div className="hidden h-full sm:block">
@@ -301,6 +315,7 @@ export function OfferList({
                   term={term}
                   selected={offer.id === selectedId}
                   onChoose={() => choose(offer.id)}
+                  preload={index === 0}
                 />
               </div>
             </li>
@@ -313,6 +328,7 @@ export function OfferList({
         car={selected}
         prices={prices}
         action={action}
+        searchQuery={searchQuery}
       />
       <MobileSummaryBar car={selected} prices={prices} action={action} />
     </div>
@@ -351,6 +367,7 @@ function Segmented<T extends string>({
 }
 
 function ClearButton({ onClick }: { onClick: () => void }) {
+  const { cars } = useMessages();
   return (
     <button
       type="button"
@@ -358,7 +375,7 @@ function ClearButton({ onClick }: { onClick: () => void }) {
       className="flex h-9 shrink-0 cursor-pointer items-center gap-1 rounded-full px-3 text-sm font-semibold text-red-600 transition-colors duration-200 ease-out hover:bg-red-50 motion-reduce:transition-none"
     >
       <X className="size-4" aria-hidden />
-      Wyczyść filtry
+      {cars.clearFilters}
     </button>
   );
 }
@@ -379,6 +396,7 @@ function FilterSheet({
   children: ReactNode;
 }) {
   const titleId = useId();
+  const { cars } = useMessages();
   return (
     <WidgetModal
       open={open}
@@ -386,16 +404,16 @@ function FilterSheet({
       className="mx-0 mb-0 max-h-[85dvh] w-full rounded-t-3xl shadow-2xl lg:hidden"
     >
       <Dialog aria-labelledby={titleId} className="flex min-h-0 flex-col outline-none">
-        <DialogHeader titleId={titleId} title="Filtry i sortowanie" className="pt-4 pb-2" />
+        <DialogHeader titleId={titleId} title={cars.filtersTitle} className="pt-4 pb-2" />
         <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overscroll-contain px-5 py-3">{children}</div>
         <div className="flex shrink-0 items-center gap-3 border-t border-muted-light px-5 py-4">
           {onClear ? <ClearButton onClick={onClear} /> : null}
           <button
             type="button"
             onClick={onClose}
-            className="h-12 flex-1 cursor-pointer rounded-xl bg-blue-medium px-4 text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
+            className={buttonClass("primary", "md", "flex-1 px-4")}
           >
-            Pokaż {resultLabel}
+            {fill(cars.showResults, { cars: resultLabel })}
           </button>
         </div>
       </Dialog>
@@ -438,12 +456,16 @@ function OfferTile({
   term,
   selected,
   onChoose,
+  preload,
 }: {
   offer: OfferCard;
   term: ReservationTerm;
   selected: boolean;
   onChoose: () => void;
+  /** The first card of the list: its photo is the page's largest paint. */
+  preload: boolean;
 }) {
+  const { cars } = useMessages();
   return (
     <article
       className={`flex h-full flex-col overflow-hidden rounded-2xl border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
@@ -456,13 +478,15 @@ function OfferTile({
             src={offer.image.src}
             alt={offer.image.alt}
             fill
-            sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            // Three columns next to the 20rem summary panel from `xl`, two below.
+            sizes="(min-width: 1280px) 300px, (min-width: 1024px) 460px, (min-width: 640px) 50vw, 100vw"
+            preload={preload}
             className="object-contain p-3"
           />
         ) : null}
         {offer.popular ? (
           <span className="absolute top-3 left-3 rounded-full bg-green-light px-2.5 py-1 text-xxs font-bold text-green-dark">
-            Popularny
+            {cars.popular}
           </span>
         ) : null}
       </div>
@@ -470,7 +494,7 @@ function OfferTile({
         <div>
           <p className="text-xxs font-semibold tracking-wide text-blue-medium uppercase">{offer.segment}</p>
           <h3 className="text-lg font-semibold text-blue-dark">{offer.name}</h3>
-          <p className="text-xs text-muted-dark">lub podobny</p>
+          <p className="text-xs text-muted-dark">{cars.orSimilar}</p>
         </div>
         <SpecList offer={offer} />
         {/* Stacked: a four-digit total with "/ 14 dni" leaves no room for the button beside it. */}
@@ -504,19 +528,14 @@ function sortOffers(offers: OfferCard[], sort: Sort, term: ReservationTerm): Off
   });
 }
 
-function countLabel(cars: number, segments: number | null): string {
-  const carsText = `${cars} ${plural(cars, "samochód", "samochody", "samochodów")}`;
+function carCount(lang: Lang, cars: Messages["cars"], count: number): string {
+  return `${count} ${plural(lang, count, cars.carCount)}`;
+}
+
+function countLabel(lang: Lang, cars: Messages["cars"], count: number, segments: number | null): string {
+  const carsText = carCount(lang, cars, count);
   if (segments === null) {
     return carsText;
   }
-  return `${carsText} w ${segments} ${plural(segments, "klasie", "klasach", "klasach")}`;
-}
-
-function plural(count: number, one: string, few: string, many: string): string {
-  if (count === 1) {
-    return one;
-  }
-  const last = count % 10;
-  const lastTwo = count % 100;
-  return last >= 2 && last <= 4 && (lastTwo < 12 || lastTwo > 14) ? few : many;
+  return fill(cars.inClasses, { cars: carsText, count: segments, classes: plural(lang, segments, cars.classCount) });
 }

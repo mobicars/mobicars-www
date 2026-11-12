@@ -10,10 +10,14 @@ import { PlaceFields } from "@/components/reservation/place-fields";
 import { formatSchedulePoint, pointFromValue, valueFromPoint } from "@/components/reservation/schedule";
 import { formatKilometers, formatMonths } from "@/components/reservation/format";
 import { StartDateDialog } from "@/components/reservation/start-date-dialog";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import { reservationConfig } from "@/lib/reservation/config";
 
 /** Monthly rental: place, pickup date, month count and kilometer limit. */
 export function LongTermBar({ places, draft, onChange, invalid, fieldRef }: TermBarProps) {
+  const lang = useLang();
+  const texts = useMessages().search;
   const [datesOpen, setDatesOpen] = useState(false);
   const start = pointFromValue(draft.start);
 
@@ -33,8 +37,8 @@ export function LongTermBar({ places, draft, onChange, invalid, fieldRef }: Term
             <BarField
               buttonRef={fieldRef("start")}
               icon={CalendarCheck2}
-              label="Data i godzina odbioru"
-              value={start ? formatSchedulePoint(start) : "Wybierz datę"}
+              label={texts.pickupDateTime}
+              value={start ? formatSchedulePoint(lang, start) : texts.chooseDate}
               onClick={() => setDatesOpen(true)}
               invalid={invalid.has("start")}
               className="border-b-2 @lg:border-r-2 @5xl:border-b-0"
@@ -42,10 +46,10 @@ export function LongTermBar({ places, draft, onChange, invalid, fieldRef }: Term
             <OptionField
               buttonRef={fieldRef("months")}
               icon={CalendarRange}
-              label="Liczba miesięcy"
+              label={texts.monthCount}
               value={draft.months}
               options={reservationConfig.longTermMonthCounts}
-              format={formatMonths}
+              format={(count) => formatMonths(lang, count)}
               onChange={(months) => onChange({ months })}
               invalid={invalid.has("months")}
               className="border-b-2 @lg:border-r-2 @5xl:border-b-0"
@@ -53,10 +57,10 @@ export function LongTermBar({ places, draft, onChange, invalid, fieldRef }: Term
             <OptionField
               buttonRef={fieldRef("km")}
               icon={Gauge}
-              label="Limit kilometrów"
+              label={texts.kmLimit}
               value={draft.km}
               options={reservationConfig.kilometerLimits}
-              format={formatKilometers}
+              format={(count) => formatKilometers(lang, count)}
               onChange={(km) => onChange({ km })}
               invalid={invalid.has("km")}
               className="border-b-2 @5xl:border-r-2 @5xl:border-b-0"
@@ -97,6 +101,7 @@ function OptionField({
   className: string;
 }) {
   const titleId = useId();
+  const texts = useMessages().search;
   const [open, setOpen] = useState(false);
 
   return (
@@ -105,7 +110,7 @@ function OptionField({
         buttonRef={buttonRef}
         icon={icon}
         label={label}
-        value={value === null ? "Wybierz" : format(value)}
+        value={value === null ? texts.choose : format(value)}
         onClick={() => setOpen(true)}
         invalid={invalid}
         className={className}

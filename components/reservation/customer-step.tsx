@@ -1,15 +1,15 @@
 "use client";
 
-import { startTransition, useActionState, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Banknote, Car, LogIn, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowLeft, Banknote, Car, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
 import { PasswordField, TextField } from "@/components/auth/fields";
 import { PhoneField } from "@/components/auth/phone-field";
-import { customerCopy as t, fieldErrors, submitErrors } from "@/components/reservation/customer-copy";
-import { formatMoney } from "@/components/reservation/offer-parts";
+import { AccountBox } from "@/components/reservation/account-box";
+import { formatMoney } from "@/components/reservation/format";
 import {
   MobileSummaryBar,
   PriceLines,
@@ -18,11 +18,16 @@ import {
   type SummaryAction,
   type TripSummary,
 } from "@/components/reservation/summary";
-import { currentHrefWith } from "@/components/reservation/url";
+import { PromoCode } from "@/components/reservation/promo-code";
+import { currentHrefWith, restartCarChoice } from "@/components/reservation/url";
 import { useQuote } from "@/components/reservation/use-quote";
+import { RichText } from "@/components/ui/rich-text";
 import type { Lang } from "@/i18n/config";
-import { loginPath } from "@/lib/auth/paths";
+import { fill } from "@/i18n/fill";
+import { useLang } from "@/i18n/lang-context";
+import { useMessages } from "@/i18n/messages-context";
 import { placeReservation, type PlaceReservationState } from "@/lib/reservation/actions";
+import type { ChosenExtra } from "@/lib/reservation/booking";
 import {
   CONSENTS,
   MAX_PASSWORD_LENGTH,
@@ -50,12 +55,10 @@ export type AccountPrefill = {
   transferConsent: boolean;
 };
 
-export type ChosenExtra = { id: number; name: string; quantity: number };
-
 const FORM_ID = "customer-form";
 
 /**
- * Last step: the whole reservation to check, then "Twoje dane" and "Rezerwuj".
+ * Last step: the whole reservation to check, then the customer's data and the booking button.
  * A guest books as a new client and sets a password, as on the old site; a
  * signed-in client books as their account (type, name and email fixed, phone
  * editable). The form is checked here first and again by `placeReservation`,
@@ -92,12 +95,15 @@ export function CustomerStep({
   account: AccountPrefill | null;
 }) {
   const router = useRouter();
+  const messages = useMessages();
+  const t = messages.details;
+  const fieldError = (code: CustomerError) => fill(t.errors[code], { count: MIN_PASSWORD_LENGTH });
   const quote = useQuote(quoteQuery(lang, searchQuery, car.id, addonIds, accessories), initialQuote);
   const [errors, setErrors] = useState<Partial<Record<CustomerField, CustomerError>>>({});
   const [state, dispatch, pending] = useActionState<PlaceReservationState, FormData>(async (previous, data) => {
     const result = await placeReservation(previous, data);
     if (result) {
-      toast.error(submitErrors[result.error]);
+      toast.error(t.submitErrors[result.error]);
       setErrors(result.fields ?? {});
       if (result.error === "price") {
         // The panel asks for the new price; the customer confirms it with another click.
@@ -115,6 +121,13 @@ export function CustomerStep({
     transfer: account?.transferConsent ?? false,
   });
   const signedIn = account !== null;
+  const [loginOpen, setLoginOpen] = useState(false);
+  const accountBox = useRef<HTMLDivElement>(null);
+  /** "An account with these details exists": open the sign-in box right here. */
+  function openLogin() {
+    setLoginOpen(true);
+    accountBox.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }
 
 
   function submit(event: FormEvent<HTMLFormElement>) {
@@ -124,7 +137,7 @@ export function CustomerStep({
     const found = validateCustomer(customerFromForm(data, account?.type ?? null), { signedIn, airport });
     setErrors(found);
     if (Object.keys(found).length > 0) {
-      toast.error(submitErrors.invalid);
+      toast.error(t.submitErrors.invalid);
       // After the fields re-render with `aria-invalid`.
       window.setTimeout(() => form.querySelector<HTMLElement>("[aria-invalid='true']")?.focus(), 0);
       return;
@@ -147,25 +160,16 @@ export function CustomerStep({
 
   const ready = quote.quote !== null && !quote.loading && !quote.failed;
   const action: SummaryAction = {
-    label: pending ? "Rezerwujemy…" : t.submit,
+    label: pending ? t.submitting : t.submit,
     form: ready ? FORM_ID : undefined,
     busy: pending,
-    hint: ready ? undefined : "Czekamy na aktualną cenę.",
+    hint: ready ? undefined : t.waitingForPrice,
   };
   const prices = quotePrices(quote);
   const goTo = (step: string) => router.push(currentHrefWith({ [QUERY_KEYS.step]: step }), { scroll: false });
-  const backToCars = () =>
-    router.push(
-      currentHrefWith({
-        [QUERY_KEYS.step]: null,
-        [QUERY_KEYS.protection]: null,
-        [QUERY_KEYS.zone]: null,
-        [QUERY_KEYS.extras]: null,
-        [QUERY_KEYS.accessories]: null,
-      }), { scroll: false }
-    );
+  const backToCars = () => router.push(restartCarChoice(), { scroll: false });
   const error = (field: CustomerField, hint?: ReactNode) =>
-    errors[field] ? <span className="text-red-700">{fieldErrors[errors[field]]}</span> : hint;
+    errors[field] ? <span className="text-red-700">{fieldError(errors[field])}</span> : hint;
   const required = CONSENTS.filter((consent) => consent.required);
   const allRequired = required.every(({ name }) => consents[name]);
 
@@ -173,14 +177,14 @@ export function CustomerStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="@container flex min-w-0 flex-col gap-6">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-2xl font-semibold text-blue-dark">Podsumowanie rezerwacji</h2>
+          <h2 className="text-2xl font-semibold text-blue-dark">{t.reviewTitle}</h2>
           <button
             type="button"
             onClick={() => goTo("extras")}
             className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
             <ArrowLeft className="size-4" aria-hidden />
-            Wróć do dodatków
+            {t.backToExtras}
           </button>
         </div>
 
@@ -195,11 +199,25 @@ export function CustomerStep({
           onChangeProtection={() => goTo("protection")}
           onChangeExtras={() => goTo("extras")}
         >
-          {/* Below `lg` the side panel is hidden: its prices go here. */}
-          <div className="lg:hidden">
+          {/* Below `lg` the side panel (with the code box and prices) is hidden: both go here. */}
+          <div className="flex flex-col gap-4 lg:hidden">
+            <PromoCode searchQuery={searchQuery} />
             <PriceLines prices={prices} />
           </div>
         </Review>
+
+        {/* One card: heading, the sign-in box (its own form) and the booking form; forms cannot nest. */}
+        <section aria-labelledby="customer-title" className="flex flex-col gap-6 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
+          <div>
+            <h2 id="customer-title" className="text-2xl font-semibold text-blue-dark">
+              {t.title}
+            </h2>
+            {signedIn ? null : <p className="mt-1 text-sm text-muted-dark">{t.description}</p>}
+          </div>
+
+          <div ref={accountBox}>
+            <AccountBox lang={lang} account={account} open={loginOpen} onOpenChange={setLoginOpen} />
+          </div>
 
         <form
           id={FORM_ID}
@@ -207,7 +225,7 @@ export function CustomerStep({
           onSubmit={submit}
           onChange={(event) => clearError((event.target as unknown as HTMLInputElement).name ?? "")}
           aria-labelledby="customer-title"
-          className="flex flex-col gap-6 rounded-2xl bg-white p-5 shadow-sm @xl:p-6"
+          className="flex flex-col gap-6"
         >
           <input type="hidden" name="lang" value={lang} />
           <input type="hidden" name="search" value={searchQuery} />
@@ -218,37 +236,8 @@ export function CustomerStep({
           {selectionQuery.acc ? <input type="hidden" name={QUERY_KEYS.accessories} value={selectionQuery.acc} /> : null}
           <input type="hidden" name="total" value={quote.quote?.total ?? ""} />
 
-          <div>
-            <h2 id="customer-title" className="text-2xl font-semibold text-blue-dark">
-              {t.title}
-            </h2>
-            {signedIn ? null : <p className="mt-1 text-sm text-muted-dark">{t.description}</p>}
-          </div>
-
-          {signedIn ? (
-            <p className="rounded-xl bg-blue-light px-4 py-3 text-sm text-blue-dark">
-              Rezerwujesz jako <span className="font-semibold">{account.email}</span>. Rodzaj klienta, imię, nazwisko i
-              e-mail pochodzą z Twojego konta; numer telefonu możesz zmienić dla tej rezerwacji.
-            </p>
-          ) : (
-            <div className="flex flex-col items-start justify-between gap-3 rounded-xl border border-blue-medium/20 bg-blue-light/60 px-4 py-3 @xl:flex-row @xl:items-center">
-              <p className="text-sm text-blue-dark">
-                <span className="font-semibold">Mam już mobikonto.</span> Zaloguj się, a dane uzupełnimy za Ciebie;
-                wybrane auto i dodatki zostaną.
-              </p>
-              <button
-                type="button"
-                onClick={() => router.push(loginPath(lang, window.location.pathname + window.location.search))}
-                className="flex h-10 shrink-0 cursor-pointer items-center gap-2 rounded-xl bg-blue-medium px-4 text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark motion-reduce:transition-none"
-              >
-                <LogIn className="size-4" aria-hidden />
-                Zaloguj się
-              </button>
-            </div>
-          )}
-
           <fieldset className="grid grid-cols-2 gap-2" disabled={signedIn}>
-            <legend className="sr-only">Rodzaj klienta</legend>
+            <legend className="sr-only">{t.customerType}</legend>
             {(["individual", "company"] as const).map((option) => (
               <label
                 key={option}
@@ -351,7 +340,7 @@ export function CustomerStep({
                 required
                 invalid={!!errors.phone}
               />
-              {errors.phone ? <span className="text-xs text-red-700">{fieldErrors[errors.phone]}</span> : null}
+              {errors.phone ? <span className="text-xs text-red-700">{fieldError(errors.phone)}</span> : null}
             </div>
           </div>
 
@@ -365,9 +354,9 @@ export function CustomerStep({
                   minLength={MIN_PASSWORD_LENGTH}
                   maxLength={MAX_PASSWORD_LENGTH}
                   invalid={!!errors.password}
-                  hint={error("password", `Co najmniej ${MIN_PASSWORD_LENGTH} znaków.`)}
-                  showLabel="Pokaż hasło"
-                  hideLabel="Ukryj hasło"
+                  hint={error("password", fill(t.passwordMin, { count: MIN_PASSWORD_LENGTH }))}
+                  showLabel={messages.account.login.showPassword}
+                  hideLabel={messages.account.login.hidePassword}
                 />
                 <PasswordField
                   label={`${t.confirm} *`}
@@ -376,8 +365,8 @@ export function CustomerStep({
                   maxLength={MAX_PASSWORD_LENGTH}
                   invalid={!!errors.confirm}
                   hint={error("confirm")}
-                  showLabel="Pokaż hasło"
-                  hideLabel="Ukryj hasło"
+                  showLabel={messages.account.login.showPassword}
+                  hideLabel={messages.account.login.hidePassword}
                 />
               </div>
               <p className="text-xs text-muted-dark">{t.passwordHint}</p>
@@ -420,13 +409,10 @@ export function CustomerStep({
               name="flightNumber"
               maxLength={20}
               autoCapitalize="characters"
-              placeholder="np. LO 3912"
+              placeholder={t.flightPlaceholder}
               className="@xl:max-w-[calc(50%-0.5rem)]"
               invalid={!!errors.flightNumber}
-              hint={error(
-                "flightNumber",
-                "Opcjonalnie. Odbierasz auto na lotnisku: numer lotu pomoże nam przygotować wydanie, gdyby samolot się spóźnił.",
-              )}
+              hint={error("flightNumber", t.flightHint)}
             />
           ) : null}
 
@@ -439,12 +425,14 @@ export function CustomerStep({
               aria-invalid={errors.comment ? true : undefined}
               className="w-full rounded-lg border border-muted bg-white px-4 py-3 font-normal text-ink outline-none transition-colors focus:border-blue-medium focus:ring-2 focus:ring-blue-light aria-invalid:border-red-500"
             />
-            {errors.comment ? <span className="text-xs text-red-700">{fieldErrors[errors.comment]}</span> : null}
+            {errors.comment ? <span className="text-xs text-red-700">{fieldError(errors.comment)}</span> : null}
           </label>
 
           <fieldset className="flex flex-col gap-3 border-t border-muted-light pt-5">
-            <legend className="sr-only">Zgody</legend>
-            <p className="text-sm text-blue-dark/80">{t.documents}</p>
+            <legend className="sr-only">{t.consentsLegend}</legend>
+            <p className="text-sm text-blue-dark/80">
+              <RichText text={t.documents} />
+            </p>
             <label className="flex cursor-pointer items-start gap-3 text-sm font-semibold text-blue-dark">
               <input
                 type="checkbox"
@@ -478,54 +466,52 @@ export function CustomerStep({
                 />
                 <span>
                   {needed ? <span aria-hidden>* </span> : null}
-                  {t.consents[name]}
-                  {needed ? <span className="sr-only"> (wymagane)</span> : null}
+                  <RichText text={t.consents[name]} />
+                  {needed ? <span className="sr-only"> {t.requiredMark}</span> : null}
                 </span>
               </label>
             ))}
-            {errors.consents ? <p className="text-sm text-red-700">{fieldErrors.consents}</p> : null}
+            {errors.consents ? <p className="text-sm text-red-700">{fieldError("consents")}</p> : null}
           </fieldset>
 
           <div className="flex flex-col gap-3 border-t border-muted-light pt-5">
             <p className="flex items-start gap-2 text-xs text-muted-dark">
               <Wallet className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-              {t.success.text2} {t.success.text3}
+              {messages.confirmation.text2} {messages.confirmation.text3}
             </p>
             {state ? (
               <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
-                {submitErrors[state.error]}
+                {t.submitErrors[state.error]}
                 {state.error === "account_exists" ? (
                   <>
                     {" "}
-                    <button
-                      type="button"
-                      onClick={() => router.push(loginPath(lang, window.location.pathname + window.location.search))}
-                      className="cursor-pointer font-semibold underline"
-                    >
-                      Zaloguj się
+                    <button type="button" onClick={openLogin} className="cursor-pointer font-semibold underline">
+                      {messages.account.login.submit}
                     </button>
                   </>
                 ) : null}
               </div>
             ) : null}
+            {/* Below `lg` the bottom bar has this button: one booking button per screen. */}
             <button
               type="submit"
               disabled={!ready || pending}
-              className="flex h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-green-medium px-5 text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-green-dark disabled:cursor-default disabled:bg-muted disabled:text-muted-dark motion-reduce:transition-none @xl:ml-auto @xl:w-72"
+              className="hidden h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-green-medium px-5 text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-green-dark disabled:cursor-default disabled:bg-muted disabled:text-muted-dark motion-reduce:transition-none lg:flex @xl:ml-auto @xl:w-72"
             >
               {action.label}
-              {ready && quote.quote ? <span className="font-semibold">· {formatMoney(quote.quote.total)}</span> : null}
+              {ready && quote.quote ? <span className="font-semibold">· {formatMoney(lang, quote.quote.total)}</span> : null}
             </button>
           </div>
         </form>
+        </section>
       </div>
-      <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} />
+      <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} searchQuery={searchQuery} />
       <MobileSummaryBar car={car} prices={prices} action={action} />
     </div>
   );
 }
 
-/** Everything chosen so far, each part with "Zmień" back to its step. */
+/** Everything chosen so far, each part with a "change" button back to its step. */
 function Review({
   trip,
   car,
@@ -549,23 +535,25 @@ function Review({
   onChangeExtras: () => void;
   children: ReactNode;
 }) {
+  const t = useMessages().details;
+  const lang = useLang();
   return (
-    <section aria-label="Twój wybór" className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
-      <ReviewRow icon={MapPin} title="Odbiór i zwrot" onChange={onChangeTrip}>
+    <section aria-label={t.reviewLabel} className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
+      <ReviewRow icon={MapPin} title={t.trip} onChange={onChangeTrip}>
         <dl className="grid gap-3 @xl:grid-cols-2">
           <div>
-            <dt className="text-xs text-muted-dark">Odbiór</dt>
+            <dt className="text-xs text-muted-dark">{t.pickup}</dt>
             <dd className="font-semibold text-blue-dark">{trip.start}</dd>
             <dd className="text-sm text-blue-dark/80">{trip.pickup}</dd>
           </div>
           <div>
-            <dt className="text-xs text-muted-dark">Zwrot</dt>
+            <dt className="text-xs text-muted-dark">{t.return}</dt>
             <dd className="font-semibold text-blue-dark">{trip.end}</dd>
             <dd className="text-sm text-blue-dark/80">{trip.dropoff ?? trip.pickup}</dd>
           </div>
         </dl>
       </ReviewRow>
-      <ReviewRow icon={Car} title="Samochód" onChange={onChangeCar}>
+      <ReviewRow icon={Car} title={t.car} onChange={onChangeCar}>
         <div className="flex items-center gap-4">
           {car.image ? (
             <span className="relative block h-16 w-28 shrink-0">
@@ -574,14 +562,14 @@ function Review({
           ) : null}
           <div className="min-w-0">
             <p className="font-semibold text-blue-dark">{car.name}</p>
-            <p className="text-xs text-muted-dark">lub podobny · {car.segment}</p>
+            <p className="text-xs text-muted-dark">{t.orSimilar} · {car.segment}</p>
           </div>
         </div>
       </ReviewRow>
-      <ReviewRow icon={ShieldCheck} title="Ochrona" onChange={onChangeProtection}>
-        <p className="text-sm font-semibold text-blue-dark">{protection?.name ?? "Bez pakietu ochrony"}</p>
+      <ReviewRow icon={ShieldCheck} title={t.protection} onChange={onChangeProtection}>
+        <p className="text-sm font-semibold text-blue-dark">{protection?.name ?? t.noProtection}</p>
       </ReviewRow>
-      <ReviewRow icon={Package} title="Dodatki" onChange={onChangeExtras}>
+      <ReviewRow icon={Package} title={t.extras} onChange={onChangeExtras}>
         {extras.length > 0 ? (
           <ul className="flex flex-col gap-1 text-sm text-blue-dark">
             {extras.map((extra) => (
@@ -592,14 +580,14 @@ function Review({
             ))}
           </ul>
         ) : (
-          <p className="text-sm text-muted-dark">Bez dodatków</p>
+          <p className="text-sm text-muted-dark">{t.noExtras}</p>
         )}
       </ReviewRow>
       {children}
       {quote?.deposit ? (
         <p className="flex items-center gap-2 text-xs text-muted-dark">
           <Banknote className="size-4 text-blue-medium" strokeWidth={1.75} aria-hidden />
-          Kaucja: <span className="font-semibold text-blue-dark">{formatMoney(quote.deposit)}</span>
+          {t.deposit}: <span className="font-semibold text-blue-dark">{formatMoney(lang, quote.deposit)}</span>
         </p>
       ) : null}
     </section>
@@ -617,6 +605,7 @@ function ReviewRow({
   onChange: () => void;
   children: ReactNode;
 }) {
+  const t = useMessages().details;
   return (
     <div className="flex gap-3 border-b border-muted-light pb-4 last-of-type:border-0">
       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-light text-blue-medium">
@@ -628,10 +617,10 @@ function ReviewRow({
           <button
             type="button"
             onClick={onChange}
-            aria-label={`Zmień: ${title}`}
+            aria-label={fill(t.changeLabel, { title })}
             className="shrink-0 cursor-pointer rounded-full border border-blue-dark/20 px-3 py-1 text-xs font-semibold text-blue-dark transition-colors duration-200 ease-out hover:border-blue-medium hover:text-blue-medium motion-reduce:transition-none"
           >
-            Zmień
+            {t.change}
           </button>
         </div>
         {children}

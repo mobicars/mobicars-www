@@ -1,59 +1,23 @@
 import Link from "next/link";
-import { Phone, UserRound } from "lucide-react";
+import { CarFront, Phone, UserRound } from "lucide-react";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Logo } from "@/components/layout/logo";
 import type { Lang } from "@/i18n/config";
-import { accountHref, reservationHref } from "@/i18n/routes";
+import { getMessages } from "@/i18n/messages";
+import { accountHref, fleetHref, reservationHref } from "@/i18n/routes";
 
 /**
  * Provisional site header and footer, until the CMS navigation is wired in:
- * the logo, the hotline, the language menu and the customer panel. The phone
+ * the logo, the fleet, the hotline, the language menu and the customer panel.
+ * Texts are the `layout` section of messages/{lang}.json. The phone
  * number is the old site's (`mobicars-pl/components/layout/header.tsx`).
  */
 
 const HOTLINE = { href: "tel:+48881328328", label: "+48 881 328 328" };
 
-const COPY: Record<
-  Lang,
-  { account: string; hotline: string; home: string; shortTerm: string; longTerm: string; documents: string }
-> = {
-  pl: {
-    account: "Moje konto",
-    hotline: "Infolinia",
-    home: "Strona główna MobiCars",
-    shortTerm: "Wynajem krótkoterminowy",
-    longTerm: "Wynajem długoterminowy",
-    documents: "Dokumenty",
-  },
-  en: {
-    account: "My account",
-    hotline: "Hotline",
-    home: "MobiCars home page",
-    shortTerm: "Short-term rental",
-    longTerm: "Long-term rental",
-    documents: "Documents",
-  },
-  de: {
-    account: "Mein Konto",
-    hotline: "Hotline",
-    home: "MobiCars Startseite",
-    shortTerm: "Kurzzeitmiete",
-    longTerm: "Langzeitmiete",
-    documents: "Dokumente",
-  },
-  uk: {
-    account: "Мій акаунт",
-    hotline: "Гаряча лінія",
-    home: "Головна сторінка MobiCars",
-    shortTerm: "Короткострокова оренда",
-    longTerm: "Довгострокова оренда",
-    documents: "Документи",
-  },
-};
-
 export function SiteHeader({ lang }: { lang: Lang }) {
-  const t = COPY[lang];
+  const t = getMessages(lang).layout;
   return (
     <header className="border-b border-muted bg-white">
       <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-3 px-3 sm:px-6 lg:h-20">
@@ -61,6 +25,13 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           <Logo className="h-8 w-auto fill-blue-medium lg:h-10" label="MobiCars" />
         </Link>
         <div className="flex items-center gap-1 sm:gap-2">
+          <Link
+            href={fleetHref(lang)}
+            className="hidden h-10 items-center gap-2 rounded-full px-3 text-sm font-bold text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] motion-reduce:transition-none sm:flex"
+          >
+            <CarFront className="size-5 text-blue-medium" aria-hidden />
+            {t.fleet}
+          </Link>
           <a
             href={HOTLINE.href}
             className="flex h-10 items-center gap-2 rounded-full bg-green-medium px-3 text-sm font-bold text-white transition-colors duration-200 ease-out hover:bg-green-dark motion-reduce:transition-none"
@@ -84,8 +55,9 @@ export function SiteHeader({ lang }: { lang: Lang }) {
 }
 
 export function SiteFooter({ lang }: { lang: Lang }) {
-  const t = COPY[lang];
+  const t = getMessages(lang).layout;
   const links = [
+    { href: fleetHref(lang), label: t.fleet },
     { href: reservationHref(lang), label: t.shortTerm },
     { href: reservationHref(lang, "long"), label: t.longTerm },
     { href: accountHref(lang), label: t.account },
