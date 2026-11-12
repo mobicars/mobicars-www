@@ -144,4 +144,13 @@ body {
   body:has([data-mobile-summary-bar]) {
     padding-bottom: 6rem;
   }
+
+  /* Outside production the red preview banner (2.75rem) takes the bottom edge: the bar goes above it. */
+  body:has([data-preview-banner]) [data-mobile-summary-bar] {
+    bottom: 2.75rem;
+  }
+
+  body:has([data-preview-banner]):has([data-mobile-summary-bar]) {
+    padding-bottom: 8.75rem;
+  }
 }
