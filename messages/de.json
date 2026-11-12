@@ -518,7 +518,16 @@
     "quantity": "Anzahl: {name}",
     "less": "Weniger",
     "more": "Mehr",
-    "perMonth": "/ Monat"
+    "perMonth": "/ Monat",
+    "upgrade": {
+      "title": "Entspannter fahren mit {name}",
+      "price": "Nur +{price} {unit}",
+      "gains": "Sie erhalten:",
+      "button": "Zu {name} wechseln",
+      "changing": "Wird geändert…",
+      "perDay": "/ Tag",
+      "perMonth": "/ Monat"
+    }
   },
   "upsell": {
     "title": "Brauchen Sie mehr Komfort?",
@@ -663,6 +672,19 @@
       "title": "Mieten Sie für {days}?",
       "text": "Monatsweise ist es meist deutlich günstiger: eine feste Monatsrate und ein Kilometerlimit nach Wahl.",
       "button": "Preise für {months} ansehen"
+    },
+    "extend": {
+      "title": "{days} statt {current} mieten",
+      "text": "Jeder Tag wird günstiger: {before} → {after}.",
+      "cost": "Für die gesamte Miete nur +{cost}.",
+      "free": "Ohne Aufpreis.",
+      "button": "Auf {days} verlängern",
+      "extending": "Wird verlängert…"
+    },
+    "resume": {
+      "title": "Sie haben eine unvollständige Buchung",
+      "button": "Buchung abschließen",
+      "dismiss": "Ausblenden"
     }
   },
   "details": {

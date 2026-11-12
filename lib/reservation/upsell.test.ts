@@ -19,6 +19,7 @@ function car(segment: string, daily: number, overrides: Partial<OfferCard> = {})
     fuelType: null,
     dailyPrice: daily,
     days: null,
+    bands: [],
     totalPrice: daily * 6,
     monthlyPrice: null,
     regularTotalPrice: null,

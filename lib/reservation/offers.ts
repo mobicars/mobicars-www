@@ -39,6 +39,12 @@ export type OfferCard = {
   totalPrice: number | null;
   /** Rental days the API counted for the search; the price reads "/ 2 dni". Null on monthly lists. */
   days: number | null;
+  /**
+   * The segment's daily price bands from the API (`cennik[segmentId].czasy`):
+   * the price per day for rentals of `from`–`to` days, promotional when one
+   * applies. Only used to spot "one more day makes every day cheaper".
+   */
+  bands: { from: number | null; to: number | null; daily: number }[];
   /** Total before the promotion, to strike through. Null without a promotion. */
   regularTotalPrice: number | null;
   promotion: { name: string | null; endsAt: string | null } | null;
@@ -87,6 +93,10 @@ function toOfferCard(offer: Offer): OfferCard {
     fuelType: attribute("fuelType"),
     ...prices(offer),
     days: offer.days,
+    bands: (offer.priceList?.bands ?? []).flatMap((band) => {
+      const daily = band.promotionalPrice ?? band.price;
+      return daily === null ? [] : [{ from: band.from, to: band.to, daily }];
+    }),
     monthlyPrice: offer.monthlyPrice,
     deposit: offer.deposit,
     available: offer.available !== false && offer.rentable,

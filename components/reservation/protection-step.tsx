@@ -9,6 +9,7 @@ import { ArrowLeft, Check, ShieldCheck } from "lucide-react";
 import { DescriptionButton } from "@/components/reservation/description-button";
 import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
 import { formatMoney } from "@/components/reservation/format";
+import { ExtendHint } from "@/components/reservation/nudges";
 import { ChooseButton } from "@/components/reservation/offer-parts";
 import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@/components/reservation/summary";
 import { Slider } from "@/components/reservation/slider";
@@ -17,6 +18,7 @@ import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/re
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
+import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
 import type { ProtectionOption, ProtectionTier } from "@/lib/reservation/protection";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
@@ -35,6 +37,7 @@ export function ProtectionStep({
   initialQuote,
   trip,
   protectionDropped = false,
+  extension = null,
 }: {
   lang: string;
   /** The search's canonical query, for the quote request. */
@@ -48,6 +51,8 @@ export function ProtectionStep({
   trip: TripSummary;
   /** The URL named a package this car (segment, dates) does not offer. */
   protectionDropped?: boolean;
+  /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). */
+  extension?: ExtensionHint | null;
 }) {
   const router = useRouter();
   const t = useMessages().protection;
@@ -123,6 +128,11 @@ export function ProtectionStep({
           <p role="status" className="mb-4 rounded-xl bg-blue-light px-4 py-3 text-sm text-blue-dark">
             {t.dropped}
           </p>
+        ) : null}
+        {extension && car.days ? (
+          <div className="mb-4">
+            <ExtendHint hint={extension} currentDays={car.days} />
+          </div>
         ) : null}
         {options.length === 0 ? (
           <p className="rounded-2xl bg-white p-6 text-sm text-blue-dark shadow-sm">

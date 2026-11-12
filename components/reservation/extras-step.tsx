@@ -7,6 +7,7 @@ import { ArrowLeft, Globe, House, Minus, Plus, X } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
 import { formatMoney } from "@/components/reservation/format";
+import { ExtendHint, ProtectionUpgrade } from "@/components/reservation/nudges";
 import { ChooseButton } from "@/components/reservation/offer-parts";
 import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@/components/reservation/summary";
 import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/reservation/url";
@@ -26,7 +27,9 @@ import {
   type ExtrasSelection,
   type ExtrasView,
 } from "@/lib/reservation/extras";
+import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
+import type { ProtectionOption } from "@/lib/reservation/protection";
 import type { UpsellOption } from "@/lib/reservation/upsell";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS } from "@/lib/reservation/search";
@@ -47,6 +50,8 @@ export function ExtrasStep({
   trip,
   droppedCount = 0,
   upsell = [],
+  extension = null,
+  upgrade = null,
 }: {
   lang: string;
   searchQuery: string;
@@ -61,6 +66,10 @@ export function ExtrasStep({
   droppedCount?: number;
   /** Dearer classes to suggest, see `lib/reservation/upsell.ts`. */
   upsell?: UpsellOption[];
+  /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). */
+  extension?: ExtensionHint | null;
+  /** The best package, offered to someone who chose a lesser one. */
+  upgrade?: { from: ProtectionOption; to: ProtectionOption } | null;
 }) {
   const router = useRouter();
   const t = useMessages().extras;
@@ -139,6 +148,9 @@ export function ExtrasStep({
             {droppedCount === 1 ? t.droppedOne : t.droppedMany}
           </p>
         ) : null}
+
+        {upgrade ? <ProtectionUpgrade from={upgrade.from} to={upgrade.to} /> : null}
+        {extension && car.days ? <ExtendHint hint={extension} currentDays={car.days} /> : null}
 
         {view.zones.length > 0 ? (
           <BorderZones zones={view.zones} value={selection.zone} onChange={(zone) => update({ ...selection, zone })} />

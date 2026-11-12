@@ -9,7 +9,7 @@
     "codegen:watch": "graphql-codegen --watch",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts i18n/routes.test.ts lib/fleet/fleet.test.ts lib/account/phone.test.ts lib/reservation/search.test.ts lib/reservation/protection.test.ts lib/reservation/quote.test.ts lib/reservation/extras.test.ts lib/reservation/upsell.test.ts lib/reservation/customer.test.ts lib/reservation/calendar.test.ts lib/reservation/monthly-hint.test.ts"
+    "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts i18n/routes.test.ts lib/fleet/fleet.test.ts lib/account/phone.test.ts lib/reservation/search.test.ts lib/reservation/protection.test.ts lib/reservation/quote.test.ts lib/reservation/extras.test.ts lib/reservation/upsell.test.ts lib/reservation/customer.test.ts lib/reservation/calendar.test.ts lib/reservation/monthly-hint.test.ts lib/reservation/extend.test.ts"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",

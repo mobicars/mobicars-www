@@ -518,7 +518,16 @@
     "quantity": "Quantity: {name}",
     "less": "Fewer",
     "more": "More",
-    "perMonth": "/ month"
+    "perMonth": "/ month",
+    "upgrade": {
+      "title": "Drive worry-free with {name}",
+      "price": "Only +{price} {unit}",
+      "gains": "You get:",
+      "button": "Switch to {name}",
+      "changing": "Switching…",
+      "perDay": "/ day",
+      "perMonth": "/ month"
+    }
   },
   "upsell": {
     "title": "Need more comfort?",
@@ -663,6 +672,19 @@
       "title": "Renting for {days}?",
       "text": "Renting by the month is usually much cheaper: a fixed monthly rate and a kilometre limit of your choice.",
       "button": "See prices for {months}"
+    },
+    "extend": {
+      "title": "Take {days} instead of {current}",
+      "text": "Every day gets cheaper: {before} → {after}.",
+      "cost": "Only +{cost} for the whole rental.",
+      "free": "At no extra cost.",
+      "button": "Extend to {days}",
+      "extending": "Extending…"
+    },
+    "resume": {
+      "title": "You have an unfinished booking",
+      "button": "Finish booking",
+      "dismiss": "Hide"
     }
   },
   "details": {

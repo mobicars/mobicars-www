@@ -1,5 +1,7 @@
 import "server-only";
 
+import { parseDateTime } from "@internationalized/date";
+
 import { calculateReservation, listAccessories, listAddons, listAllOffers, type Extra } from "@/lib/rentcarsoft";
 import {
   selectedAccessories,
@@ -8,11 +10,13 @@ import {
   type ExtrasSelection,
   type ExtrasView,
 } from "@/lib/reservation/extras";
+import { extensionCandidate, type ExtensionHint } from "@/lib/reservation/extend";
 import { toOfferCards, type OfferCard } from "@/lib/reservation/offers";
 import { toProtectionOptions, type ProtectionOption } from "@/lib/reservation/protection";
 import { toQuoteView, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
 import {
   QUERY_KEYS,
+  formatQueryDateTime,
   rentalPeriod,
   toRentCarSoftDateTime,
   type ReservationSearch,
@@ -157,4 +161,47 @@ export function chosenExtras(selection: ExtrasSelection, view: ExtrasView, fallb
     ...selectedAddonIds(selection).map((id) => ({ id, name: names.get(id) ?? fallback, quantity: 1 })),
     ...selectedAccessories(selection).map(({ id, quantity }) => ({ id, name: names.get(id) ?? fallback, quantity })),
   ];
+}
+
+/**
+ * Daily rental only. Picks the length with `extensionCandidate`, then quotes
+ * the car alone for the current and the longer window, so the extra cost is
+ * RentCarSoft's, place fees and promotions included. Null when there is no
+ * cheaper band within reach or a quote fails (the hint is optional).
+ */
+export async function extensionHint(
+  lang: string,
+  search: ReservationSearch,
+  car: OfferCard,
+  promoCode: string | null,
+): Promise<ExtensionHint | null> {
+  if (search.term !== "short") {
+    return null;
+  }
+  const candidate = extensionCandidate(car);
+  if (!candidate) {
+    return null;
+  }
+  const end = formatQueryDateTime(parseDateTime(search.end).add({ days: candidate.addDays }));
+  try {
+    const [now, longer] = await Promise.all([
+      quoteFor(lang, search, car.id, [], [], promoCode),
+      quoteFor(lang, { ...search, end }, car.id, [], [], promoCode),
+    ]);
+    // The per-day prices shown are the quotes' rent over their days, so they
+    // always agree with the cost; the bands only chose the length. A band can
+    // differ from the quote (live API, 12 November 2026: 119.20 band, 124.20 quoted).
+    const perDay = (view: QuoteView, days: number) => {
+      const rent = view.lines.find((line) => line.kind === "rent");
+      return rent ? Math.round((rent.amount / days) * 100) / 100 : null;
+    };
+    const dailyBefore = perDay(now, car.days!);
+    const dailyAfter = perDay(longer, candidate.days);
+    if (dailyBefore === null || dailyAfter === null || dailyAfter >= dailyBefore) {
+      return null;
+    }
+    return { ...candidate, dailyBefore, dailyAfter, end, extraCost: Math.round((longer.total - now.total) * 100) / 100 };
+  } catch {
+    return null;
+  }
 }

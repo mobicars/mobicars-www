@@ -12,6 +12,7 @@ import { OfferList, type OfferView } from "@/components/reservation/offer-list";
 import { ReservationPicker } from "@/components/reservation/picker";
 import { PickupTimeGuard } from "@/components/reservation/pickup-time-guard";
 import { ProtectionStep } from "@/components/reservation/protection-step";
+import { RememberBooking } from "@/components/reservation/remember-booking";
 import { RememberSearch } from "@/components/reservation/remember-search";
 import { SearchProblem } from "@/components/reservation/search-problem";
 import { ReservationSteps } from "@/components/reservation/steps";
@@ -26,12 +27,14 @@ import { getAccountDetails, getSession } from "@/lib/auth/dal";
 import {
   chosenExtras,
   listOfferCards,
+  extensionHint,
   loadBookingChoices,
   normalizePromo,
   quoteFor,
 } from "@/lib/reservation/booking";
 import { monthlyAlternative } from "@/lib/reservation/monthly-hint";
 import { toPickupPlace, type PickupPlace } from "@/lib/reservation/places";
+import type { ProtectionOption } from "@/lib/reservation/protection";
 import { upsellOptions } from "@/lib/reservation/upsell";
 import { quoteQuery, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
 import {
@@ -269,7 +272,13 @@ async function Offers({
     // The protection and extras steps start over for another car or search; not
     // for a discount code, so the code box keeps its message when it drops one.
     const stepKey = `${car.id}|${searchToQuery(search)}`;
+    // Started now, awaited by the step that shows it; the details step does not.
+    const extension = step === "details" ? null : extensionHint(lang, search, car, promo);
     const { options, extrasView } = await loadBookingChoices(lang, search, car);
+    // For the homepage's "finish your booking" banner.
+    const remember = (
+      <RememberBooking car={car.name} dates={compactTrip(lang, search, places).dates} start={search.start} />
+    );
     // No package is preselected: the customer picks one (the free one included).
     const chosen = options.find((option) => option.id === protection)?.id ?? null;
 
@@ -287,6 +296,7 @@ async function Offers({
         return (
           <>
             <ReservationSteps current={3} />
+            {remember}
             <CustomerStep
               // Signing in or out on the form refreshes the page: start the form over with the new data.
               key={prefill?.email ?? "guest"}
@@ -310,6 +320,7 @@ async function Offers({
       return (
         <>
           <ReservationSteps current={2} />
+          {remember}
           <ExtrasStep
             key={stepKey}
             lang={lang}
@@ -320,6 +331,8 @@ async function Offers({
             initialSelection={selection}
             droppedCount={dropped}
             upsell={upsellOptions(car, offers, undefined, search.term === "long" ? search.months : null)}
+            extension={await extension}
+            upgrade={protectionUpgrade(options, chosen)}
             initialQuote={quote}
             trip={trip}
           />
@@ -330,6 +343,7 @@ async function Offers({
     return (
       <>
         <ReservationSteps current={1} />
+        {remember}
         <ProtectionStep
           key={stepKey}
           lang={lang}
@@ -339,6 +353,7 @@ async function Offers({
           initialProtection={chosen}
           protectionDropped={protection !== null && chosen === null}
           initialQuote={await serverQuote(lang, search, searchQuery, car.id, chosen === null ? [] : [chosen])}
+          extension={await extension}
           trip={trip}
         />
       </>
@@ -394,6 +409,22 @@ async function accountPrefill(lang: Lang): Promise<AccountPrefill | null> {
  * The first summary quote, rendered with the page so it needs no fetch. A
  * failed call yields `quote: null`; the panel then says the price is missing.
  */
+/**
+ * The best package (the recommended, dearest one) for someone who chose a
+ * lesser one, offered again on the extras step. Null when they already have it.
+ */
+function protectionUpgrade(
+  options: ProtectionOption[],
+  chosen: number | null,
+): { from: ProtectionOption; to: ProtectionOption } | null {
+  const from = options.find((option) => option.id === chosen);
+  const to = options.find((option) => option.recommended);
+  if (!from || !to || from.id === to.id || (to.price ?? 0) <= (from.price ?? 0)) {
+    return null;
+  }
+  return { from, to };
+}
+
 /** The search query plus the discount code, the form every step and quote request receives. */
 function withPromo(query: URLSearchParams, promo: string | null): URLSearchParams {
   if (promo) {

@@ -44,8 +44,63 @@ export function loadSearchDraft(): SearchDraft | null {
   }
 }
 
-/** After a placed reservation: the next visit starts with an empty widget. */
+/**
+ * A booking left on the protection, extras or details step, for the "finish
+ * your booking" banner on the homepage. `start` is the raw pickup value, so the
+ * banner can hide itself once that time is no longer bookable.
+ */
+export type BookingDraft = { href: string; car: string; dates: string; start: string };
+
+const DRAFT_KEY = "mobicars:reservation-draft";
+const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function saveBookingDraft(draft: BookingDraft): void {
+  try {
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ v: VERSION, savedAt: Date.now(), ...draft }));
+  } catch {
+    // Storage is unavailable; the banner is a convenience.
+  }
+}
+
+export function loadBookingDraft(): BookingDraft | null {
+  try {
+    const raw = window.localStorage.getItem(DRAFT_KEY);
+    if (!raw) {
+      return null;
+    }
+    const stored = JSON.parse(raw) as Partial<BookingDraft & { v: number; savedAt: number }>;
+    if (
+      stored.v !== VERSION ||
+      typeof stored.savedAt !== "number" ||
+      Date.now() - stored.savedAt > DRAFT_MAX_AGE_MS ||
+      typeof stored.href !== "string" ||
+      // Only a path on this site: the value comes back into a link.
+      !stored.href.startsWith("/") ||
+      stored.href.startsWith("//") ||
+      typeof stored.car !== "string" ||
+      typeof stored.dates !== "string" ||
+      typeof stored.start !== "string"
+    ) {
+      window.localStorage.removeItem(DRAFT_KEY);
+      return null;
+    }
+    return { href: stored.href, car: stored.car, dates: stored.dates, start: stored.start };
+  } catch {
+    return null;
+  }
+}
+
+export function clearBookingDraft(): void {
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+  } catch {
+    // Storage is unavailable; nothing was kept.
+  }
+}
+
+/** After a placed reservation: the next visit starts with an empty widget and no draft. */
 export function clearSearch(): void {
+  clearBookingDraft();
   try {
     window.localStorage.removeItem(KEY);
   } catch {

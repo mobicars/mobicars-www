@@ -518,7 +518,16 @@
     "quantity": "Ilość: {name}",
     "less": "Mniej",
     "more": "Więcej",
-    "perMonth": "/ mies."
+    "perMonth": "/ mies.",
+    "upgrade": {
+      "title": "Spokojniejsza jazda z pakietem {name}",
+      "price": "Tylko +{price} {unit}",
+      "gains": "Zyskujesz:",
+      "button": "Zmień na {name}",
+      "changing": "Zmieniamy…",
+      "perDay": "/ doba",
+      "perMonth": "/ mies."
+    }
   },
   "upsell": {
     "title": "Potrzebujesz większego komfortu?",
@@ -663,6 +672,19 @@
       "title": "Wynajmujesz na {days}?",
       "text": "Na miesiące wychodzi zwykle wyraźnie taniej, a w cenie masz stałą ratę i limit kilometrów do wyboru.",
       "button": "Sprawdź ceny na {months}"
+    },
+    "extend": {
+      "title": "Weź {days} zamiast {current}",
+      "text": "Każda doba stanieje z {before} do {after}.",
+      "cost": "Za cały wynajem tylko +{cost}.",
+      "free": "Bez żadnej dopłaty.",
+      "button": "Przedłuż do {days}",
+      "extending": "Przedłużamy…"
+    },
+    "resume": {
+      "title": "Masz niedokończoną rezerwację",
+      "button": "Dokończ rezerwację",
+      "dismiss": "Ukryj"
     }
   },
   "details": {
