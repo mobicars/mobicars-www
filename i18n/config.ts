@@ -1,4 +1,4 @@
-export const langs = ["pl", "en"] as const;
+export const langs = ["pl", "en", "de", "uk"] as const;
 
 export type Lang = (typeof langs)[number];
 
@@ -7,6 +7,8 @@ export const defaultLang: Lang = "pl";
 export const languages: readonly { lang: Lang; label: string }[] = [
   { lang: "pl", label: "Polski" },
   { lang: "en", label: "English" },
+  { lang: "de", label: "Deutsch" },
+  { lang: "uk", label: "Українська" },
 ];
 
 export function isLang(value: string): value is Lang {

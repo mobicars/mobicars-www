@@ -1,6 +1,6 @@
 /**
  * Stable MobiCars names for RentCarSoft custom-field ids.
- * Display text for select values comes from the key dictionaries, not from this map.
+ * Display text for select values comes from the payload `label`, or from the key dictionary when that label is absent.
  */
 
 export const OFFER_KEY_LABELS: Record<number, string> = {
@@ -116,6 +116,10 @@ export const CLIENT_KEY_LABELS: Record<number, string> = {
 };
 
 export const DEFAULT_CLIENT_KEY_IDS = [1, 2, 4, 5, 7, 9, 44, 46];
+
+/** Client key 25 “Zakaz wynajmu”: value 16 is “Tak”, 15 is “Nie”. */
+export const CLIENT_BANNED_KEY_ID = 25;
+export const CLIENT_BANNED_VALUE_ID = 16;
 
 export const PRICE_GROUP_KEY_LABELS: Record<number, string> = {
   1: "name",

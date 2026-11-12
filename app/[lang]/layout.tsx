@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import { notFound } from "next/navigation";
 
+import { SiteFooter, SiteHeader } from "@/components/layout/site-chrome";
+import { PreviewBanner } from "@/components/ui/preview-banner";
+import { Toaster } from "@/components/ui/toaster";
 import { isLang, langStaticParams } from "@/i18n/config";
 
 import "../globals.css";
@@ -35,7 +38,11 @@ export default async function RootLayout({
   return (
     <html lang={lang} className={`${poppins.variable} h-full antialiased`}>
       <body className={`${poppins.className} flex min-h-full flex-col`}>
+        <SiteHeader lang={lang} />
         {children}
+        <SiteFooter lang={lang} />
+        <PreviewBanner />
+        <Toaster />
       </body>
     </html>
   );

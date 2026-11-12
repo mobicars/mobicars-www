@@ -202,9 +202,10 @@ export type CreateReservationInput = {
   promoCode?: string;
   addonIds?: number[];
   /**
-   * Domain quantity. The create body still uses OpenAPI `quantity`.
-   * Calculate uses `ilosc`, which is the key the live quote prices.
-   * Those wire names are intentionally not unified until a create is tested.
+   * Domain quantity. The create body sends it under both keys: `quantity`
+   * (OpenAPI) and `ilosc` (what the old site sent on create and what calculate
+   * prices). Which one create reads is UNVERIFIED; drop the other once a live
+   * create has been read back (see `docs/quirks.md`).
    */
   accessories?: ReservationAccessory[];
   flightNumber?: string;
@@ -256,6 +257,7 @@ export function buildReservationBody(
     body.accessories = input.accessories.map((item) => ({
       id: item.id,
       quantity: item.quantity,
+      ilosc: item.quantity,
     }));
   }
   if (input.longTerm) {

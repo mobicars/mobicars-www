@@ -9,10 +9,11 @@ import {
   type ExtrasQueryInput,
   type QueryParams,
 } from "../internal/params";
+import { isProduction } from "../../env";
 
 export async function listAddons(input: ExtrasQueryInput = {}): Promise<Extra[]> {
   const query = buildExtrasQuery(input, "clients");
-  if (isCatalogExtrasQuery(input)) {
+  if (isProduction() && isCatalogExtrasQuery(input)) {
     return loadCachedAddons(query);
   }
   return loadAddons(query);
@@ -23,7 +24,7 @@ export async function getAddon(
   input: Pick<ExtrasQueryInput, "lang" | "pickUpDate" | "returnDate" | "promoCode"> = {},
 ): Promise<Extra> {
   const query = buildExtrasQuery(input, "clients");
-  if (isCatalogExtrasQuery(input)) {
+  if (isProduction() && isCatalogExtrasQuery(input)) {
     return loadCachedAddon(id, query);
   }
   return loadAddon(id, query);
@@ -33,7 +34,7 @@ export async function listAccessories(
   input: ExtrasQueryInput = {},
 ): Promise<Extra[]> {
   const query = buildExtrasQuery(input, "customers");
-  if (isCatalogExtrasQuery(input)) {
+  if (isProduction() && isCatalogExtrasQuery(input)) {
     return loadCachedAccessories(query);
   }
   return loadAccessories(query);
@@ -44,7 +45,7 @@ export async function getAccessory(
   input: Pick<ExtrasQueryInput, "lang" | "pickUpDate" | "returnDate" | "promoCode"> = {},
 ): Promise<Extra> {
   const query = buildExtrasQuery(input, "customers");
-  if (isCatalogExtrasQuery(input)) {
+  if (isProduction() && isCatalogExtrasQuery(input)) {
     return loadCachedAccessory(id, query);
   }
   return loadAccessory(id, query);

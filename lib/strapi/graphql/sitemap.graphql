@@ -1,0 +1,81 @@
+query getSitemapPages($status: PublicationStatus, $locale: I18NLocaleCode) {
+  pages_connection(
+    status: $status
+    locale: $locale
+    pagination: { pageSize: 100 }
+  ) {
+    nodes {
+      __typename
+      slug
+      updatedAt
+      title
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+    }
+  }
+
+  localPages_connection(
+    status: $status
+    locale: $locale
+    pagination: { pageSize: 100 }
+  ) {
+    nodes {
+      __typename
+      slug
+      updatedAt
+      Title
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+    }
+  }
+
+  cities_connection(
+    status: $status
+    locale: $locale
+    pagination: { pageSize: 100 }
+  ) {
+    nodes {
+      __typename
+      slug
+      updatedAt
+      title
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+    }
+  }
+
+  blogs_connection(
+    status: $status
+    locale: $locale
+    pagination: { pageSize: 100 }
+  ) {
+    nodes {
+      __typename
+      slug
+      updatedAt
+      title
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+    }
+  }
+}
