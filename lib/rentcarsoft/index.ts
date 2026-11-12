@@ -5,6 +5,7 @@ export {
   formatRentCarSoftDate,
   formatRentCarSoftDateTime,
 } from "./internal/dates";
+export { CLIENT_BANNED_KEY_ID } from "./internal/labels";
 export { RentCarSoftError } from "./internal/errors";
 export type { RentCarSoftErrorCode } from "./internal/errors";
 
@@ -20,7 +21,7 @@ export {
 export type { Currency, Language, PaymentType } from "./internal/entities";
 
 export { getOffer, listAllOffers, listOffers } from "./modules/offers";
-export type { Offer, OfferImage } from "./internal/entities";
+export type { Offer, OfferImage, OfferPromotion } from "./internal/entities";
 
 export {
   getDepartment,
@@ -45,16 +46,33 @@ export { calculateReservation, verifyPromoCode } from "./modules/pricing";
 export type { QuoteLine, ReservationQuote } from "./internal/entities";
 export type { PromoCodeCheck } from "./internal/parse";
 
-export { createReservation } from "./modules/reservations";
-export type { CreatedReservation } from "./internal/entities";
+export {
+  createReservation,
+  getReservation,
+  listClientReservations,
+} from "./modules/reservations";
+export type {
+  ClientReservation,
+  CreatedReservation,
+  ReservationAccountManager,
+  ReservationPayment,
+  ReservationStatus,
+  ReservationStop,
+} from "./internal/entities";
 
 export {
+  changeClientPassword,
+  clientEmailExists,
   completePasswordRecovery,
+  createClient,
   getClient,
   getPasswordRecoveryToken,
+  isClientBanned,
   loginClient,
   startPasswordRecovery,
+  updateClient,
 } from "./modules/clients";
+export type { CreateClientInput } from "./modules/clients";
 export type { ClientRecord } from "./internal/parse";
 
 export type {

@@ -2,7 +2,7 @@
 
 Server-only client for the MobiCars Next.js application. Application code imports `@/lib/rentcarsoft` and does not build RentCarSoft HTTP requests itself. Capability functions live in `modules/`. HTTP, configuration, query building, and parsers live in `internal/` and are not a public import path.
 
-The contract is the RentCarSoft API (OpenAPI 1.0.8, reviewed 8 October 2026) plus live behavior recorded in `docs/quirks.md`. The vendor specification file is not part of this repository. Legacy `mobicars-pl` is migration reference only. This package does not wrap the whole RentCarSoft API.
+The contract is the RentCarSoft API (OpenAPI 1.0.10, reviewed 22 October 2026; the 1.0.8 → 1.0.10 changes are listed in `docs/api-coverage.md` and do not affect the bridge) plus live behavior recorded in `docs/quirks.md`. The vendor specification file is not part of this repository. Legacy `mobicars-pl` is migration reference only. This package does not wrap the whole RentCarSoft API.
 
 ## Configuration
 
@@ -82,7 +82,9 @@ Realtime, never cached:
 - `verifyPromoCode`
 - `calculateReservation`
 - `createReservation`
-- `loginClient`, `getClient`
+- `listClientReservations`, `getReservation` (the response has no client id; check ownership against the client's list)
+- `loginClient`, `getClient`, `isClientBanned` (client key 25, value 16)
+- `changeClientPassword`, `createClient`, `clientEmailExists`, `updateClient`
 - `startPasswordRecovery`, `getPasswordRecoveryToken`, `completePasswordRecovery`
 
 `listOffers` and the extras list switch to the uncached path when the input includes dates, a promo code, `onlyAvailable`, `onlyAvailableAtLocation`, a long-term quote, or client ids.
@@ -106,8 +108,13 @@ Mutations are not retried.
 - `ServicePoint.city` and `ServicePoint.address` are trimmed custom fields 3 and 4. An empty value is `null`.
 - `ServicePoint.office` is custom field 22 with value `13` (`Tak`). `ServicePoint.trainStation` is custom field 21 with value `9` (`Tak`). `airport` stays the API boolean `isAirport`.
 - Offer field 71 with value `81` sets `Offer.isPopular`.
+- On a dated short-term list, `Offer.isDiscounted` and `Offer.discountedCalculatedPrice` carry a segment promotion, and `Offer.promotion` its name and dates from `cennik[segmentId]`. The discounted total matched the calculate total on the live API.
+- `OfferImage.main` is the gallery's `default` flag: the offer's main photo.
+- `Offer.monthlyPrice` is `cennik.cena_miesieczna` from the long-term list (`longTermQuote`). Short-term lists and `getOffer` leave it `null`; they price through `dailyPrice` and `calculatedPrice` (the whole searched period).
+- `Offer.brand` and `Offer.model` map `mark` and `model` as the spec names them, but the live list fills them the other way round (`mark: "Aygo"`, `model: "Toyota"`). Show `attributes.name` (key 1) when it is set. See `docs/quirks.md`.
 - Addon and accessory long-term catalogs use `loadLongTerm`.
-- Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `ilosc`. Create sends `quantity`. The create key is UNVERIFIED. Do not match a selected accessory by `QuoteLine.id`: on the live short quote that id equalled the line price.
+- `Extra.type` is `additionalType`; `1` is insurance. On a dated addon list `Extra.price` is the per-day price for that day count and `Extra.calculatedPrice` the window total. The calculate addon line matched it (see `docs/quirks.md`).
+- Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `ilosc`. Create sends both `quantity` and `ilosc` until a live create shows which one it reads (the old site sent `ilosc`). Do not match a selected accessory by `QuoteLine.id`: on the live short quote that id equalled the line price.
 - `createReservation` does not set `paymentMethod` or `statusRez` unless the caller passes `paymentMethodId` or `forcedStatusId`.
 - Login, password-recovery start, and password replacement use a JSON body. The recovery token read uses a query string.
 - `GET /client/{id}` accepts one object or an array of exactly one object. Any other shape is `malformed_response`. The successful live shape is still UNVERIFIED.

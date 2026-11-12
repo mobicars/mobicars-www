@@ -11,13 +11,14 @@ import {
   type QueryParams,
 } from "../internal/params";
 import { listOfferKeys } from "./catalog";
+import { isProduction } from "../../env";
 
 const MAX_OFFER_PAGES = 20;
 
 /** One page of offers. `page` starts at 0. Walk the catalog with `listAllOffers`. */
 export async function listOffers(input: OfferListInput = {}): Promise<Offer[]> {
   const query = buildOfferQuery(input);
-  if (isCatalogOfferQuery(input)) {
+  if (isProduction() && isCatalogOfferQuery(input)) {
     return loadCachedOffers(query);
   }
   return loadOffers(query);
@@ -56,7 +57,7 @@ export async function getOffer(
   delete query.page;
   delete query.perPage;
   delete query.order;
-  if (isCatalogOfferQuery(input)) {
+  if (isProduction() && isCatalogOfferQuery(input)) {
     return loadCachedOffer(id, query);
   }
   return loadOffer(id, query);

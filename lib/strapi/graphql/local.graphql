@@ -1,0 +1,93 @@
+query getLocalPage(
+  $status: PublicationStatus
+  $locale: I18NLocaleCode
+  $slug: String
+) {
+  localPages_connection(
+    status: $status
+    locale: $locale
+    filters: { slug: { eq: $slug } }
+  ) {
+    nodes {
+      __typename
+      Title
+      slug
+      seo {
+        ...Seo
+      }
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+
+      components {
+        __typename
+
+        ... on ComponentSharedHeroPage {
+          ...HeroPageFields
+        }
+
+        ... on ComponentSharedDivider {
+          ...DividerFields
+        }
+
+        ... on ComponentSharedCardGroup {
+          ...CardFields
+        }
+
+        ... on ComponentSharedFaq {
+          items(pagination: { limit: 30 }) {
+            ...FaqItemFields
+          }
+        }
+
+        ... on ComponentSharedOpinions {
+          ...OpinionsFields
+        }
+
+        ... on ComponentSharedButtons {
+          ...ButtonsFields
+        }
+
+        ... on ComponentSharedTextHeading {
+          ...TextHeadingFields
+        }
+
+        ... on ComponentSharedTextWithImage {
+          ...TextWithImageFields
+        }
+
+        ... on ComponentSharedImage {
+          ...ImageFields
+        }
+
+        ... on ComponentSharedCarsShow {
+          ...CarsShowFields
+        }
+
+        ... on ComponentSharedBlogShow {
+          ...BlogShowFields
+        }
+
+        ... on ComponentSharedText {
+          ...TextFields
+        }
+
+        ... on ComponentSharedMap {
+          fullScreen
+        }
+
+        ... on ComponentSharedBoxes {
+          ...BoxesFields
+        }
+
+        ... on ComponentSharedPromoShow {
+          ...PromoShowFields
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,126 @@
+fragment BlogTeaser on BlogEntityResponseCollection {
+  nodes {
+    __typename
+    locale
+    title
+    slug
+    seo {
+      ...Seo
+    }
+    coverImage {
+      ...Image
+    }
+  }
+}
+
+query getBlogs(
+  $status: PublicationStatus
+  $locale: I18NLocaleCode
+  $sort: [String]
+  $limit: Int
+) {
+  blogs_connection(
+    status: $status
+    locale: $locale
+    sort: $sort
+    pagination: { limit: $limit }
+  ) {
+    ...BlogTeaser
+  }
+}
+
+query getBlog(
+  $status: PublicationStatus
+  $locale: I18NLocaleCode
+  $slug: String
+  $sort: [String]
+  $limit: Int
+) {
+  related: blogs_connection(
+    status: $status
+    locale: $locale
+    sort: $sort
+    pagination: { limit: $limit }
+  ) {
+    ...BlogTeaser
+  }
+
+  blogs_connection(
+    status: $status
+    locale: $locale
+    filters: { slug: { eq: $slug } }
+  ) {
+    nodes {
+      locale
+      title
+      slug
+      seo {
+        ...Seo
+      }
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+
+      coverImage {
+        ...Image
+      }
+      components {
+        __typename
+
+        ... on ComponentSharedDivider {
+          ...DividerFields
+        }
+
+        ... on ComponentSharedCardGroup {
+          ...CardFields
+        }
+
+        ... on ComponentSharedFaq {
+          items(pagination: { limit: 30 }) {
+            ...FaqItemFields
+          }
+        }
+
+        ... on ComponentSharedOpinions {
+          ...OpinionsFields
+        }
+
+        ... on ComponentSharedButtons {
+          ...ButtonsFields
+        }
+
+        ... on ComponentSharedTextHeading {
+          ...TextHeadingFields
+        }
+
+        ... on ComponentSharedTextWithImage {
+          ...TextWithImageFields
+        }
+
+        ... on ComponentSharedCarsShow {
+          ...CarsShowFields
+        }
+
+        ... on ComponentSharedBlogShow {
+          ...BlogShowFields
+        }
+
+        ... on ComponentSharedText {
+          ...TextFields
+        }
+
+        ... on ComponentSharedMap {
+          fullScreen
+        }
+
+        ... on ComponentSharedBasicText {
+          ...BasicTextFields
+        }
+      }
+    }
+  }
+}

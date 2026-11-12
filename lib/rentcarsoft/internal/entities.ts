@@ -25,9 +25,24 @@ import {
 
 export type OfferImage = {
   alt: string;
+  /** `default`: the offer's main photo. Exactly one per offer on the live list. */
+  main: boolean;
+  /** `cover` or `coverBig`. Several photos per offer can carry it. */
   cover: boolean;
   webp: string | null;
   standard: string | null;
+};
+
+export type OfferPromotion = {
+  name: string | null;
+  /** `YYYY-MM-DD HH:mm:ss`, Warsaw wall time. */
+  startsAt: string | null;
+  endsAt: string | null;
+  /**
+   * Promotional per-day price: `promocja` of the `cennik` band whose `od`–`do`
+   * holds the list's own `days`. Null when no band matches.
+   */
+  dailyPrice: number | null;
 };
 
 export type Offer = {
@@ -44,6 +59,23 @@ export type Offer = {
   deposit: number | null;
   dailyPrice: number | null;
   calculatedPrice: number | null;
+  /**
+   * Dated short-term list: true when a segment promotion applies to the asked
+   * window. `discountedCalculatedPrice` then holds the promotional total, which
+   * matched the calculate `total` on the live API. Without a promotion it
+   * equals `calculatedPrice`.
+   */
+  isDiscounted: boolean;
+  discountedCalculatedPrice: number | null;
+  /** Rental days the API counted for the asked window. Null on undated lists. */
+  days: number | null;
+  /** Segment promotion from `cennik[segmentId]`, when `is_promocja` is set. */
+  promotion: OfferPromotion | null;
+  /**
+   * Long-term list only (`longTermQuote`): monthly price for the asked month
+   * count and kilometre limit, from `cennik.cena_miesieczna`. Null otherwise.
+   */
+  monthlyPrice: number | null;
   attributes: Record<string, FieldAttribute>;
   isPopular: boolean;
   gallery: OfferImage[];
@@ -80,10 +112,53 @@ export function parseOffer(
     deposit: asNumber(record.deposit),
     dailyPrice: asNumber(record.dailyPrice),
     calculatedPrice: asNumber(record.calculatedPrice),
+    isDiscounted: asBoolean(record.isDiscounted) ?? false,
+    discountedCalculatedPrice: asNumber(record.discountedCalculatedPrice),
+    days: asNumber(record.days),
+    promotion: parsePromotion(record.cennik, record.segmentId, asNumber(record.days)),
+    monthlyPrice: isRecord(record.cennik) ? asNumber(record.cennik.cena_miesieczna) : null,
     attributes,
     isPopular: popular?.valueId === asId(POPULAR_OFFER_VALUE),
     gallery: parseGallery(record.gallery),
   };
+}
+
+/**
+ * The short-term `cennik` is keyed by segment id. The long-term list reuses the
+ * name for a flat `{ cena_miesieczna, … }` object, which has no promotion.
+ */
+function parsePromotion(cennik: unknown, segmentId: unknown, days: number | null): OfferPromotion | null {
+  if (!isRecord(cennik) || segmentId === undefined || segmentId === null) {
+    return null;
+  }
+  const segment = cennik[String(segmentId)];
+  if (!isRecord(segment) || asNumber(segment.is_promocja) !== 1) {
+    return null;
+  }
+  return {
+    name: asString(segment.promocja_nazwa)?.trim() || null,
+    startsAt: asString(segment.promocja_od),
+    endsAt: asString(segment.promocja_do),
+    dailyPrice: days === null ? null : bandPromotion(segment.czasy, days),
+  };
+}
+
+/** The band's own promotional price; the bridge picks it, it does not compute one. */
+function bandPromotion(bands: unknown, days: number): number | null {
+  if (!Array.isArray(bands)) {
+    return null;
+  }
+  for (const band of bands) {
+    if (!isRecord(band)) {
+      continue;
+    }
+    const from = asNumber(band.od);
+    const to = asNumber(band.do);
+    if ((from === null || days >= from) && (to === null || days <= to)) {
+      return asNumber(band.promocja);
+    }
+  }
+  return null;
 }
 
 function findRawKey(keys: unknown, id: number): unknown {
@@ -113,6 +188,7 @@ function parseGallery(value: unknown): OfferImage[] {
     return [
       {
         alt: asString(item.altText) ?? "",
+        main: asBoolean(item.default) ?? false,
         cover: asBoolean(item.cover) ?? asBoolean(item.coverBig) ?? false,
         webp,
         standard,
@@ -333,11 +409,25 @@ export type ExtraPresentation = {
 export type Extra = {
   id: number;
   name: string;
+  /**
+   * `additionalType`: the group. `1` is insurance ("Ubezpieczenia"); the old
+   * site also grouped `0` others, `2` kids, `3` multimedia, `4` border trips.
+   */
+  type: number | null;
   description: string | null;
   image: string | null;
   oneTimeFee: boolean | null;
+  /** Per day, or once when `oneTimeFee`, for the day count of the asked window. */
   price: number | null;
   priceDiscounted: number | null;
+  /**
+   * Dated lists only: the price for the whole asked window. It matched the
+   * calculate addon line on the live API. `discountedCalculatedPrice` is the
+   * promotional one when `isDiscounted`.
+   */
+  calculatedPrice: number | null;
+  discountedCalculatedPrice: number | null;
+  isDiscounted: boolean;
   monthlyPrice: number | null;
   longTermVisible: boolean | null;
   inalienable: boolean | null;
@@ -354,11 +444,15 @@ export function parseExtra(value: unknown): Extra {
   return {
     id: requireId(record.id),
     name: asString(record.name) ?? "",
+    type: asNumber(record.additionalType),
     description: asString(record.description),
     image: asString(record.image),
     oneTimeFee: asBoolean(record.oneTimeFee),
     price: asNumber(record.price),
     priceDiscounted: asNumber(record.priceDiscounted),
+    calculatedPrice: asNumber(record.calculatedPrice),
+    discountedCalculatedPrice: asNumber(record.discountedCalculatedPrice),
+    isDiscounted: asBoolean(record.isDiscounted) ?? false,
     monthlyPrice: asNumber(record.monthlyPrice),
     longTermVisible: asBoolean(record.longTermVisible),
     inalienable: asBoolean(record.inalienable),
@@ -575,5 +669,177 @@ export function parsePaymentTypes(value: unknown): PaymentType[] {
       id: requireId(record.id),
       name: asString(record.name) ?? "",
     };
+  });
+}
+
+export type ReservationStatus = {
+  name: string;
+  /** The status holds the car. */
+  blocksCar: boolean;
+  /** Final status, e.g. “Zakończona”. */
+  ending: boolean;
+  cancelled: boolean;
+  /** The car has been picked up, e.g. “Trwająca”. */
+  pickedUp: boolean;
+};
+
+export type ReservationStop = {
+  pointId: number | null;
+  pointName: string | null;
+  /** Custom address instead of a service point. */
+  address: string | null;
+  /** Warsaw wall time, `YYYY-MM-DD HH:mm:ss`. */
+  date: string | null;
+};
+
+export type ReservationPayment = {
+  paid: boolean | null;
+  amountDue: number | null;
+  totalPaid: number | null;
+  remainingToPay: number | null;
+  depositTotal: number | null;
+  depositPaid: number | null;
+};
+
+export type ReservationAccountManager = {
+  name: string | null;
+  surname: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
+export type ClientReservation = {
+  id: number;
+  number: string;
+  createdAt: string | null;
+  status: ReservationStatus | null;
+  pickUp: ReservationStop;
+  return: ReservationStop;
+  longTerm: boolean;
+  mileageLimit: {
+    enabled: boolean;
+    dailyAmount: number | null;
+    totalAmount: number | null;
+    fee: number | null;
+  } | null;
+  pickupCode: string | null;
+  currency: string | null;
+  comment: string | null;
+  accountManager: ReservationAccountManager | null;
+  payment: ReservationPayment;
+  addons: { id: number; name: string }[];
+  accessories: { id: number; name: string }[];
+  offer: Offer | null;
+  carImage: string | null;
+};
+
+export function parseClientReservations(
+  value: unknown,
+  definitions?: KeyDefinition[],
+): ClientReservation[] {
+  return expectArray(value).map((item) => parseClientReservation(item, definitions));
+}
+
+export function parseClientReservation(
+  value: unknown,
+  definitions?: KeyDefinition[],
+): ClientReservation {
+  const record = expectRecord(Array.isArray(value) && value.length === 1 ? value[0] : value);
+  const status = isRecord(record.status) ? record.status : null;
+  const payment = isRecord(record.payment) ? record.payment : {};
+  const summary = isRecord(payment.chargeSummary) ? payment.chargeSummary : {};
+  const deposit = isRecord(payment.deposit) ? payment.deposit : {};
+  const mileage = isRecord(record.mileageLimit) ? record.mileageLimit : null;
+  const manager = isRecord(record.accountManager) ? record.accountManager : null;
+  const fleet = isRecord(record.fleet) ? record.fleet : null;
+
+  return {
+    id: requireId(record.id),
+    number: asString(record.number) ?? String(record.id),
+    createdAt: asDateTime(record.createdAt),
+    status: status
+      ? {
+          name: asString(status.name) ?? "",
+          blocksCar: asBoolean(status.blocks) ?? false,
+          ending: asBoolean(status.ending) ?? false,
+          cancelled: asBoolean(status.cancel) ?? false,
+          pickedUp: asBoolean(status.received) ?? false,
+        }
+      : null,
+    pickUp: parseReservationStop(record.pickUp),
+    return: parseReservationStop(record.return),
+    longTerm: asBoolean(record.longTerm) ?? false,
+    mileageLimit: mileage
+      ? {
+          enabled: asBoolean(mileage.enabled) ?? false,
+          dailyAmount: asNumber(mileage.dailyAmount),
+          totalAmount: asNumber(mileage.totalAmount),
+          fee: asNumber(mileage.fee),
+        }
+      : null,
+    pickupCode: nonEmpty(record.pickupCode),
+    currency: nonEmpty(record.currency),
+    comment: nonEmpty(record.comment),
+    accountManager: manager
+      ? {
+          name: nonEmpty(manager.name),
+          surname: nonEmpty(manager.surname),
+          email: nonEmpty(manager.email),
+          phone: nonEmpty(manager.phone),
+        }
+      : null,
+    payment: {
+      paid: asBoolean(payment.paid),
+      amountDue: asNumber(summary.amountDue),
+      totalPaid: asNumber(summary.totalPaid),
+      remainingToPay: asNumber(summary.remainingToPay),
+      depositTotal: asNumber(deposit.total),
+      depositPaid: asNumber(deposit.paid),
+    },
+    addons: parseNamedItems(record.addons),
+    accessories: parseNamedItems(record.accessories),
+    offer: isRecord(record.offer) ? parseOffer(record.offer, definitions) : null,
+    carImage: fleet ? nonEmpty(fleet.image) : null,
+  };
+}
+
+function parseReservationStop(value: unknown): ReservationStop {
+  const record = isRecord(value) ? value : {};
+  const point = isRecord(record.point) ? record.point : {};
+  return {
+    pointId: asId(point.id),
+    pointName: nonEmpty(point.name),
+    address: nonEmpty(record.address),
+    date: asDateTime(record.date),
+  };
+}
+
+/**
+ * The spec says `YYYY-mm-dd H:i:s`. The live API sends a PHP DateTime object,
+ * `{ date: "YYYY-mm-dd HH:mm:ss.uuuuuu", timezone: "Europe/Warsaw" }`. Both map
+ * to `YYYY-MM-DD HH:mm:ss` without the fraction.
+ */
+function asDateTime(value: unknown): string | null {
+  const text = isRecord(value) ? asString(value.date) : asString(value);
+  const match = text?.match(/^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})(:\d{2})?/);
+  return match ? `${match[1]} ${match[2]}${match[3] ?? ":00"}` : null;
+}
+
+function nonEmpty(value: unknown): string | null {
+  const text = asString(value)?.trim();
+  return text ? text : null;
+}
+
+function parseNamedItems(value: unknown): { id: number; name: string }[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return value.flatMap((item) => {
+    if (!isRecord(item)) {
+      return [];
+    }
+    const id = asId(item.id);
+    const name = nonEmpty(item.name);
+    return id === null || !name ? [] : [{ id, name }];
   });
 }

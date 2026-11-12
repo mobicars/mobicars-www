@@ -4,6 +4,8 @@ import { describe, it } from "node:test";
 import { getRentCarSoftConfig } from "./internal/config";
 import { formatRentCarSoftDateTime } from "./internal/dates";
 import {
+  parseClientReservation,
+  parseClientReservations,
   parseCreatedReservation,
   parseExtra,
   parseOffer,
@@ -158,7 +160,7 @@ describe("offer and reservation parameters", () => {
     assert.equal("mileageLimit" in query, false);
   });
 
-  it("sends accessory quantity as ilosc on calculate and as quantity on create", () => {
+  it("sends accessory quantity as ilosc on calculate and under both keys on create", () => {
     const accessories = [{ id: 8, quantity: 2 }];
     const calculate = buildCalculateQuery({
       offerId: 1,
@@ -183,8 +185,7 @@ describe("offer and reservation parameters", () => {
       accessories,
       longTerm: { months: 12, monthlyKmLimit: 1500 },
     });
-    assert.deepEqual(body.accessories, [{ id: 8, quantity: 2 }]);
-    assert.equal(JSON.stringify(body.accessories).includes("ilosc"), false);
+    assert.deepEqual(body.accessories, [{ id: 8, quantity: 2, ilosc: 2 }]);
     assert.equal(body.iloscMiesiecy, 12);
     assert.equal(body.ustalonyLimitKm, 1500);
     assert.equal(body.longTerm, true);
@@ -218,7 +219,7 @@ describe("offer and reservation parameters", () => {
       accessories: [{ id: 8, quantity: 2 }],
       addonIds: [3],
     });
-    assert.deepEqual(body.accessories, [{ id: 8, quantity: 2 }]);
+    assert.deepEqual(body.accessories, [{ id: 8, quantity: 2, ilosc: 2 }]);
     assert.equal("ilosc" in body, false);
     assert.equal("paymentMethod" in body, false);
     assert.equal("statusRez" in body, false);
@@ -272,6 +273,101 @@ describe("normalization", () => {
       offerKeys: [{ id: 71, value: "81" }],
     });
     assert.equal(offer.isPopular, true);
+    assert.equal(offer.monthlyPrice, null);
+    assert.equal(offer.isDiscounted, false);
+
+    const gallery = parseOffer({
+      id: 4,
+      gallery: [
+        { cover: true, urls: { 512: { webp: "cover.webp" } } },
+        { default: true, urls: { 512: { webp: "main.webp" } } },
+      ],
+    }).gallery;
+    assert.deepEqual(
+      gallery.map((image) => [image.webp, image.main, image.cover]),
+      [["cover.webp", false, true], ["main.webp", true, false]],
+    );
+    assert.equal(offer.promotion, null);
+
+    const promoted = parseOffer({
+      id: 1218,
+      segmentId: 1462,
+      isDiscounted: true,
+      calculatedPrice: 417,
+      discountedCalculatedPrice: 375.3,
+      days: 3,
+      cennik: {
+        1462: {
+          is_promocja: 1,
+          promocja_nazwa: " Jesień z Mobicars ",
+          promocja_od: "2026-10-05 00:00:00",
+          promocja_do: "2026-12-15 23:55:00",
+          czasy: [
+            { od: null, do: "1", cena: "179.00", promocja: "161.10000000" },
+            { od: "2", do: "3", cena: "139.00", promocja: "125.10000000" },
+            { od: "4", do: "7", cena: "119.00", promocja: "95.20000000" },
+          ],
+        },
+      },
+    });
+    assert.equal(promoted.discountedCalculatedPrice, 375.3);
+    assert.equal(promoted.days, 3);
+    assert.deepEqual(promoted.promotion, {
+      name: "Jesień z Mobicars",
+      startsAt: "2026-10-05 00:00:00",
+      endsAt: "2026-12-15 23:55:00",
+      dailyPrice: 125.1,
+    });
+    assert.equal(
+      parseOffer({ id: 3, segmentId: 1462, cennik: { 1462: { is_promocja: 0 } } }).promotion,
+      null,
+    );
+    assert.equal(
+      parseOffer({ id: 2, cennik: { cena_miesieczna: 2650, limit_km_miesieczny: "50.00" } }).monthlyPrice,
+      2650,
+    );
+
+    const fuelDictionary = [
+      {
+        id: 9,
+        name: "Rodzaj paliwa",
+        values: [{ id: 15, name: "Benzyna" }],
+      },
+    ];
+    const polishFuel = parseOffer(
+      {
+        id: 1218,
+        mark: "Aygo",
+        model: "Toyota",
+        offerKeys: [{ id: 9, value: "15" }],
+      },
+      fuelDictionary,
+    );
+    assert.equal(polishFuel.attributes.fuelType?.value, "Benzyna");
+    assert.equal(polishFuel.attributes.fuelType?.valueId, 15);
+
+    const englishFuel = parseOffer(
+      {
+        id: 1218,
+        mark: "Aygo",
+        model: "Toyota",
+        offerKeys: [{ id: 9, value: "15", label: "Petrol" }],
+      },
+      fuelDictionary,
+    );
+    assert.equal(englishFuel.attributes.fuelType?.value, "Petrol");
+    assert.equal(englishFuel.attributes.fuelType?.valueId, 15);
+
+    const blankLabel = parseOffer(
+      {
+        id: 1218,
+        mark: "Aygo",
+        model: "Toyota",
+        offerKeys: [{ id: 9, value: "15", label: "  " }],
+      },
+      fuelDictionary,
+    );
+    assert.equal(blankLabel.attributes.fuelType?.value, "Benzyna");
 
     const point = parseServicePoint({
       id: 4,
@@ -473,6 +569,21 @@ describe("normalization", () => {
     assert.equal(addon.presentation?.glassDamage, "1000");
     assert.equal(addon.presentation?.theft, null);
     assert.equal(parseExtra({ id: 5, name: "Seat" }).presentation, null);
+
+    const insurance = parseExtra({
+      id: 1005,
+      name: "Ochrona Komfort",
+      additionalType: 1,
+      price: 69,
+      calculatedPrice: 207,
+      discountedCalculatedPrice: 207,
+      isDiscounted: false,
+    });
+    assert.equal(insurance.type, 1);
+    assert.equal(insurance.calculatedPrice, 207);
+    assert.equal(insurance.discountedCalculatedPrice, 207);
+    assert.equal(insurance.isDiscounted, false);
+    assert.equal(parseExtra({ id: 6, name: "Seat" }).type, null);
   });
 
   it("formats pickup dates in local time", () => {
@@ -608,5 +719,69 @@ describe("configuration", () => {
         return true;
       },
     );
+  });
+});
+
+describe("client reservations", () => {
+  const live = {
+    id: 618,
+    number: "REZ/26/10/618",
+    createdAt: { date: "2026-10-20 09:15:00.000000", timezone_type: 3, timezone: "Europe/Warsaw" },
+    status: { name: "Anulowana", blocks: false, ending: false, cancel: true, received: false },
+    pickUp: {
+      address: null,
+      date: { date: "2026-10-27 04:00:00.000000", timezone_type: 3, timezone: "Europe/Warsaw" },
+      point: { id: 3, name: "Kraków" },
+    },
+    return: {
+      address: "  ",
+      date: "2026-10-28 04:00:00",
+      point: { id: 3, name: "Kraków" },
+    },
+    mileageLimit: { enabled: true, dailyAmount: 300, totalAmount: 300, fee: 0.5 },
+    longTerm: false,
+    pickupCode: null,
+    accountManager: null,
+    payment: {
+      paid: false,
+      deposit: { type: "", total: 500, paid: 0 },
+      chargeSummary: { amountDue: 199, totalPaid: 0, remainingToPay: 199, paidOut: 0, balance: -199 },
+    },
+    addons: [{ id: 4, name: "Pełne ubezpieczenie" }, { id: 5 }],
+    accessories: [],
+    client: { keys: [] },
+    offer: null,
+    fleet: { id: 9, image: null, keys: [] },
+  };
+
+  it("reads the live PHP DateTime objects and plain date strings", () => {
+    const reservation = parseClientReservation(live);
+    assert.equal(reservation.createdAt, "2026-10-20 09:15:00");
+    assert.equal(reservation.pickUp.date, "2026-10-27 04:00:00");
+    assert.equal(reservation.return.date, "2026-10-28 04:00:00");
+    assert.equal(reservation.return.address, null);
+    assert.equal(reservation.return.pointName, "Kraków");
+  });
+
+  it("maps status flags, payment summary, and named extras", () => {
+    const reservation = parseClientReservation(live);
+    assert.deepEqual(reservation.status, {
+      name: "Anulowana",
+      blocksCar: false,
+      ending: false,
+      cancelled: true,
+      pickedUp: false,
+    });
+    assert.equal(reservation.payment.remainingToPay, 199);
+    assert.equal(reservation.payment.depositTotal, 500);
+    assert.deepEqual(reservation.addons, [{ id: 4, name: "Pełne ubezpieczenie" }]);
+    assert.equal(reservation.offer, null);
+    assert.equal(reservation.accountManager, null);
+  });
+
+  it("accepts a single reservation wrapped in an array and rejects a missing id", () => {
+    assert.equal(parseClientReservation([live]).id, 618);
+    assert.equal(parseClientReservations([live, live]).length, 2);
+    assert.throws(() => parseClientReservation({ ...live, id: null }), RentCarSoftError);
   });
 });

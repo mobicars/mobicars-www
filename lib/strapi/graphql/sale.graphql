@@ -1,0 +1,59 @@
+query getSale(
+  $status: PublicationStatus
+  $locale: I18NLocaleCode
+  $slug: String
+) {
+  sales_connection(
+    status: $status
+    locale: $locale
+    filters: { slug: { eq: $slug } }
+  ) {
+    nodes {
+      locale
+      Title
+      slug
+      Seo(pagination: { limit: 1 }) {
+        ...Seo
+      }
+
+      localizations_connection {
+        nodes {
+          slug
+          locale
+        }
+      }
+
+      Price
+      Gallery(pagination: { limit: 20 }) {
+        ...Image
+      }
+      Body
+    }
+  }
+}
+
+fragment SaleTeaser on SaleEntityResponseCollection {
+  nodes {
+    __typename
+    Title
+    Price
+    Gallery(pagination: { limit: 1 }) {
+      ...Image
+    }
+    Seo(pagination: { limit: 1 }) {
+      ...Seo
+    }
+    slug
+    locale
+  }
+}
+
+query getSales(
+  $status: PublicationStatus
+  $locale: I18NLocaleCode
+  $sort: [String]
+) {
+  sales_connection(status: $status, locale: $locale, sort: $sort) {
+    ...SaleTeaser
+  }
+}

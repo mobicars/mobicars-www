@@ -1,0 +1,19 @@
+fragment ratingFields on Rating {
+  date
+  name
+  text
+  rate
+  source
+}
+
+query getRatings($status: PublicationStatus, $sort: [String], $limit: Int) {
+  ratings_connection(
+    status: $status
+    sort: $sort
+    pagination: { limit: $limit }
+  ) {
+    nodes {
+      ...ratingFields
+    }
+  }
+}

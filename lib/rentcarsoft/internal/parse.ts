@@ -116,19 +116,41 @@ export function mapCustomFields(
     if (!label) {
       continue;
     }
-    const raw = item.value;
-    const rawText = raw === undefined || raw === null ? "" : String(raw);
-    const valueId = asId(raw);
-    const defined = byId.get(id)?.values.find((entry) => entry.id === valueId);
+    const resolved = resolveFieldText(item.value, item.label, byId.get(id));
 
     attributes[label] = {
       label,
-      value: defined?.name ?? rawText,
-      valueId,
+      value: resolved.value,
+      valueId: resolved.valueId,
     };
   }
 
   return attributes;
+}
+
+/**
+ * Select text for a custom field.
+ * A Polish payload has no `label`, so the text is the dictionary `name`.
+ * Other languages send `label`, and that text wins over the dictionary.
+ * Text and number fields keep their raw value.
+ */
+function resolveFieldText(
+  raw: unknown,
+  apiLabel: unknown,
+  definition: KeyDefinition | undefined,
+): { value: string; valueId: number | null } {
+  const rawText = raw === undefined || raw === null ? "" : String(raw);
+  const valueId = asId(raw);
+  const translated = asString(apiLabel)?.trim();
+  if (translated) {
+    return { value: translated, valueId };
+  }
+
+  const defined =
+    valueId === null
+      ? undefined
+      : definition?.values.find((entry) => entry.id === valueId);
+  return { value: defined?.name ?? rawText, valueId };
 }
 
 export type PromoCodeCheck = {
