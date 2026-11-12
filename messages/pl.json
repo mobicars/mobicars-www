@@ -564,7 +564,11 @@
     "retry": "Spróbuj ponownie",
     "total": "Razem",
     "calculating": "Liczymy cenę",
-    "noPrice": "Brak ceny"
+    "noPrice": "Brak ceny",
+    "share": "Udostępnij",
+    "shareText": "Rezerwacja auta w MobiCars: {car}",
+    "linkCopied": "Link do rezerwacji skopiowany",
+    "copyFailed": "Nie udało się skopiować linku"
   },
   "search": {
     "termLabel": "Rodzaj wynajmu",
@@ -656,7 +660,14 @@
     "guardReturn": "Zwrot przesuniemy tak samo, na {point}, żeby długość wynajmu się nie zmieniła.",
     "guardKeep": "Wybrane auto, ochronę i dodatki zachowamy, a cenę policzymy od nowa.",
     "guardSelf": "Zmienię termin sam",
-    "guardMove": "Przesuń na {point}"
+    "guardMove": "Przesuń na {point}",
+    "useMyLocation": "Użyj mojej lokalizacji",
+    "locating": "Ustalam lokalizację…",
+    "locationDenied": "Brak zgody na lokalizację. Możesz ją włączyć w ustawieniach przeglądarki albo wpisać miejsce ręcznie.",
+    "locationFailed": "Nie udało się ustalić lokalizacji. Wpisz miejsce ręcznie.",
+    "locationNoPlaces": "Nie mamy punktu w miejscowości {city}. Wybierz najbliższe miasto z listy.",
+    "locationOtherCity": "Twoja lokalizacja to {city}, a wybrane miejsce to {place}. Sprawdź adres przed zapisaniem.",
+    "locationNoStreet": "Nie znaleźliśmy tu nazwy ulicy. Wpisz adres ręcznie."
   },
   "booking": {
     "titleShort": "Wynajem krótkoterminowy",

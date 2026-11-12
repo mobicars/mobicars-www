@@ -564,7 +564,11 @@
     "retry": "Try again",
     "total": "Total",
     "calculating": "Calculating the price",
-    "noPrice": "No price"
+    "noPrice": "No price",
+    "share": "Share",
+    "shareText": "Car booking at MobiCars: {car}",
+    "linkCopied": "Booking link copied",
+    "copyFailed": "Couldn't copy the link"
   },
   "search": {
     "termLabel": "Rental type",
@@ -656,7 +660,14 @@
     "guardReturn": "We’ll move the return by the same amount, to {point}, so the rental length stays the same.",
     "guardKeep": "We’ll keep your car, protection and extras, and recalculate the price.",
     "guardSelf": "I’ll change it myself",
-    "guardMove": "Move to {point}"
+    "guardMove": "Move to {point}",
+    "useMyLocation": "Use my location",
+    "locating": "Finding your location…",
+    "locationDenied": "Location access was not allowed. You can turn it on in your browser settings or type the place yourself.",
+    "locationFailed": "We couldn't find your location. Please type the place yourself.",
+    "locationNoPlaces": "We have no pickup point in {city}. Choose the nearest city from the list.",
+    "locationOtherCity": "Your location is {city}, but the chosen place is {place}. Check the address before saving.",
+    "locationNoStreet": "We couldn't find a street name here. Please type the address."
   },
   "booking": {
     "titleShort": "Short-term rental",

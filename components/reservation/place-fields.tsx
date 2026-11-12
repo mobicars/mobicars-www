@@ -16,6 +16,8 @@ import {
   CarFront,
   ChevronLeft,
   House,
+  LoaderCircle,
+  LocateFixed,
   MapPin,
   MapPinCheck,
   MapPinMinus,
@@ -31,6 +33,7 @@ import {
 
 import { BarField, fieldHover, invalidField } from "@/components/reservation/bar-field";
 import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { useMyLocation } from "@/components/reservation/use-my-location";
 import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
@@ -205,6 +208,10 @@ function PlaceDialogBody({
   const [view, setView] = useState<PlaceView>(restoredPlace ? "address" : "search");
   const [addressPlace, setAddressPlace] = useState<PickupPlace | null>(restoredPlace);
   const [ownAddress, setOwnAddress] = useState(restoredPlace ? (savedAddress?.text ?? "") : "");
+  const location = useMyLocation();
+  // "Użyj mojej lokalizacji": the city found, and whether it has no points, or is not the address's city.
+  const [foundCity, setFoundCity] = useState<string | null>(null);
+  const [streetMissing, setStreetMissing] = useState(false);
   const trimmedQuery = query.trim();
   const cities = useMemo(() => uniqueCities(lang, places), [lang, places]);
   const visiblePlaces = useMemo(
@@ -239,6 +246,28 @@ function PlaceDialogBody({
     }
     onSelect(item, null);
     onOpenChange(false);
+  }
+
+  function locateCity() {
+    location.locate(({ city }) => {
+      setFoundCity(city);
+      if (city && places.some((item) => matchesPlace(lang, item, city))) {
+        setQuery(city);
+      }
+    });
+  }
+
+  function locateAddress() {
+    location.locate(({ city, street }) => {
+      setFoundCity(city);
+      // A square or a field has no street name; the customer types it.
+      setStreetMissing(street === null);
+      const sameCity = !city || !addressPlace?.city || sameText(lang, city, addressPlace.city);
+      const text = [street, sameCity ? null : city].filter(Boolean).join(", ");
+      if (street && text) {
+        setOwnAddress(text);
+      }
+    });
   }
 
   function saveAddress() {
@@ -286,6 +315,19 @@ function PlaceDialogBody({
               </label>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-4 pb-6">
+              {location.supported ? (
+                <div className="mb-5">
+                  <LocateButton locating={location.locating} onClick={locateCity} label={texts.useMyLocation} busy={texts.locating} />
+                  <LocationNote
+                    error={location.error}
+                    message={
+                      foundCity && !location.locating && !places.some((item) => matchesPlace(lang, item, foundCity))
+                        ? fill(texts.locationNoPlaces, { city: foundCity })
+                        : null
+                    }
+                  />
+                </div>
+              ) : null}
               {trimmedQuery === "" ? (
                 <div className="mb-5">
                   <h3 className="mb-3 text-sm font-semibold text-blue-medium">{texts.popularCities}</h3>
@@ -380,6 +422,23 @@ function PlaceDialogBody({
                 className="h-12 w-full rounded-xl border border-blue-dark/15 bg-white pr-4 pl-11 text-base outline-none transition-[border-color,background-color] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:bg-blue-medium/5 motion-reduce:transition-none"
               />
             </label>
+            {location.supported ? (
+              <div className="mt-3">
+                <LocateButton locating={location.locating} onClick={locateAddress} label={texts.useMyLocation} busy={texts.locating} />
+                <LocationNote
+                  error={location.error}
+                  message={
+                    location.locating
+                      ? null
+                      : streetMissing
+                        ? texts.locationNoStreet
+                        : foundCity && addressPlace?.city && !sameText(lang, foundCity, addressPlace.city)
+                          ? fill(texts.locationOtherCity, { city: foundCity, place: addressPlace.city })
+                          : null
+                  }
+                />
+              </div>
+            ) : null}
             <button
               type="button"
               disabled={ownAddress.trim() === ""}
@@ -480,6 +539,48 @@ function placeIcon(place: PickupPlace): LucideIcon {
     return MapPinPlus;
   }
   return CarFront;
+}
+
+function LocateButton({
+  locating,
+  onClick,
+  label,
+  busy,
+}: {
+  locating: boolean;
+  onClick: () => void;
+  label: string;
+  busy: string;
+}) {
+  return (
+    <button
+      type="button"
+      disabled={locating}
+      onClick={onClick}
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-medium/40 text-sm font-semibold text-blue-medium transition-colors duration-200 ease-out hover:bg-blue-medium/5 disabled:opacity-60 motion-reduce:transition-none"
+    >
+      {locating ? (
+        <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
+      ) : (
+        <LocateFixed className="size-4" aria-hidden />
+      )}
+      {locating ? busy : label}
+    </button>
+  );
+}
+
+function LocationNote({ error, message }: { error: "denied" | "failed" | null; message: string | null }) {
+  const texts = useMessages().search;
+  const text = error === "denied" ? texts.locationDenied : error === "failed" ? texts.locationFailed : message;
+  return text ? (
+    <p role="status" className="mt-2 text-xs text-blue-dark/70">
+      {text}
+    </p>
+  ) : null;
+}
+
+function sameText(lang: Lang, left: string, right: string): boolean {
+  return left.localeCompare(right, intlLocales[lang], { sensitivity: "base" }) === 0;
 }
 
 function uniqueCities(lang: Lang, places: PickupPlace[]): string[] {

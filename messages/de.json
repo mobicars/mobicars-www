@@ -564,7 +564,11 @@
     "retry": "Erneut versuchen",
     "total": "Gesamt",
     "calculating": "Preis wird berechnet",
-    "noPrice": "Kein Preis"
+    "noPrice": "Kein Preis",
+    "share": "Teilen",
+    "shareText": "Mietwagenbuchung bei MobiCars: {car}",
+    "linkCopied": "Buchungslink kopiert",
+    "copyFailed": "Link konnte nicht kopiert werden"
   },
   "search": {
     "termLabel": "Mietart",
@@ -656,7 +660,14 @@
     "guardReturn": "Die Rückgabe verschieben wir entsprechend auf den {point}, damit die Mietdauer gleich bleibt.",
     "guardKeep": "Fahrzeug, Schutzpaket und Extras bleiben erhalten, der Preis wird neu berechnet.",
     "guardSelf": "Ich ändere den Termin selbst",
-    "guardMove": "Auf {point} verschieben"
+    "guardMove": "Auf {point} verschieben",
+    "useMyLocation": "Meinen Standort verwenden",
+    "locating": "Standort wird ermittelt…",
+    "locationDenied": "Der Standortzugriff wurde nicht erlaubt. Sie können ihn in den Browsereinstellungen aktivieren oder den Ort selbst eingeben.",
+    "locationFailed": "Ihr Standort konnte nicht ermittelt werden. Bitte geben Sie den Ort selbst ein.",
+    "locationNoPlaces": "In {city} haben wir keinen Abholort. Wählen Sie die nächstgelegene Stadt aus der Liste.",
+    "locationOtherCity": "Ihr Standort ist {city}, der gewählte Ort ist {place}. Prüfen Sie die Adresse vor dem Speichern.",
+    "locationNoStreet": "Hier wurde kein Straßenname gefunden. Bitte geben Sie die Adresse ein."
   },
   "booking": {
     "titleShort": "Kurzzeitmiete",

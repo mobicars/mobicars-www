@@ -7,6 +7,7 @@ import { ArrowRight, CalendarDays, LoaderCircle, MapPin } from "lucide-react";
 import { formatMoney } from "@/components/reservation/format";
 import { PromoCode } from "@/components/reservation/promo-code";
 import { QuoteLines, Spinner } from "@/components/reservation/quote-lines";
+import { ShareBooking } from "@/components/reservation/share-booking";
 import type { QuoteState } from "@/components/reservation/use-quote";
 import { buttonClass } from "@/components/ui/button";
 import { fill } from "@/i18n/fill";
@@ -88,7 +89,10 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQue
   return (
     <aside aria-label={t.title} aria-busy={loading} className="hidden lg:block">
       <div className="sticky top-4 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
-        <h2 className="text-lg font-semibold text-blue-dark">{t.title}</h2>
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-blue-dark">{t.title}</h2>
+          {car ? <ShareBooking car={car.name} variant="text" /> : null}
+        </div>
         <dl className="flex flex-col gap-2 text-xs text-blue-dark/80">
           <div className="flex gap-2">
             <MapPin className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
@@ -246,7 +250,10 @@ export function MobileSummaryBar({
             )}
           </p>
         </div>
-        <ActionButton action={action} disabled={!actionable(action) || loading} />
+        <div className="flex shrink-0 items-center gap-2">
+          <ShareBooking car={car.name} variant="icon" />
+          <ActionButton action={action} disabled={!actionable(action) || loading} />
+        </div>
       </div>
     </div>
   );
