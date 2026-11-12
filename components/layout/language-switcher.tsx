@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Button, Menu, MenuItem, MenuTrigger, Popover } from "react-aria-components";
 import { Check, ChevronDown } from "lucide-react";
 
@@ -15,7 +15,6 @@ import { switchLangHref } from "@/i18n/routes";
  */
 export function LanguageSwitcher({ lang }: { lang: Lang }) {
   const router = useRouter();
-  const pathname = usePathname();
   const current = languages.find((item) => item.lang === lang) ?? languages[0];
 
   return (
@@ -37,7 +36,9 @@ export function LanguageSwitcher({ lang }: { lang: Lang }) {
           onAction={(key) => {
             const target = key as Lang;
             if (target !== lang) {
-              router.push(switchLangHref(pathname, window.location.search, target));
+              // Read at the click, not with `usePathname`: that hook would make every page
+              // with an unknown param (e.g. a reservation id) fail to prerender.
+              router.push(switchLangHref(window.location.pathname, window.location.search, target));
             }
           }}
           className="outline-none"
