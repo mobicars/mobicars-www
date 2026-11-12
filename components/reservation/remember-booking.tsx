@@ -2,17 +2,25 @@
 
 import { useEffect } from "react";
 
-import { saveBookingDraft } from "@/lib/reservation/storage";
+import { saveBookingDraft, type BookingDraft } from "@/lib/reservation/storage";
 
 /**
  * On the protection, extras and details steps: keeps the current booking URL
  * for the homepage's "finish your booking" banner. The URL changes as choices
  * are made, so it is saved again whenever the page is left or hidden.
  */
-export function RememberBooking({ car, dates, start }: { car: string; dates: string; start: string }) {
+export function RememberBooking({ car, segment, image, place, dates, start }: Omit<BookingDraft, "href">) {
   useEffect(() => {
     const save = () =>
-      saveBookingDraft({ href: window.location.pathname + window.location.search, car, dates, start });
+      saveBookingDraft({
+        href: window.location.pathname + window.location.search,
+        car,
+        segment,
+        image,
+        place,
+        dates,
+        start,
+      });
     const onVisibility = () => {
       if (document.visibilityState === "hidden") {
         save();
@@ -27,6 +35,6 @@ export function RememberBooking({ car, dates, start }: { car: string; dates: str
       window.removeEventListener("pagehide", save);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [car, dates, start]);
+  }, [car, segment, image, place, dates, start]);
   return null;
 }

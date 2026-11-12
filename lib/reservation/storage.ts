@@ -49,7 +49,15 @@ export function loadSearchDraft(): SearchDraft | null {
  * your booking" banner on the homepage. `start` is the raw pickup value, so the
  * banner can hide itself once that time is no longer bookable.
  */
-export type BookingDraft = { href: string; car: string; dates: string; start: string };
+export type BookingDraft = {
+  href: string;
+  car: string;
+  segment: string;
+  image: string | null;
+  place: string;
+  dates: string;
+  start: string;
+};
 
 const DRAFT_KEY = "mobicars:reservation-draft";
 const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
@@ -78,13 +86,24 @@ export function loadBookingDraft(): BookingDraft | null {
       !stored.href.startsWith("/") ||
       stored.href.startsWith("//") ||
       typeof stored.car !== "string" ||
+      typeof stored.segment !== "string" ||
+      (stored.image !== null && typeof stored.image !== "string") ||
+      typeof stored.place !== "string" ||
       typeof stored.dates !== "string" ||
       typeof stored.start !== "string"
     ) {
       window.localStorage.removeItem(DRAFT_KEY);
       return null;
     }
-    return { href: stored.href, car: stored.car, dates: stored.dates, start: stored.start };
+    return {
+      href: stored.href,
+      car: stored.car,
+      segment: stored.segment,
+      image: stored.image ?? null,
+      place: stored.place,
+      dates: stored.dates,
+      start: stored.start,
+    };
   } catch {
     return null;
   }

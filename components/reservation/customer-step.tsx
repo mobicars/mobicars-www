@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { PasswordField, TextField } from "@/components/auth/fields";
 import { PhoneField } from "@/components/auth/phone-field";
 import { AccountBox } from "@/components/reservation/account-box";
+import { ExtendHint, ProtectionUpgrade } from "@/components/reservation/nudges";
 import { formatMoney } from "@/components/reservation/format";
 import {
   MobileSummaryBar,
@@ -39,7 +40,9 @@ import {
   type CustomerField,
   type CustomerType,
 } from "@/lib/reservation/customer";
+import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
+import type { ProtectionOption } from "@/lib/reservation/protection";
 import { quoteQuery, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
@@ -77,6 +80,8 @@ export function CustomerStep({
   trip,
   airport,
   account,
+  extension,
+  upgrade,
 }: {
   lang: Lang;
   searchQuery: string;
@@ -93,6 +98,10 @@ export function CustomerStep({
   /** Pickup at an airport: asks for the flight number. */
   airport: boolean;
   account: AccountPrefill | null;
+  /** "Weź 4 dni zamiast 3", above the customer's data. */
+  extension?: ExtensionHint | null;
+  /** The recommended package, between the data and the consents. */
+  upgrade?: { from: ProtectionOption; to: ProtectionOption } | null;
 }) {
   const router = useRouter();
   const messages = useMessages();
@@ -205,6 +214,8 @@ export function CustomerStep({
             <PriceLines prices={prices} />
           </div>
         </Review>
+
+        {extension && car.days ? <ExtendHint hint={extension} currentDays={car.days} /> : null}
 
         {/* One card: heading, the sign-in box (its own form) and the booking form; forms cannot nest. */}
         <section aria-labelledby="customer-title" className="flex flex-col gap-6 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
@@ -427,6 +438,8 @@ export function CustomerStep({
             />
             {errors.comment ? <span className="text-xs text-red-700">{fieldError(errors.comment)}</span> : null}
           </label>
+
+          {upgrade ? <ProtectionUpgrade from={upgrade.from} to={upgrade.to} /> : null}
 
           <fieldset className="flex flex-col gap-3 border-t border-muted-light pt-5">
             <legend className="sr-only">{t.consentsLegend}</legend>

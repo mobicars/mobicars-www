@@ -18,10 +18,10 @@ export default async function Home({ params }: PageProps<"/[lang]">) {
     <main className="flex flex-1 flex-col">
       <div className="flex min-h-screen items-center bg-linear-to-br from-blue-medium to-blue-dark px-3 py-8 sm:px-6">
         <div className="mx-auto w-full max-w-6xl">
-          <ResumeBooking />
           <ReservationPicker lang={lang} layout="horizontal" places={places} />
         </div>
       </div>
+      <ResumeBooking />
     </main>
   );
 }

@@ -683,8 +683,12 @@
     },
     "resume": {
       "title": "You have an unfinished booking",
-      "button": "Finish booking",
-      "dismiss": "Hide"
+      "text": "Your choice is waiting for you. Go back and finish booking in a moment.",
+      "orSimilar": "or similar · {segment}",
+      "pickup": "Place",
+      "dates": "Dates",
+      "back": "Go back",
+      "decline": "No, thanks"
     }
   },
   "details": {

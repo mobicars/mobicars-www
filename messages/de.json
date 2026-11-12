@@ -683,8 +683,12 @@
     },
     "resume": {
       "title": "Sie haben eine unvollständige Buchung",
-      "button": "Buchung abschließen",
-      "dismiss": "Ausblenden"
+      "text": "Ihre Auswahl wartet auf Sie. Schließen Sie die Buchung in wenigen Augenblicken ab.",
+      "orSimilar": "oder ähnlich · {segment}",
+      "pickup": "Ort",
+      "dates": "Zeitraum",
+      "back": "Zurück",
+      "decline": "Nein, danke"
     }
   },
   "details": {

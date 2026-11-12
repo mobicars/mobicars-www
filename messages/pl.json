@@ -683,8 +683,12 @@
     },
     "resume": {
       "title": "Masz niedokończoną rezerwację",
-      "button": "Dokończ rezerwację",
-      "dismiss": "Ukryj"
+      "text": "Twój wybór na Ciebie czeka. Wróć i dokończ rezerwację w kilka chwil.",
+      "orSimilar": "lub podobny · {segment}",
+      "pickup": "Miejsce",
+      "dates": "Termin",
+      "back": "Wróć",
+      "decline": "Nie, dziękuję"
     }
   },
   "details": {

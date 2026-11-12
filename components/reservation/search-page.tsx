@@ -272,12 +272,20 @@ async function Offers({
     // The protection and extras steps start over for another car or search; not
     // for a discount code, so the code box keeps its message when it drops one.
     const stepKey = `${car.id}|${searchToQuery(search)}`;
-    // Started now, awaited by the step that shows it; the details step does not.
-    const extension = step === "details" ? null : extensionHint(lang, search, car, promo);
+    // Started now, awaited by the step that shows it.
+    const extension = extensionHint(lang, search, car, promo);
     const { options, extrasView } = await loadBookingChoices(lang, search, car);
     // For the homepage's "finish your booking" banner.
+    const where = compactTrip(lang, search, places);
     const remember = (
-      <RememberBooking car={car.name} dates={compactTrip(lang, search, places).dates} start={search.start} />
+      <RememberBooking
+        car={car.name}
+        segment={car.segment}
+        image={car.image?.src ?? null}
+        place={where.place}
+        dates={where.dates}
+        start={search.start}
+      />
     );
     // No package is preselected: the customer picks one (the free one included).
     const chosen = options.find((option) => option.id === protection)?.id ?? null;
@@ -312,6 +320,8 @@ async function Offers({
               trip={trip}
               airport={places.find((place) => place.id === search.pickup.id)?.airport ?? false}
               account={prefill}
+              extension={await extension}
+              upgrade={protectionUpgrade(options, chosen)}
             />
           </>
         );
