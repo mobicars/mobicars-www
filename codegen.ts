@@ -1,4 +1,9 @@
 import type { CodegenConfig } from "@graphql-codegen/cli";
+import { loadEnvConfig } from "@next/env";
+
+// The same `.env` files Next reads, so `npm run codegen`, `dev` and `build`
+// reach the same CMS with the same token. Variables already set win.
+loadEnvConfig(process.cwd());
 
 const strapiUrl = process.env.STRAPI_URL || "http://localhost:1337";
 const strapiKey = process.env.STRAPI_KEY;
