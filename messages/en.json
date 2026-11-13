@@ -1,5 +1,19 @@
 {
   "layout": {
+    "closeAnnouncement": "Close announcement",
+    "menu": "Menu",
+    "closeMenu": "Close menu",
+    "mainNav": "Main menu",
+    "allCars": "Whole fleet",
+    "fromPerDay": "from {price} / day",
+    "airport": "Airport",
+    "trainStation": "Train station",
+    "office": "Office",
+    "otherPlaces": "Other places",
+    "allPosts": "All posts",
+    "followUs": "Follow us",
+    "contact": "Contact",
+    "legal": "Legal",
     "account": "My account",
     "hotline": "Hotline",
     "home": "MobiCars home page",
@@ -8,6 +22,12 @@
     "documents": "Documents",
     "languageCurrent": "Language: {label}",
     "languageChoose": "Choose a language",
+    "languageNames": {
+      "pl": "Polish",
+      "en": "English",
+      "de": "German",
+      "uk": "Ukrainian"
+    },
     "description": "Car rental",
     "fleet": "Fleet"
   },
@@ -513,8 +533,6 @@
     "oneTime": "one-time",
     "wholeRental": "{price} for the whole rental",
     "perItem": "per item",
-    "add": "Add",
-    "remove": "Remove",
     "quantity": "Quantity: {name}",
     "less": "Fewer",
     "more": "More",
@@ -526,7 +544,8 @@
       "button": "Switch to {name}",
       "changing": "Switching…",
       "perDay": "/ day",
-      "perMonth": "/ month"
+      "perMonth": "/ month",
+      "confirmTitle": "Do you want to upgrade your protection and enjoy peace of mind?"
     }
   },
   "upsell": {
@@ -542,10 +561,7 @@
       "other": "seats"
     },
     "wholeRental": "+{price} for the whole rental",
-    "confirmTitle": "Do you confirm the change of car class?",
-    "to": "to",
-    "surcharge": "Extra charge",
-    "recheck": "We will check your protection and extras for the new car and recalculate the price.",
+    "confirmTitle": "Do you want to change the car class?",
     "cancel": "No, go back",
     "confirm": "Yes, confirm",
     "perMonth": "/ month"
@@ -563,6 +579,9 @@
     "failed": "We could not get the price.",
     "retry": "Try again",
     "total": "Total",
+    "priceDetails": "Price details",
+    "forPeriod": "for {period}",
+    "tripTitle": "Pick-up and return",
     "calculating": "Calculating the price",
     "noPrice": "No price",
     "share": "Share",
@@ -690,7 +709,8 @@
       "cost": "Only +{cost} for the whole rental.",
       "free": "At no extra cost.",
       "button": "Extend to {days}",
-      "extending": "Extending…"
+      "extending": "Extending…",
+      "confirmTitle": "Do you want to extend your rental to lower the daily cost?"
     },
     "resume": {
       "title": "You have an unfinished booking",

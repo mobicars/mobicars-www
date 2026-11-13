@@ -1,8 +1,10 @@
 "use client";
 
 import { Share2 } from "lucide-react";
+import { Button } from "react-aria-components";
 import { toast } from "sonner";
 
+import { IconTooltip } from "@/components/ui/tooltip";
 import { fill } from "@/i18n/fill";
 import { useMessages } from "@/i18n/messages-context";
 
@@ -33,15 +35,15 @@ export function ShareBooking({ car, variant }: { car: string; variant: "text" | 
   }
 
   return variant === "icon" ? (
-    <button
-      type="button"
-      onClick={share}
-      aria-label={t.share}
-      title={t.share}
-      className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-blue-dark/15 text-blue-medium transition-colors duration-200 ease-out hover:border-blue-medium motion-reduce:transition-none"
-    >
-      <Share2 className="size-5" aria-hidden />
-    </button>
+    <IconTooltip label={t.share}>
+      <Button
+        onPress={share}
+        aria-label={t.share}
+        className="flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-full border border-blue-dark/15 text-blue-medium outline-none transition-colors duration-200 ease-out hover:border-blue-medium data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none"
+      >
+        <Share2 className="size-5" aria-hidden />
+      </Button>
+    </IconTooltip>
   ) : (
     <button
       type="button"

@@ -1,11 +1,10 @@
 import { AlertTriangle } from "lucide-react";
 
-import { isProduction } from "@/lib/env";
+import { contentPreview } from "@/lib/cache";
 
+/** Shown while `CACHE_ENABLED` is off: live data and Strapi drafts (`lib/cache.ts`). */
 export function PreviewBanner() {
-  const isPreview = !isProduction();
-
-  if (!isPreview) return null;
+  if (!contentPreview()) return null;
 
   return (
     // Fixed height: the phone's booking bar sits right above it (`globals.css`).
@@ -19,7 +18,7 @@ export function PreviewBanner() {
           <strong>Tryb podglądu treści</strong>
         </p>
         <p className="text-xxs">
-          Cache jest włączony. Niektóre dane mogą być nieopublikowane.
+          Cache jest wyłączony. Widoczne są też nieopublikowane szkice z CMS.
         </p>
       </div>
     </div>

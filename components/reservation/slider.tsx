@@ -1,6 +1,6 @@
 "use client";
 
-import { Children, useEffect, useRef, useState, type ReactNode } from "react";
+import { Children, useEffect, useState, type ReactNode } from "react";
 
 import { fill } from "@/i18n/fill";
 import { useMessages } from "@/i18n/messages-context";
@@ -13,6 +13,11 @@ import { useMessages } from "@/i18n/messages-context";
  * `className` decides where it stops being a slider: pass the grid classes
  * for wider screens (e.g. `md:grid md:grid-cols-3`) and hide the dots there
  * with `dotsClassName`, so the same cards serve both layouts.
+ *
+ * Plain children become a list. A collection that brings its own element (a
+ * `GridList` of selectable cards) is passed as `list` instead: it gets the
+ * ref, the row classes and the class for each item, and `count` says how many
+ * items it renders.
  */
 export function Slider({
   label,
@@ -21,6 +26,8 @@ export function Slider({
   itemClassName = "",
   dotsClassName = "",
   children,
+  list,
+  count,
 }: {
   label: string;
   startIndex?: number;
@@ -28,17 +35,21 @@ export function Slider({
   /** Width of a card in the slider, e.g. `w-[82%]`. */
   itemClassName?: string;
   dotsClassName?: string;
-  children: ReactNode;
+  children?: ReactNode;
+  list?: (props: { ref: (element: HTMLDivElement | null) => void; className: string; itemClassName: string }) => ReactNode;
+  count?: number;
 }) {
   const { steps } = useMessages();
   const items = Children.toArray(children);
-  const list = useRef<HTMLUListElement>(null);
+  const total = list ? (count ?? 0) : items.length;
+  // State, not a ref: the row can be a collection that is handed the setter.
+  const [row, setRow] = useState<HTMLElement | null>(null);
   const [active, setActive] = useState(startIndex);
 
   // Open on the start card, with no animation, once the row has a width: a
   // streamed step can mount while still hidden. Does nothing once it is a grid.
   useEffect(() => {
-    const element = list.current;
+    const element = row;
     if (!element) {
       return;
     }
@@ -54,12 +65,12 @@ export function Slider({
     });
     observer.observe(element);
     return () => observer.disconnect();
-    // Only on mount: later the customer's own position wins.
+    // Only once the row is there: later the customer's own position wins.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [row]);
 
   function nearest(): number {
-    const element = list.current;
+    const element = row;
     if (!element) {
       return active;
     }
@@ -78,7 +89,7 @@ export function Slider({
   }
 
   function show(index: number) {
-    const element = list.current;
+    const element = row;
     const item = element?.children[index] as HTMLElement | undefined;
     if (!element || !item) {
       return;
@@ -90,27 +101,38 @@ export function Slider({
     });
   }
 
+  // Scroll is listened to here, so a collection need not pass `onScroll` on.
+  useEffect(() => {
+    const element = row;
+    if (!element) {
+      return;
+    }
+    const onScroll = () => setActive(nearest());
+    element.addEventListener("scroll", onScroll, { passive: true });
+    return () => element.removeEventListener("scroll", onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [row]);
+
   return (
     <div>
-      <ul
-        ref={list}
-        aria-label={label}
-        onScroll={() => setActive(nearest())}
-        className={`relative flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
-      >
-        {items.map((item, index) => (
-          <li key={index} className={`flex shrink-0 snap-center ${itemClassName}`}>
-            {item}
-          </li>
-        ))}
-      </ul>
-      {items.length > 1 ? (
+      {list ? (
+        list({ ref: setRow, className: `${rowClass} ${className}`, itemClassName: `${itemClass} ${itemClassName}` })
+      ) : (
+        <ul ref={setRow} aria-label={label} className={`${rowClass} ${className}`}>
+          {items.map((item, index) => (
+            <li key={index} className={`${itemClass} ${itemClassName}`}>
+              {item}
+            </li>
+          ))}
+        </ul>
+      )}
+      {total > 1 ? (
         <div className={`mt-2 flex justify-center gap-1 ${dotsClassName}`}>
-          {items.map((_, index) => (
+          {Array.from({ length: total }, (_, index) => (
             <button
               key={index}
               type="button"
-              aria-label={fill(steps.slide, { index: index + 1, count: items.length })}
+              aria-label={fill(steps.slide, { index: index + 1, count: total })}
               aria-current={index === active || undefined}
               onClick={() => show(index)}
               className="flex size-6 cursor-pointer items-center justify-center"
@@ -127,3 +149,7 @@ export function Slider({
     </div>
   );
 }
+
+const rowClass =
+  "relative flex snap-x snap-mandatory gap-3 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden";
+const itemClass = "flex shrink-0 snap-center";

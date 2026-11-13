@@ -1,0 +1,21 @@
+# Every page of one locale, only what a URL is built from. See `modules/routes.ts`.
+query PageRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: Int!, $pageSize: Int!) {
+  pages_connection(
+    locale: $locale
+    status: $status
+    sort: "id"
+    pagination: { page: $page, pageSize: $pageSize }
+  ) {
+    nodes {
+      documentId
+      slug
+      parentPage {
+        documentId
+      }
+    }
+    pageInfo {
+      page
+      pageCount
+    }
+  }
+}

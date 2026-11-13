@@ -317,6 +317,7 @@ export function TimeField({
         >
           <DialogHeader titleId={titleId} title={label} className="py-4" />
           <OptionList
+            labelledBy={titleId}
             options={SLOTS.filter((slot) => !isBlocked(slot))}
             isSelected={(slot) => value?.hour === slot.hour && value.minute === slot.minute}
             getKey={formatClock}

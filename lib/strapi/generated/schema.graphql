@@ -1,3 +1,35 @@
+type Announcement {
+  closable: Boolean!
+  createdAt: DateTime
+  documentId: ID!
+  enabled: Boolean!
+  endsAt: DateTime
+  link: ComponentElementsLink
+  locale: String
+  localizations: [Announcement]!
+  localizations_connection: AnnouncementRelationResponseCollection
+  publishedAt: DateTime
+  startsAt: DateTime
+  text: String!
+  updatedAt: DateTime
+  variant: ENUM_ANNOUNCEMENT_VARIANT!
+}
+
+input AnnouncementInput {
+  closable: Boolean
+  enabled: Boolean
+  endsAt: DateTime
+  link: ComponentElementsLinkInput
+  publishedAt: DateTime
+  startsAt: DateTime
+  text: String
+  variant: ENUM_ANNOUNCEMENT_VARIANT
+}
+
+type AnnouncementRelationResponseCollection {
+  nodes: [Announcement!]!
+}
+
 type Blog {
   components: [BlogComponentsDynamicZone]
   coverImage: UploadFile!
@@ -129,16 +161,25 @@ type CityRelationResponseCollection {
 }
 
 type ComponentBlocksHero {
+  backgroundImage: UploadFile!
+  backgroundImageMobile: UploadFile
+  backgroundVideo: UploadFile
   badge: String
-  calendarDefaultType: ENUM_COMPONENTBLOCKSHERO_CALENDARDEFAULTTYPE!
-  calendarLayout: ENUM_COMPONENTBLOCKSHERO_CALENDARLAYOUT!
   ctas(filters: ComponentElementsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsCta]
+  height: ENUM_COMPONENTBLOCKSHERO_HEIGHT!
   id: ID!
-  imageBackground: UploadFile
-  isFullscreen: Boolean!
+  overlay: ENUM_COMPONENTBLOCKSHERO_OVERLAY!
+  reservationDefaultTerm: ENUM_COMPONENTBLOCKSHERO_RESERVATIONDEFAULTTERM!
+  reservationLayout: ENUM_COMPONENTBLOCKSHERO_RESERVATIONLAYOUT!
   subtitle: String
   title: String!
-  videoBackground: UploadFile
+}
+
+type ComponentBlocksRichText {
+  content: String!
+  id: ID!
+  settings: ComponentElementsSettings
+  title: String
 }
 
 type ComponentElementsCta {
@@ -161,7 +202,7 @@ type ComponentElementsLink {
   blog: Blog
   customUrl: String
   id: ID!
-  label: String!
+  label: String
   linkType: ENUM_COMPONENTELEMENTSLINK_LINKTYPE!
   localPage: LocalPage
   newTab: Boolean
@@ -183,6 +224,38 @@ input ComponentElementsLinkFiltersInput {
   sale: SaleFiltersInput
 }
 
+input ComponentElementsLinkInput {
+  blog: ID
+  customUrl: String
+  id: ID
+  label: String
+  linkType: ENUM_COMPONENTELEMENTSLINK_LINKTYPE
+  localPage: ID
+  newTab: Boolean
+  page: ID
+  sale: ID
+}
+
+type ComponentElementsSeo {
+  id: ID!
+  keywords: String
+  metaDescription: String
+  metaTitle: String
+  noFollow: Boolean!
+  noIndex: Boolean!
+  shareImage: UploadFile
+}
+
+input ComponentElementsSeoInput {
+  id: ID
+  keywords: String
+  metaDescription: String
+  metaTitle: String
+  noFollow: Boolean
+  noIndex: Boolean
+  shareImage: ID
+}
+
 type ComponentElementsSettings {
   containerWidth: ENUM_COMPONENTELEMENTSSETTINGS_CONTAINERWIDTH
   id: ID!
@@ -190,6 +263,52 @@ type ComponentElementsSettings {
   spacingBottom: ENUM_COMPONENTELEMENTSSETTINGS_SPACINGBOTTOM
   spacingTop: ENUM_COMPONENTELEMENTSSETTINGS_SPACINGTOP
   theme: ENUM_COMPONENTELEMENTSSETTINGS_THEME
+}
+
+type ComponentMenuGroup {
+  id: ID!
+  links(filters: ComponentElementsLinkFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsLink]
+  title: String!
+}
+
+input ComponentMenuGroupFiltersInput {
+  and: [ComponentMenuGroupFiltersInput]
+  links: ComponentElementsLinkFiltersInput
+  not: ComponentMenuGroupFiltersInput
+  or: [ComponentMenuGroupFiltersInput]
+  title: StringFilterInput
+}
+
+input ComponentMenuGroupInput {
+  id: ID
+  links: [ComponentElementsLinkInput]
+  title: String
+}
+
+type ComponentMenuItem {
+  id: ID!
+  label: String!
+  link: ComponentElementsLink
+  links(filters: ComponentElementsLinkFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsLink]
+  submenu: ENUM_COMPONENTMENUITEM_SUBMENU!
+}
+
+input ComponentMenuItemFiltersInput {
+  and: [ComponentMenuItemFiltersInput]
+  label: StringFilterInput
+  link: ComponentElementsLinkFiltersInput
+  links: ComponentElementsLinkFiltersInput
+  not: ComponentMenuItemFiltersInput
+  or: [ComponentMenuItemFiltersInput]
+  submenu: StringFilterInput
+}
+
+input ComponentMenuItemInput {
+  id: ID
+  label: String
+  link: ComponentElementsLinkInput
+  links: [ComponentElementsLinkInput]
+  submenu: ENUM_COMPONENTMENUITEM_SUBMENU
 }
 
 type ComponentSharedBasicText {
@@ -476,6 +595,42 @@ type ComponentSharedTextWithImage {
   title: String!
 }
 
+type ComponentSiteContact {
+  address: String
+  email: String!
+  id: ID!
+  openingHours: String
+  phone: String!
+}
+
+input ComponentSiteContactInput {
+  address: String
+  email: String
+  id: ID
+  openingHours: String
+  phone: String
+}
+
+type ComponentSiteSocialLink {
+  id: ID!
+  platform: ENUM_COMPONENTSITESOCIALLINK_PLATFORM!
+  url: String!
+}
+
+input ComponentSiteSocialLinkFiltersInput {
+  and: [ComponentSiteSocialLinkFiltersInput]
+  not: ComponentSiteSocialLinkFiltersInput
+  or: [ComponentSiteSocialLinkFiltersInput]
+  platform: StringFilterInput
+  url: StringFilterInput
+}
+
+input ComponentSiteSocialLinkInput {
+  id: ID
+  platform: ENUM_COMPONENTSITESOCIALLINK_PLATFORM
+  url: String
+}
+
 type ComponentSystemDictionary {
   Key: String!
   Name: String!
@@ -589,22 +744,40 @@ type DictionaryRelationResponseCollection {
   nodes: [Dictionary!]!
 }
 
-enum ENUM_COMPONENTBLOCKSHERO_CALENDARDEFAULTTYPE {
-  long
-  short
+enum ENUM_ANNOUNCEMENT_VARIANT {
+  info
+  promo
+  urgent
 }
 
-enum ENUM_COMPONENTBLOCKSHERO_CALENDARLAYOUT {
+enum ENUM_COMPONENTBLOCKSHERO_HEIGHT {
+  compact
+  default
+  fullscreen
+}
+
+enum ENUM_COMPONENTBLOCKSHERO_OVERLAY {
+  light
+  medium
+  none
+  strong
+}
+
+enum ENUM_COMPONENTBLOCKSHERO_RESERVATIONDEFAULTTERM {
+  longTerm
+  shortTerm
+}
+
+enum ENUM_COMPONENTBLOCKSHERO_RESERVATIONLAYOUT {
   default
   horizontal
   none
 }
 
 enum ENUM_COMPONENTELEMENTSCTA_VARIANT {
-  ghost
-  outline
   primary
   secondary
+  success
 }
 
 enum ENUM_COMPONENTELEMENTSLINK_LINKTYPE {
@@ -643,6 +816,14 @@ enum ENUM_COMPONENTELEMENTSSETTINGS_THEME {
   primary
 }
 
+enum ENUM_COMPONENTMENUITEM_SUBMENU {
+  blog
+  fleet
+  links
+  locations
+  none
+}
+
 enum ENUM_COMPONENTSHAREDCTA_COLOR {
   blue
   green
@@ -677,6 +858,15 @@ enum ENUM_COMPONENTSHAREDTEXT_ALIGNMENT {
   center
   left
   right
+}
+
+enum ENUM_COMPONENTSITESOCIALLINK_PLATFORM {
+  facebook
+  instagram
+  linkedin
+  tiktok
+  x
+  youtube
 }
 
 type Error {
@@ -747,7 +937,7 @@ type FooterRelationResponseCollection {
   nodes: [Footer!]!
 }
 
-union GenericMorph = Blog | City | ComponentBlocksHero | ComponentElementsCta | ComponentElementsLink | ComponentElementsSettings | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | Footer | Global | I18NLocale | Infobar | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
+union GenericMorph = Announcement | Blog | City | ComponentBlocksHero | ComponentBlocksRichText | ComponentElementsCta | ComponentElementsLink | ComponentElementsSeo | ComponentElementsSettings | ComponentMenuGroup | ComponentMenuItem | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
 
 type Global {
   createdAt: DateTime
@@ -904,6 +1094,32 @@ input JSONFilterInput {
   startsWith: JSON
 }
 
+type Layout {
+  createdAt: DateTime
+  documentId: ID!
+  footerGroups(filters: ComponentMenuGroupFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentMenuGroup]
+  footerText: String
+  header(filters: ComponentMenuItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentMenuItem]
+  legalLinks(filters: ComponentElementsLinkFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsLink]
+  locale: String
+  localizations: [Layout]!
+  localizations_connection: LayoutRelationResponseCollection
+  publishedAt: DateTime
+  updatedAt: DateTime
+}
+
+input LayoutInput {
+  footerGroups: [ComponentMenuGroupInput]
+  footerText: String
+  header: [ComponentMenuItemInput]
+  legalLinks: [ComponentElementsLinkInput]
+  publishedAt: DateTime
+}
+
+type LayoutRelationResponseCollection {
+  nodes: [Layout!]!
+}
+
 type LocalPage {
   Title: String!
   components: [LocalPageComponentsDynamicZone]
@@ -1015,6 +1231,10 @@ type Mutation {
 
   """Create a new user"""
   createUsersPermissionsUser(data: UsersPermissionsUserInput!): UsersPermissionsUserEntityResponse!
+  deleteAnnouncement(
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+  ): DeleteMutationResponse
   deleteBlog(
     documentId: ID!
 
@@ -1040,6 +1260,10 @@ type Mutation {
     locale: I18NLocaleCode
   ): DeleteMutationResponse
   deleteInfobar(
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+  ): DeleteMutationResponse
+  deleteLayout(
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
@@ -1080,6 +1304,10 @@ type Mutation {
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
+  deleteSite(
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+  ): DeleteMutationResponse
   deleteSocial: DeleteMutationResponse
   deleteUploadFile(id: ID!): UploadFile
 
@@ -1103,6 +1331,13 @@ type Mutation {
   Reset user password. Confirm with a code (resetToken from forgotPassword)
   """
   resetPassword(code: String!, password: String!, passwordConfirmation: String!): UsersPermissionsLoginPayload
+  updateAnnouncement(
+    data: AnnouncementInput!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): Announcement
   updateBlog(
     data: BlogInput!
     documentId: ID!
@@ -1147,6 +1382,13 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Infobar
+  updateLayout(
+    data: LayoutInput!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): Layout
   updateLocalPage(
     data: LocalPageInput!
     documentId: ID!
@@ -1197,6 +1439,13 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): ServicePoint
+  updateSite(
+    data: SiteInput!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): Site
   updateSocial(data: SocialInput!, status: PublicationStatus = PUBLISHED): Social
   updateUploadFile(id: ID!, info: FileInfoInput): UploadFile!
 
@@ -1330,6 +1579,14 @@ enum PublicationStatus {
 }
 
 type Query {
+  announcement(
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    publicationFilter: PublicationFilter
+    status: PublicationStatus = PUBLISHED
+  ): Announcement
   blog(
     documentId: ID!
     hasPublishedVersion: Boolean
@@ -1427,6 +1684,14 @@ type Query {
     publicationFilter: PublicationFilter
     status: PublicationStatus = PUBLISHED
   ): Infobar
+  layout(
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    publicationFilter: PublicationFilter
+    status: PublicationStatus = PUBLISHED
+  ): Layout
   localPage(
     documentId: ID!
     hasPublishedVersion: Boolean
@@ -1600,6 +1865,14 @@ type Query {
     sort: [String] = []
     status: PublicationStatus = PUBLISHED
   ): ServicePointEntityResponseCollection
+  site(
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    publicationFilter: PublicationFilter
+    status: PublicationStatus = PUBLISHED
+  ): Site
   social(hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): Social
   uploadFile(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): UploadFile
   uploadFiles(filters: UploadFileFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [UploadFile]!
@@ -1884,6 +2157,30 @@ input ServicePointInput {
 
 type ServicePointRelationResponseCollection {
   nodes: [ServicePoint!]!
+}
+
+type Site {
+  contact: ComponentSiteContact
+  createdAt: DateTime
+  documentId: ID!
+  locale: String
+  localizations: [Site]!
+  localizations_connection: SiteRelationResponseCollection
+  publishedAt: DateTime
+  seo: ComponentElementsSeo
+  social(filters: ComponentSiteSocialLinkFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentSiteSocialLink]
+  updatedAt: DateTime
+}
+
+input SiteInput {
+  contact: ComponentSiteContactInput
+  publishedAt: DateTime
+  seo: ComponentElementsSeoInput
+  social: [ComponentSiteSocialLinkInput]
+}
+
+type SiteRelationResponseCollection {
+  nodes: [Site!]!
 }
 
 type Social {

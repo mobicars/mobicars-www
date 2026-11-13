@@ -25,7 +25,7 @@ The fleet list and one page per car, generated from the RentCarSoft catalog. The
 
 ## Data (`cars.ts`)
 
-Server-only. `listFleetCars(lang)` reads the daily catalog (`listAllOffers`, term `short`, no dates); `getFleetCar(lang, id)` reads one offer (`getOffer`). Both are cached in production by the bridge (`rcs:catalog`, `hours`); on staging and locally they are not (`lib/env.ts`, `lib/rentcarsoft/docs/caching.md`).
+Server-only. `listFleetCars(lang)` reads the daily catalog (`listAllOffers`, term `short`, no dates); `getFleetCar(lang, id)` reads one offer (`getOffer`). Both are cached by the bridge (`rcs:catalog`, `hours`) when `CACHE_ENABLED` is on (production) and read live when it is off (local, preview); see `lib/cache.ts` and `lib/rentcarsoft/docs/caching.md`.
 
 What the undated catalog carries (checked on the live API on 12 November 2026, 34 offers):
 
@@ -53,7 +53,7 @@ What the undated catalog carries (checked on the live API on 12 November 2026, 3
 ## List page
 
 - Server-rendered with every car in the HTML (good for search engines), then filtered in the browser (`components/fleet/fleet-browser.tsx`).
-- Filters, one value per group: category (the old site's small / compact / large / eco / delivery, matched by value id, `OFFER_CATEGORIES` in `lib/reservation/offers.ts`), gearbox, fuel (value ids of key 9), seats ("5+", "7+", "9+"). Sort: recommended (API order), price up, price down. A group with nothing to choose from is hidden.
+- Filters, one value per group: category (the old site's small / compact / large / eco / delivery, matched by value id, `OFFER_CATEGORIES` in `lib/reservation/offers.ts`), gearbox, fuel (value ids of key 9), seats ("5+", "7+", "9+"). Sort: recommended (API order), price up, price down. A group with nothing to choose from is hidden. Each group is a `ChoiceChips` (`components/ui/choice-chips.tsx`, React Aria `ToggleButtonGroup`): one Tab stop per group, arrows between chips, pressing the chosen chip again clears the filter.
 - **The query string is the state**: `?category=eco&gearbox=automatic&fuel=18&seats=7&sort=price_asc` (`filters.ts`, tested). The keys are the same in every language. The page does not read `searchParams` on the server, so it stays static; the browser applies the query after hydration through `useSyncExternalStore`, and changes use `history.replaceState`.
 - Below `lg` the filters fold behind a "Filtry" button with the number of active filters.
 - The note "Rezerwujesz klasę samochodu…" is the old site's `infoCar.all`: a booking is for a class, "or similar".
@@ -65,7 +65,7 @@ In order: breadcrumbs, segment and `h1` ("Wynajem Toyota Yaris"), gallery, key f
 - **Booking.** The box holds the homepage widget (`ReservationPicker`) with `offerId`: "Szukaj" opens the reservation page with this car chosen and the next step open (`offer=<id>&step=protection`), for daily and monthly rental alike. If the car is not in the list for the chosen place and dates, the reservation page falls back to the car list with "Wybrane auto nie jest dostępne…" (`lib/reservation/README.md`). The widget starts on the visitor's last search, so a car with both terms can open on the monthly tab.
 - **Monthly availability differs from the catalog flag.** `longTerm: true` and a `monthly_price` do not mean the car is on every monthly list: on 12 November 2026 the monthly list for place 479, 3 months and 2000 km had 14 cars and no Toyota Yaris (1219), although its page shows "od 1500 zł / mies.". The monthly list depends on the months and the kilometre limit.
 - **Similar cars** (`similarCars`): up to four, the most shared categories first, then the closest "od" price.
-- **Rendering.** `generateStaticParams` prerenders every car of the daily catalog (same slugs in every language). Other ids render on their first visit: the page awaits `params` inside `<Suspense>`, as the Next 16 guide "ISR with Cache Components" describes. A redirect or 404 for an id outside the prerendered list happens inside the streamed part.
+- **Rendering.** `generateStaticParams` prerenders every car of the daily catalog (same slugs in every language). Other ids render on their first visit. The page sets `export const instant = false` and reads `params` and the offer before rendering, outside `<Suspense>`, so an unknown id answers a real 404 and an old slug a real 308 (inside a streamed part both would come back as 200).
 
 ## SEO
 

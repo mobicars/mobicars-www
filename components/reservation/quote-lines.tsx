@@ -1,5 +1,6 @@
 import { LoaderCircle } from "lucide-react";
 
+import { AnimatedMoney } from "@/components/reservation/animated-money";
 import { formatKilometers, formatMoney, formatMonths } from "@/components/reservation/format";
 import type { Lang } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
@@ -29,7 +30,7 @@ export function QuoteLines({
   total: number | null;
   /** After the total, e.g. "/ mies.". */
   totalSuffix?: string;
-  /** A newer quote is on its way: placeholders instead of amounts, a spinner instead of the total. */
+  /** A newer quote is on its way: placeholders instead of amounts, the total greyed with a spinner. */
   loading?: boolean;
   messages: Messages;
   lang: Lang;
@@ -158,11 +159,12 @@ function TotalRow({
     <div className="mt-2 flex min-h-11 items-center justify-between gap-3 border-t border-muted-light pt-3">
       <dt className="font-semibold text-blue-dark">{label}</dt>
       <dd className="text-xl font-bold text-blue-dark">
-        {loading || total === null ? (
+        {total === null ? (
           <Spinner label={messages.summary.calculating} />
         ) : (
           <>
-            {formatMoney(lang, total)}
+            {/* While a newer quote loads: this amount greyed with a spinner, then it counts to the new one. */}
+            <AnimatedMoney id="quote-total" value={total} lang={lang} pending={loading} pendingLabel={messages.summary.calculating} />
             {suffix ? <span className="text-xs font-semibold"> {suffix}</span> : null}
           </>
         )}

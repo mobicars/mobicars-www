@@ -1,9 +1,10 @@
 "use client";
 
-import { useTransition, type ReactNode } from "react";
+import { Suspense, use, useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarPlus, Check, LoaderCircle, ShieldCheck } from "lucide-react";
 
+import { ConfirmQuestion } from "@/components/reservation/dialog-parts";
 import { formatDayCount, formatMoney } from "@/components/reservation/format";
 import { currentHrefWith } from "@/components/reservation/url";
 import { buttonClass } from "@/components/ui/button";
@@ -15,17 +16,65 @@ import type { ProtectionOption } from "@/lib/reservation/protection";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
 /**
- * Small, honest upsells on the booking steps. Each one is a single tap that
+ * Small, honest upsells on the booking steps. Each one asks first, then
  * changes the URL; the page then quotes again, so every price shown after the
- * tap is RentCarSoft's.
+ * change is RentCarSoft's.
  */
+
+const promiseIds = new WeakMap<object, number>();
+let lastPromiseId = 0;
+
+/**
+ * `ExtendHint` for a hint still being quoted: the step shows without waiting
+ * for its two extra quotes, and the card appears once they arrive. Each new
+ * promise (a new server render) gets a fresh boundary, so a navigation never
+ * waits for the hint either.
+ */
+export function ExtendHintSlot({
+  hint,
+  currentDays,
+  className,
+}: {
+  hint: Promise<ExtensionHint | null>;
+  currentDays: number | null;
+  className?: string;
+}) {
+  if (!promiseIds.has(hint)) {
+    promiseIds.set(hint, ++lastPromiseId);
+  }
+  return (
+    <Suspense key={promiseIds.get(hint)} fallback={null}>
+      <ResolvedExtendHint hint={hint} currentDays={currentDays} className={className} />
+    </Suspense>
+  );
+}
+
+function ResolvedExtendHint({
+  hint,
+  currentDays,
+  className,
+}: {
+  hint: Promise<ExtensionHint | null>;
+  currentDays: number | null;
+  className?: string;
+}) {
+  // A refresh in development can hand over the settled value instead of the promise.
+  const value = isThenable(hint) ? use(hint) : (hint as ExtensionHint | null);
+  if (!value || !currentDays) {
+    return null;
+  }
+  const card = <ExtendHint hint={value} currentDays={currentDays} />;
+  return className ? <div className={className}>{card}</div> : card;
+}
+
+function isThenable(value: unknown): value is Promise<ExtensionHint | null> {
+  return typeof (value as { then?: unknown } | null)?.then === "function";
+}
 
 /** "Weź 4 dni zamiast 3": the next price band is a day or two away (see `extensionHint`). */
 export function ExtendHint({ hint, currentDays }: { hint: ExtensionHint; currentDays: number }) {
   const t = useMessages().booking.extend;
   const lang = useLang();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const days = formatDayCount(lang, hint.days);
 
   return (
@@ -33,19 +82,12 @@ export function ExtendHint({ hint, currentDays }: { hint: ExtensionHint; current
       icon={<CalendarPlus className="size-6" strokeWidth={1.75} aria-hidden />}
       title={fill(t.title, { days, current: formatDayCount(lang, currentDays) })}
       action={
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            startTransition(() =>
-              router.replace(currentHrefWith({ [QUERY_KEYS.end]: hint.end }), { scroll: false }),
-            )
-          }
-          className={buttonClass("success", "md", "w-full sm:w-auto")}
-        >
-          {pending ? <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : null}
-          {pending ? t.extending : fill(t.button, { days })}
-        </button>
+        <NudgeAction
+          label={fill(t.button, { days })}
+          pendingLabel={t.extending}
+          question={t.confirmTitle}
+          href={() => currentHrefWith({ [QUERY_KEYS.end]: hint.end })}
+        />
       }
     >
       {fill(t.text, { before: formatMoney(lang, hint.dailyBefore), after: formatMoney(lang, hint.dailyAfter) })}{" "}
@@ -65,8 +107,6 @@ export function ProtectionUpgrade({ from, to }: { from: ProtectionOption; to: Pr
   const t = messages.extras.upgrade;
   const rows = messages.protection.rows;
   const lang = useLang();
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
   // Covers the better package pays in full where the chosen one does not.
   const gains = to.rows.filter(
     (row) => row.covered && !from.rows.some((other) => other.key === row.key && other.covered),
@@ -78,19 +118,12 @@ export function ProtectionUpgrade({ from, to }: { from: ProtectionOption; to: Pr
       icon={<ShieldCheck className="size-6" strokeWidth={1.75} aria-hidden />}
       title={fill(t.title, { name: to.name })}
       action={
-        <button
-          type="button"
-          disabled={pending}
-          onClick={() =>
-            startTransition(() =>
-              router.replace(currentHrefWith({ [QUERY_KEYS.protection]: String(to.id) }), { scroll: false }),
-            )
-          }
-          className={buttonClass("success", "md", "w-full sm:w-auto")}
-        >
-          {pending ? <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : null}
-          {pending ? t.changing : fill(t.button, { name: to.name })}
-        </button>
+        <NudgeAction
+          label={fill(t.button, { name: to.name })}
+          pendingLabel={t.changing}
+          question={t.confirmTitle}
+          href={() => currentHrefWith({ [QUERY_KEYS.protection]: String(to.id) })}
+        />
       }
     >
       <span className="font-semibold text-green-dark">
@@ -108,6 +141,46 @@ export function ProtectionUpgrade({ from, to }: { from: ProtectionOption; to: Pr
         </span>
       ) : null}
     </NudgeCard>
+  );
+}
+
+/** The card's button: asks `question`, then moves to `href()` (read on confirm, so it keeps the latest URL). */
+function NudgeAction({
+  label,
+  pendingLabel,
+  question,
+  href,
+}: {
+  label: string;
+  pendingLabel: string;
+  question: string;
+  href: () => string;
+}) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [asking, setAsking] = useState(false);
+
+  return (
+    <>
+      <button
+        type="button"
+        disabled={pending}
+        onClick={() => setAsking(true)}
+        className={buttonClass("success", "md", "w-full sm:w-auto")}
+      >
+        {pending ? <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden /> : null}
+        {pending ? pendingLabel : label}
+      </button>
+      <ConfirmQuestion
+        open={asking}
+        title={question}
+        onCancel={() => setAsking(false)}
+        onConfirm={() => {
+          setAsking(false);
+          startTransition(() => router.replace(href(), { scroll: false }));
+        }}
+      />
+    </>
   );
 }
 

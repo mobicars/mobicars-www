@@ -1,15 +1,16 @@
 "use client";
 
-import { startTransition, useActionState, useRef, useState, type FormEvent, type ReactNode } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Banknote, Car, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
+import { FieldError, Label, TextArea, TextField as AriaTextField } from "react-aria-components";
 import { toast } from "sonner";
 
 import { PasswordField, TextField } from "@/components/auth/fields";
 import { PhoneField } from "@/components/auth/phone-field";
 import { AccountBox } from "@/components/reservation/account-box";
-import { ExtendHint, ProtectionUpgrade } from "@/components/reservation/nudges";
+import { ExtendHintSlot, ProtectionUpgrade } from "@/components/reservation/nudges";
 import { formatMoney } from "@/components/reservation/format";
 import {
   MobileSummaryBar,
@@ -22,6 +23,7 @@ import {
 import { PromoCode } from "@/components/reservation/promo-code";
 import { currentHrefWith, restartCarChoice } from "@/components/reservation/url";
 import { useQuote } from "@/components/reservation/use-quote";
+import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
 import { RichText } from "@/components/ui/rich-text";
 import type { Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
@@ -69,7 +71,7 @@ const FORM_ID = "customer-form";
  */
 export function CustomerStep({
   lang,
-  searchQuery,
+  searchQuery: serverSearchQuery,
   car,
   protection,
   extras,
@@ -99,10 +101,11 @@ export function CustomerStep({
   airport: boolean;
   account: AccountPrefill | null;
   /** "Weź 4 dni zamiast 3", above the customer's data. */
-  extension?: ExtensionHint | null;
+  extension?: Promise<ExtensionHint | null> | null;
   /** The recommended package, between the data and the consents. */
   upgrade?: { from: ProtectionOption; to: ProtectionOption } | null;
 }) {
+  const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
   const messages = useMessages();
   const t = messages.details;
@@ -181,6 +184,14 @@ export function CustomerStep({
     errors[field] ? <span className="text-red-700">{fieldError(errors[field])}</span> : hint;
   const required = CONSENTS.filter((consent) => consent.required);
   const allRequired = required.every(({ name }) => consents[name]);
+  const someRequired = required.some(({ name }) => consents[name]);
+  // Some but not all ticked: "mixed", drawn as a dash and read out as partly checked.
+  const checkAll = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (checkAll.current) {
+      checkAll.current.indeterminate = someRequired && !allRequired;
+    }
+  }, [someRequired, allRequired]);
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
@@ -215,7 +226,7 @@ export function CustomerStep({
           </div>
         </Review>
 
-        {extension && car.days ? <ExtendHint hint={extension} currentDays={car.days} /> : null}
+        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
 
         {/* One card: heading, the sign-in box (its own form) and the booking form; forms cannot nest. */}
         <section aria-labelledby="customer-title" className="flex flex-col gap-6 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
@@ -427,17 +438,21 @@ export function CustomerStep({
             />
           ) : null}
 
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-blue-dark">
-            {t.comment}
-            <textarea
-              name="comment"
+          {/* Like `TextField`: the error is linked to the field, so it is read out with it. */}
+          <AriaTextField
+            name="comment"
+            isInvalid={!!errors.comment}
+            validationBehavior="aria"
+            className="flex flex-col gap-1.5 text-sm font-medium text-blue-dark"
+          >
+            <Label>{t.comment}</Label>
+            <TextArea
               rows={3}
               maxLength={2000}
-              aria-invalid={errors.comment ? true : undefined}
               className="w-full rounded-lg border border-muted bg-white px-4 py-3 font-normal text-ink outline-none transition-colors focus:border-blue-medium focus:ring-2 focus:ring-blue-light aria-invalid:border-red-500"
             />
-            {errors.comment ? <span className="text-xs text-red-700">{fieldError(errors.comment)}</span> : null}
-          </label>
+            <FieldError className="text-xs font-normal text-red-700">{errors.comment ? fieldError(errors.comment) : null}</FieldError>
+          </AriaTextField>
 
           {upgrade ? <ProtectionUpgrade from={upgrade.from} to={upgrade.to} /> : null}
 
@@ -450,6 +465,7 @@ export function CustomerStep({
               <input
                 type="checkbox"
                 checked={allRequired}
+                ref={checkAll}
                 onChange={(event) => {
                   const on = event.target.checked;
                   setConsents((current) => ({
@@ -519,7 +535,7 @@ export function CustomerStep({
         </section>
       </div>
       <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} searchQuery={searchQuery} />
-      <MobileSummaryBar car={car} prices={prices} action={action} />
+      <MobileSummaryBar trip={trip} car={car} prices={prices} action={action} />
     </div>
   );
 }

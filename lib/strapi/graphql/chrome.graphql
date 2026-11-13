@@ -1,0 +1,81 @@
+# The header, footer and site-wide settings, one request for every page. See `modules/chrome.ts`.
+query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  layout(locale: $locale, status: $status) {
+    header {
+      label
+      submenu
+      link {
+        ...Link
+      }
+      links {
+        ...Link
+      }
+    }
+    footerGroups {
+      title
+      links {
+        ...Link
+      }
+    }
+    footerText
+    legalLinks {
+      ...Link
+    }
+  }
+  announcement(locale: $locale, status: $status) {
+    documentId
+    updatedAt
+    enabled
+    text
+    variant
+    link {
+      ...Link
+    }
+    startsAt
+    endsAt
+    closable
+  }
+  site(locale: $locale, status: $status) {
+    seo {
+      ...Seo
+    }
+    contact {
+      phone
+      email
+      address
+      openingHours
+    }
+    social {
+      platform
+      url
+    }
+  }
+}
+
+# Newest blog posts, for the "blog" submenu.
+query LatestPosts($locale: I18NLocaleCode!, $status: PublicationStatus!, $limit: Int!) {
+  blogs(
+    locale: $locale
+    status: $status
+    sort: ["publishedAt:desc", "createdAt:desc"]
+    pagination: { limit: $limit }
+  ) {
+    documentId
+    title
+    slug
+    coverImage {
+      ...Media
+    }
+  }
+}
+
+fragment Seo on ComponentElementsSeo {
+  metaTitle
+  metaDescription
+  keywords
+  noIndex
+  noFollow
+  shareImage {
+    ...Media
+  }
+}

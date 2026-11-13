@@ -147,7 +147,7 @@ export function RecoveryCodeDialog({
     <ModalOverlay
       isOpen={open}
       onOpenChange={onOpenChange}
-      className="pickup-overlay fixed inset-0 z-50 flex bg-black/50"
+      className="pickup-overlay fixed inset-0 z-50 flex bg-blue-dark/40 backdrop-blur-[4px]"
     >
       <Modal className="pickup-modal m-auto flex max-h-[calc(100dvh-1.5rem)] w-[min(26rem,calc(100%-1.5rem))] flex-col overflow-y-auto rounded-2xl bg-white text-ink shadow-2xl outline-none">
         <Dialog aria-labelledby={titleId} className="relative flex flex-col gap-5 p-6 outline-none sm:p-8">

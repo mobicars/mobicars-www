@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, useTransition, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
+import { useSearchParams } from "next/navigation";
 import { BadgePercent, LoaderCircle, X } from "lucide-react";
 
-import { currentHrefWith } from "@/components/reservation/url";
+import { replaceParam } from "@/components/reservation/url";
 import { buttonClass } from "@/components/ui/button";
 import { useMessages } from "@/i18n/messages-context";
 import { QUERY_KEYS } from "@/lib/reservation/search";
@@ -12,24 +12,22 @@ import { QUERY_KEYS } from "@/lib/reservation/search";
 /**
  * "Masz kod rabatowy?" in the booking summary, like the old site's coupon box.
  * A code is checked with `GET /api/reservation/promo` for the pickup date and
- * then put in the URL (`promo=`). The page re-renders with it, so every quote
- * and the reservation itself carry the code; the discount shows in the
- * prices RentCarSoft returns, nothing is subtracted here.
+ * then put in the URL (`promo=`) without a navigation: the steps read it with
+ * `useLiveSearchQuery`, so only the quotes run again, and the reservation
+ * carries the code. The discount shows in the prices RentCarSoft returns,
+ * nothing is subtracted here.
  */
 export function PromoCode({ searchQuery }: { searchQuery: string }) {
   const t = useMessages().promo;
-  const router = useRouter();
-  const query = new URLSearchParams(searchQuery);
-  const applied = query.get(QUERY_KEYS.promo);
-  const start = query.get(QUERY_KEYS.start);
+  const applied = useSearchParams().get(QUERY_KEYS.promo);
+  const start = new URLSearchParams(searchQuery).get(QUERY_KEYS.start);
   const [open, setOpen] = useState(false);
   const [code, setCode] = useState("");
   const [checking, setChecking] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [navigating, startNavigation] = useTransition();
 
   function go(promo: string | null) {
-    startNavigation(() => router.replace(currentHrefWith({ [QUERY_KEYS.promo]: promo }), { scroll: false }));
+    replaceParam(QUERY_KEYS.promo, promo);
   }
 
   // A code that came with the link (or a changed pickup date) is checked once
@@ -43,11 +41,11 @@ export function PromoCode({ searchQuery }: { searchQuery: string }) {
       if (result === "invalid") {
         setError(t.invalid);
         setOpen(true);
-        startNavigation(() => router.replace(currentHrefWith({ [QUERY_KEYS.promo]: null }), { scroll: false }));
+        replaceParam(QUERY_KEYS.promo, null);
       }
     });
     return () => controller.abort();
-  }, [applied, start, router, t.invalid]);
+  }, [applied, start, t.invalid]);
 
   async function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,14 +80,9 @@ export function PromoCode({ searchQuery }: { searchQuery: string }) {
           <button
             type="button"
             onClick={() => go(null)}
-            disabled={navigating}
-            className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-60"
+            className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
           >
-            {navigating ? (
-              <LoaderCircle className="size-3.5 animate-spin motion-reduce:animate-none" aria-hidden />
-            ) : (
-              <X className="size-3.5" aria-hidden />
-            )}
+            <X className="size-3.5" aria-hidden />
             {t.remove}
           </button>
         </div>

@@ -1,7 +1,7 @@
 import type { Extra, ExtraPresentation } from "@/lib/rentcarsoft";
 
 import type { PriceUnit } from "./extras";
-import { plainText } from "./text";
+import { richText } from "./text";
 
 /** `Extra.type` of the insurance addons ("Ubezpieczenia"). */
 export const INSURANCE_TYPE = 1;
@@ -34,7 +34,7 @@ export type ProtectionOption = {
   name: string;
   /** Shield picture managed in RentCarSoft, as the old site showed. */
   image: string | null;
-  /** Plain text; the API sends HTML. */
+  /** Cleaned HTML (`richText`); render it as markup. */
   description: string | null;
   /** Per day for the searched day count, or the one-time fee. */
   price: number | null;
@@ -80,7 +80,7 @@ export function toProtectionOptions(extras: Extra[], unit: PriceUnit = "day"): P
       unit,
       name: extra.name,
       image: extra.image,
-      description: extra.description ? plainText(extra.description) : null,
+      description: extra.description ? richText(extra.description) : null,
       price: extra.isDiscounted ? (extra.priceDiscounted ?? extra.price) : extra.price,
       oneTime: extra.oneTimeFee === true,
       totalPrice: discounted ?? extra.calculatedPrice,

@@ -48,6 +48,8 @@ type ReservationPickerProps = {
   layout?: ReservationPickerLayout;
   /** Shows one bar without the switch. Without it both terms are offered. */
   term?: ReservationTerm;
+  /** Tab shown first when there is no saved search; both stay offered. Ignored with `term`. */
+  defaultTerm?: ReservationTerm;
   /** Search read from the URL. Wins over the copy saved in the browser. */
   initial?: SearchDraft | null;
   /**
@@ -95,10 +97,12 @@ export function ReservationPicker({
   places,
   layout = "vertical",
   term: lockedTerm,
+  defaultTerm,
   initial = null,
   live = false,
   offerId,
 }: ReservationPickerProps) {
+  const firstTerm = lockedTerm ?? defaultTerm;
   const router = useRouter();
   const messages = useMessages();
   const texts = messages.search;
@@ -109,14 +113,14 @@ export function ReservationPicker({
   const fields = useRef<Partial<Record<SearchField, HTMLButtonElement | null>>>({});
   const prepared = useClientOnlyValue(() =>
     prepareDraft(
-      initial ?? loadSearchDraft() ?? emptyDraft(lockedTerm),
+      initial ?? loadSearchDraft() ?? emptyDraft(firstTerm),
       places,
       // On the reservation page the URL's booking is in progress: keep its dates.
       live ? bookingInProgressStart() : earliestPickup(),
     ),
   );
   const draft: SearchDraft = {
-    ...(prepared ?? initial ?? emptyDraft(lockedTerm)),
+    ...(prepared ?? initial ?? emptyDraft(firstTerm)),
     ...edits,
     ...(lockedTerm ? { term: lockedTerm } : {}),
   };

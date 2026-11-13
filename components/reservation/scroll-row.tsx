@@ -8,14 +8,13 @@ import { useMessages } from "@/i18n/messages-context";
 /**
  * A horizontal row that says it scrolls: at an edge with more content behind
  * it, the row fades out and shows an arrow button. Nothing shows when
- * everything fits. Used for the other cars of a class on a phone.
+ * everything fits. Used for the other cars of a class on a phone; the
+ * children bring their own group and label (`CarPicker`).
  */
 export function ScrollRow({
-  label,
   className = "",
   children,
 }: {
-  label: string;
   className?: string;
   children: ReactNode;
 }) {
@@ -59,8 +58,6 @@ export function ScrollRow({
     <div className="relative">
       <div
         ref={row}
-        role="group"
-        aria-label={label}
         onScroll={measure}
         className={`flex gap-2 overflow-x-auto overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}
       >

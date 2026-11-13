@@ -1,320 +1,72 @@
-query getPage(
-  $status: PublicationStatus
-  $locale: I18NLocaleCode
-  $slug: String
-) {
-  pages_connection(
-    status: $status
-    locale: $locale
-    filters: { slug: { eq: $slug } }
-  ) {
-    nodes {
+# One page and its `blocks`. The legacy `components` / `extraComponents` zones
+# belong to mobicars-pl and are not read here.
+query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  page(documentId: $documentId, locale: $locale, status: $status) {
+    documentId
+    title
+    seo {
+      metaTitle
+      metaDescription
+      noIndex
+      noFollow
+    }
+    blocks {
       __typename
-      title
-      slug
-      parentPage {
-        slug
-      }
-      seo {
-        ...Seo
-      }
-      apiReference
-      localizations_connection {
-        nodes {
-          slug
-          locale
-        }
-      }
-
-      components {
-        __typename
-
-        ... on ComponentSharedContact {
-          ...ContactFields
-        }
-
-        ... on ComponentSharedHeroPage {
-          ...HeroPageFields
-        }
-
-        ... on ComponentSharedDivider {
-          ...DividerFields
-        }
-
-        ... on ComponentSharedCardGroup {
-          ...CardFields
-        }
-
-        ... on ComponentSharedFaq {
-          items(pagination: { limit: 30 }) {
-            ...FaqItemFields
-          }
-        }
-
-        ... on ComponentSharedOpinions {
-          ...OpinionsFields
-        }
-
-        ... on ComponentSharedButtons {
-          ...ButtonsFields
-        }
-
-        ... on ComponentSharedTextHeading {
-          ...TextHeadingFields
-        }
-
-        ... on ComponentSharedTextWithImage {
-          ...TextWithImageFields
-        }
-
-        ... on ComponentSharedImage {
-          ...ImageFields
-        }
-
-        ... on ComponentSharedCarsShow {
-          ...CarsShowFields
-        }
-
-        ... on ComponentSharedBlogShow {
-          ...BlogShowFields
-        }
-
-        ... on ComponentSharedText {
-          ...TextFields
-        }
-
-        ... on ComponentSharedMap {
-          fullScreen
-        }
-
-        ... on ComponentSharedBoxes {
-          ...BoxesFields
-        }
-
-        ... on ComponentSharedPromoShow {
-          ...PromoShowFields
-        }
-      }
-
-      extraComponents {
-        __typename
-
-        ... on ComponentSharedContact {
-          ...ContactFields
-        }
-
-        ... on ComponentSharedHeroPage {
-          ...HeroPageFields
-        }
-
-        ... on ComponentSharedDivider {
-          ...DividerFields
-        }
-
-        ... on ComponentSharedCardGroup {
-          ...CardFields
-        }
-
-        ... on ComponentSharedFaq {
-          items(pagination: { limit: 30 }) {
-            ...FaqItemFields
-          }
-        }
-
-        ... on ComponentSharedOpinions {
-          ...OpinionsFields
-        }
-
-        ... on ComponentSharedButtons {
-          ...ButtonsFields
-        }
-
-        ... on ComponentSharedTextHeading {
-          ...TextHeadingFields
-        }
-
-        ... on ComponentSharedTextWithImage {
-          ...TextWithImageFields
-        }
-
-        ... on ComponentSharedImage {
-          ...ImageFields
-        }
-
-        ... on ComponentSharedCarsShow {
-          ...CarsShowFields
-        }
-
-        ... on ComponentSharedBlogShow {
-          ...BlogShowFields
-        }
-
-        ... on ComponentSharedText {
-          ...TextFields
-        }
-
-        ... on ComponentSharedMap {
-          fullScreen
-        }
-
-        ... on ComponentSharedBoxes {
-          ...BoxesFields
-        }
+      ... on ComponentBlocksHero {
+        ...HeroBlock
       }
     }
   }
+}
 
-  cities_connection(
-    status: $status
-    locale: $locale
-    filters: { slug: { eq: $slug } }
-  ) {
-    nodes {
-      __typename
-      title
-      slug
-      apiReference
-      seo {
-        ...Seo
-      }
+fragment Media on UploadFile {
+  url
+  mime
+  width
+  height
+  alternativeText
+}
 
-      localizations_connection {
-        nodes {
-          slug
-          locale
-        }
-      }
-
-      components {
-        __typename
-
-        ... on ComponentSharedHeroPage {
-          ...HeroPageFields
-        }
-
-        ... on ComponentSharedDivider {
-          ...DividerFields
-        }
-
-        ... on ComponentSharedCardGroup {
-          ...CardFields
-        }
-
-        ... on ComponentSharedFaq {
-          items(pagination: { limit: 30 }) {
-            ...FaqItemFields
-          }
-        }
-
-        ... on ComponentSharedTextHeading {
-          ...TextHeadingFields
-        }
-
-        ... on ComponentSharedTextWithImage {
-          ...TextWithImageFields
-        }
-
-        ... on ComponentSharedCarsShow {
-          ...CarsShowFields
-        }
-
-        ... on ComponentSharedBlogShow {
-          ...BlogShowFields
-        }
-
-        ... on ComponentSharedText {
-          ...TextFields
-        }
-
-        ... on ComponentSharedMap {
-          fullScreen
-        }
-
-        ... on ComponentSharedBoxes {
-          ...BoxesFields
-        }
-      }
-    }
+fragment Link on ComponentElementsLink {
+  label
+  linkType
+  customUrl
+  newTab
+  page {
+    documentId
   }
-
-  servicePoints_connection(
-    status: $status
-    locale: $locale
-    filters: { slug: { eq: $slug } }
-  ) {
-    nodes {
-      __typename
-      title
-      slug
-      apiReference
-      city {
-        title
-        slug
-      }
-      seo {
-        ...Seo
-      }
-
-      localizations_connection {
-        nodes {
-          slug
-          locale
-        }
-      }
-
-      components {
-        __typename
-
-        ... on ComponentSharedHeroPage {
-          ...HeroPageFields
-        }
-
-        ... on ComponentSharedDivider {
-          ...DividerFields
-        }
-
-        ... on ComponentSharedCardGroup {
-          ...CardFields
-        }
-
-        ... on ComponentSharedFaq {
-          items(pagination: { limit: 30 }) {
-            ...FaqItemFields
-          }
-        }
-
-        ... on ComponentSharedTextHeading {
-          ...TextHeadingFields
-        }
-
-        ... on ComponentSharedTextWithImage {
-          ...TextWithImageFields
-        }
-
-        ... on ComponentSharedImage {
-          ...ImageFields
-        }
-
-        ... on ComponentSharedCarsShow {
-          ...CarsShowFields
-        }
-
-        ... on ComponentSharedBlogShow {
-          ...BlogShowFields
-        }
-
-        ... on ComponentSharedText {
-          ...TextFields
-        }
-
-        ... on ComponentSharedMap {
-          fullScreen
-        }
-
-        ... on ComponentSharedBoxes {
-          ...BoxesFields
-        }
-      }
-    }
+  blog {
+    slug
   }
+}
+
+fragment Cta on ComponentElementsCta {
+  variant
+  icon
+  link {
+    ...Link
+  }
+}
+
+fragment HeroBlock on ComponentBlocksHero {
+  id
+  badge
+  title
+  subtitle
+  ctas {
+    ...Cta
+  }
+  backgroundImage {
+    ...Media
+  }
+  backgroundImageMobile {
+    ...Media
+  }
+  backgroundVideo {
+    ...Media
+  }
+  overlay
+  height
+  reservationLayout
+  reservationDefaultTerm
 }

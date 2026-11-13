@@ -1,9 +1,0 @@
-query getDictionary($status: PublicationStatus, $locale: I18NLocaleCode) {
-  dictionary(status: $status, locale: $locale) {
-    Item(pagination: { limit: 999 }) {
-      Name
-      Key
-      Value
-    }
-  }
-}

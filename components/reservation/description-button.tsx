@@ -1,14 +1,18 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Dialog } from "react-aria-components";
+import { Button, Dialog } from "react-aria-components";
 import { Info } from "lucide-react";
 
 import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
 import { fill } from "@/i18n/fill";
 import { useMessages } from "@/i18n/messages-context";
 
-/** "i" button that opens a dialog with an extra's description (plain text). */
+/**
+ * "i" button that opens a dialog with an extra's description: HTML already
+ * cleaned by `richText`. A React Aria button, so inside a selectable card
+ * (`GridListItem`) pressing it opens the details without picking the card.
+ */
 export function DescriptionButton({
   title,
   description,
@@ -24,18 +28,17 @@ export function DescriptionButton({
   const [open, setOpen] = useState(false);
   return (
     <>
-      <button
-        type="button"
+      <Button
         aria-label={fill(steps.detailsOf, { title })}
-        onClick={() => setOpen(true)}
-        className={`flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none focus-visible:ring-2 ${
+        onPress={() => setOpen(true)}
+        className={`flex size-6 shrink-0 cursor-pointer items-center justify-center rounded-full outline-none data-focus-visible:ring-2 ${
           tone === "dark"
-            ? "text-white/90 hover:bg-white/15 focus-visible:ring-white"
-            : "text-blue-medium hover:bg-blue-medium/10 focus-visible:ring-blue-medium"
+            ? "text-white/90 hover:bg-white/15 data-focus-visible:ring-white"
+            : "text-blue-medium hover:bg-blue-medium/10 data-focus-visible:ring-blue-medium"
         }`}
       >
         <Info className="size-4" aria-hidden />
-      </button>
+      </Button>
       <WidgetModal
         open={open}
         onOpenChange={setOpen}
@@ -43,9 +46,10 @@ export function DescriptionButton({
       >
         <Dialog aria-labelledby={titleId} className="flex max-h-[inherit] min-h-0 flex-col outline-none">
           <DialogHeader titleId={titleId} title={title} className="py-4" />
-          <div className="min-h-0 overflow-y-auto px-5 pb-5 text-sm leading-relaxed whitespace-pre-line text-blue-dark/85">
-            {description}
-          </div>
+          <div
+            className="rich-text prose prose-sm min-h-0 max-w-none overflow-y-auto px-5 pb-5"
+            dangerouslySetInnerHTML={{ __html: description ?? "" }}
+          />
         </Dialog>
       </WidgetModal>
     </>

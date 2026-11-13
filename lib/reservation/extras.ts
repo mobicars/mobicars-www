@@ -1,6 +1,6 @@
 import type { Extra } from "@/lib/rentcarsoft";
 
-import { plainText } from "./text";
+import { richText } from "./text";
 
 /**
  * The extras step: everything after insurance. RentCarSoft has two kinds,
@@ -40,6 +40,7 @@ export type ExtraOption = {
   name: string;
   /** Border zones: the part of the name in brackets, e.g. "limit 400 km/ doba". */
   note: string | null;
+  /** Cleaned HTML (`richText`); render it as markup. */
   description: string | null;
   image: string | null;
   /** Per day, or once when `oneTime`. Per unit for quantities. */
@@ -175,7 +176,7 @@ function toOption(extra: Extra, kind: ExtraOption["kind"], unit: PriceUnit): Ext
     kind,
     name: extra.name.trim(),
     note: null,
-    description: extra.description ? plainText(extra.description) : null,
+    description: extra.description ? richText(extra.description) : null,
     image: extra.image,
     price,
     oneTime,

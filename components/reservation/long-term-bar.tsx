@@ -126,6 +126,7 @@ function OptionField({
         >
           <DialogHeader titleId={titleId} title={label} className="py-4" />
           <OptionList
+            labelledBy={titleId}
             options={options}
             isSelected={(option) => option === value}
             getKey={String}

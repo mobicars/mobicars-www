@@ -3,7 +3,7 @@ import { cacheLife, cacheTag } from "next/cache";
 import { parseOffer, parseOffers, type Offer } from "../internal/entities";
 import { RentCarSoftError } from "../internal/errors";
 import { rentCarSoftRequest } from "../internal/http";
-import { CACHE_TAGS } from "../internal/labels";
+import { CACHE_TAGS, SEARCH_CACHE_LIFE } from "../internal/labels";
 import {
   buildOfferQuery,
   isCatalogOfferQuery,
@@ -11,17 +11,17 @@ import {
   type QueryParams,
 } from "../internal/params";
 import { listOfferKeys } from "./catalog";
-import { isProduction } from "../../env";
+import { cacheEnabled } from "../../cache";
 
 const MAX_OFFER_PAGES = 20;
 
 /** One page of offers. `page` starts at 0. Walk the catalog with `listAllOffers`. */
 export async function listOffers(input: OfferListInput = {}): Promise<Offer[]> {
   const query = buildOfferQuery(input);
-  if (isProduction() && isCatalogOfferQuery(input)) {
-    return loadCachedOffers(query);
+  if (!cacheEnabled()) {
+    return loadOffers(query);
   }
-  return loadOffers(query);
+  return isCatalogOfferQuery(input) ? loadCachedOffers(query) : loadSearchedOffers(query);
 }
 
 /**
@@ -57,23 +57,38 @@ export async function getOffer(
   delete query.page;
   delete query.perPage;
   delete query.order;
-  if (isProduction() && isCatalogOfferQuery(input)) {
-    return loadCachedOffer(id, query);
+  if (!cacheEnabled()) {
+    return loadOffer(id, query);
   }
-  return loadOffer(id, query);
+  return isCatalogOfferQuery(input) ? loadCachedOffer(id, query) : loadSearchedOffer(id, query);
 }
 
 async function loadCachedOffers(query: QueryParams): Promise<Offer[]> {
   "use cache";
   cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
   return loadOffers(query);
 }
 
 async function loadCachedOffer(id: number, query: QueryParams): Promise<Offer> {
   "use cache";
   cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
+  return loadOffer(id, query);
+}
+
+/** Dates, a code, availability or a long-term quote: `SEARCH_CACHE_LIFE`. */
+async function loadSearchedOffers(query: QueryParams): Promise<Offer[]> {
+  "use cache";
+  cacheLife(SEARCH_CACHE_LIFE);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.search);
+  return loadOffers(query);
+}
+
+async function loadSearchedOffer(id: number, query: QueryParams): Promise<Offer> {
+  "use cache";
+  cacheLife(SEARCH_CACHE_LIFE);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.search);
   return loadOffer(id, query);
 }
 

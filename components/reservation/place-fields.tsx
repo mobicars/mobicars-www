@@ -11,7 +11,7 @@ import {
   type ReactNode,
   type Ref,
 } from "react";
-import { Dialog, Tab, TabList, TabListStateContext, TabPanel, Tabs, type Key } from "react-aria-components";
+import { Dialog, ListBox, ListBoxItem, Tab, TabList, TabListStateContext, TabPanel, Tabs, type Key } from "react-aria-components";
 import {
   CarFront,
   ChevronLeft,
@@ -201,7 +201,7 @@ function PlaceDialogBody({
     : null;
   const searchRef = useRef<HTMLInputElement>(null);
   const addressRef = useRef<HTMLInputElement>(null);
-  const selectedRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
   const addressTitleId = useId();
   const [query, setQuery] = useState("");
@@ -220,7 +220,7 @@ function PlaceDialogBody({
   );
 
   useEffect(() => {
-    selectedRef.current?.scrollIntoView({ block: "nearest" });
+    listRef.current?.querySelector("[aria-selected='true']")?.scrollIntoView({ block: "nearest" });
   }, [selectedId]);
 
   useEffect(() => {
@@ -350,44 +350,62 @@ function PlaceDialogBody({
                   {places.length === 0 ? texts.noPlaces : fill(texts.noPlacesFor, { query: trimmedQuery })}
                 </p>
               ) : (
-                <ul className="flex flex-col gap-2">
+                // A list box: one tab stop, arrow keys through the points, typing jumps to
+                // one, and the chosen point is read out as selected. Pressing the chosen one
+                // again picks it once more (an empty selection), like the old buttons.
+                <ListBox
+                  ref={listRef}
+                  aria-label={texts.placeSearch[kind]}
+                  selectionMode="single"
+                  selectedKeys={selectedId === null ? [] : [selectedId]}
+                  onSelectionChange={(keys) => {
+                    const [key] = keys === "all" ? [] : keys;
+                    const item = visiblePlaces.find((place) => place.id === (key ?? selectedId));
+                    if (item) {
+                      choosePlace(item);
+                    }
+                  }}
+                  className="flex flex-col gap-2 outline-none"
+                >
                   {visiblePlaces.map((item) => {
                     const Icon = placeIcon(item);
-                    const selected = item.id === selectedId;
                     return (
-                      <li key={item.id}>
-                        <button
-                          ref={selected ? selectedRef : undefined}
-                          type="button"
-                          aria-pressed={selected}
-                          onClick={() => choosePlace(item)}
-                          className={`flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                            selected
+                      <ListBoxItem
+                        key={item.id}
+                        id={item.id}
+                        textValue={item.name}
+                        className={({ isSelected }) =>
+                          `flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+                            isSelected
                               ? "border-blue-medium bg-blue-medium text-white hover:border-blue-dark hover:bg-blue-dark"
                               : "border-blue-light bg-white hover:border-blue-medium/40 hover:bg-[color-mix(in_srgb,var(--color-blue-dark)_4%,white)]"
-                          }`}
-                        >
-                          <Icon
-                            className={`size-5 shrink-0 ${selected ? "text-white" : "text-blue-medium"}`}
-                            strokeWidth={1.75}
-                            aria-hidden
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-semibold">{item.name}</span>
-                            {item.address ? (
-                              <span className={`block text-xs ${selected ? "text-white/80" : "text-blue-dark/60"}`}>
-                                {item.address}
+                          }`
+                        }
+                      >
+                        {({ isSelected: selected }) => (
+                          <>
+                              <Icon
+                                className={`size-5 shrink-0 ${selected ? "text-white" : "text-blue-medium"}`}
+                                strokeWidth={1.75}
+                                aria-hidden
+                              />
+                              <span className="min-w-0 flex-1">
+                                <span className="block text-sm font-semibold">{item.name}</span>
+                                {item.address ? (
+                                  <span className={`block text-xs ${selected ? "text-white/80" : "text-blue-dark/60"}`}>
+                                    {item.address}
+                                  </span>
+                                ) : null}
                               </span>
-                            ) : null}
-                          </span>
-                          {selected ? (
-                            <SquareCheck className="size-5 shrink-0 text-white" strokeWidth={1.75} aria-hidden />
-                          ) : null}
-                        </button>
-                      </li>
+                              {selected ? (
+                                <SquareCheck className="size-5 shrink-0 text-white" strokeWidth={1.75} aria-hidden />
+                              ) : null}
+                          </>
+                        )}
+                      </ListBoxItem>
                     );
                   })}
-                </ul>
+                </ListBox>
               )}
             </div>
           </TabPanel>

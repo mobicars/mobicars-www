@@ -15,22 +15,27 @@ const schema: CodegenConfig["schema"] = [
   },
 ];
 
-const commonPlugins = [
-  "typescript",
-  "typescript-operations",
-  "typescript-graphql-request",
-];
-
+/**
+ * Types for `lib/strapi/graphql`. Each query is a `TypedDocumentString` that
+ * carries its result and variable types; the bridge posts it with `fetch`
+ * (`lib/strapi/internal/http.ts`), so there is no GraphQL client at runtime.
+ */
 const config: CodegenConfig = {
   generates: {
     "lib/strapi/generated/graphql.ts": {
       schema,
       documents: ["lib/strapi/graphql/**/*.graphql"],
-      plugins: commonPlugins,
+      plugins: ["typescript", "typescript-operations", "typed-document-node"],
+      config: {
+        documentMode: "string",
+        useTypeImports: true,
+        enumsAsTypes: true,
+        avoidOptionals: true,
+        scalars: { ID: "string", I18NLocaleCode: "string" },
+      },
     },
     "lib/strapi/generated/schema.graphql": {
       schema,
-      documents: ["lib/strapi/graphql/**/*.graphql"],
       plugins: ["schema-ast"],
     },
   },

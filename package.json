@@ -9,16 +9,18 @@
     "codegen:watch": "graphql-codegen --watch",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts i18n/routes.test.ts lib/fleet/fleet.test.ts lib/account/phone.test.ts lib/reservation/search.test.ts lib/reservation/protection.test.ts lib/reservation/quote.test.ts lib/reservation/extras.test.ts lib/reservation/upsell.test.ts lib/reservation/customer.test.ts lib/reservation/calendar.test.ts lib/reservation/monthly-hint.test.ts lib/reservation/extend.test.ts"
+    "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts i18n/routes.test.ts lib/fleet/fleet.test.ts lib/account/phone.test.ts lib/reservation/search.test.ts lib/reservation/protection.test.ts lib/reservation/quote.test.ts lib/reservation/extras.test.ts lib/reservation/upsell.test.ts lib/reservation/customer.test.ts lib/reservation/calendar.test.ts lib/reservation/monthly-hint.test.ts lib/reservation/extend.test.ts lib/reservation/text.test.ts lib/strapi/strapi.test.ts lib/revalidate.test.ts"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",
+    "@tailwindcss/typography": "^0.5.20",
     "jose": "^6.2.17",
     "libphonenumber-js": "^1.13.15",
     "lucide-react": "^1.53.0",
     "next": "16.4.6",
     "react": "19.3.0",
-    "react-aria-components": "^1.22.0",
+    "react-aria": "^3.53.1",
+    "react-aria-components": "^1.22.1",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
     "sonner": "^2.0.8"
@@ -26,6 +28,7 @@
   "devDependencies": {
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/schema-ast": "^4.1.0",
+    "@graphql-codegen/typed-document-node": "^5.1.2",
     "@graphql-codegen/typescript": "^4.1.6",
     "@graphql-codegen/typescript-generic-sdk": "^5.0.1",
     "@graphql-codegen/typescript-graphql-request": "^6.4.0",

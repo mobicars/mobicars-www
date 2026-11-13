@@ -4,6 +4,7 @@ import { startTransition, useActionState, useState, useTransition } from "react"
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronDown, LoaderCircle, LogIn, LogOut, UserRound } from "lucide-react";
+import { Button, Disclosure, DisclosurePanel } from "react-aria-components";
 
 import { FormAlert, PasswordField, TextField } from "@/components/auth/fields";
 import { buttonClass } from "@/components/ui/button";
@@ -82,12 +83,11 @@ export function AccountBox({
 
   const [haveBefore, haveAfter = ""] = d.haveAccount.split("{mobi}");
   return (
-    <div className="rounded-xl border border-blue-medium/20 bg-blue-light/60">
-      <button
-        type="button"
-        aria-expanded={open}
-        onClick={() => onOpenChange(!open)}
-        className="flex w-full cursor-pointer items-center justify-between gap-3 px-4 py-3 text-left text-sm text-blue-dark"
+    // React Aria's disclosure: the button says it is expanded and which panel it controls.
+    <Disclosure isExpanded={open} onExpandedChange={onOpenChange} className="rounded-xl border border-blue-medium/20 bg-blue-light/60">
+      <Button
+        slot="trigger"
+        className="flex w-full cursor-pointer items-center justify-between gap-3 rounded-xl px-4 py-3 text-left text-sm text-blue-dark outline-none data-focus-visible:ring-2 data-focus-visible:ring-blue-medium"
       >
         <span className="flex items-center gap-2">
           <LogIn className="size-4 shrink-0 text-blue-medium" aria-hidden />
@@ -104,7 +104,9 @@ export function AccountBox({
           className={`size-5 shrink-0 text-blue-medium transition-transform duration-200 ease-out motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
           aria-hidden
         />
-      </button>
+      </Button>
+      <DisclosurePanel>
+      {/* Only while open, so password managers do not fill a hidden form. */}
       {open ? (
         // A separate form: it must not submit the booking form around it.
         <form
@@ -158,6 +160,7 @@ export function AccountBox({
           </div>
         </form>
       ) : null}
-    </div>
+      </DisclosurePanel>
+    </Disclosure>
   );
 }

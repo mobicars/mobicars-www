@@ -125,7 +125,20 @@ export const PRICE_GROUP_KEY_LABELS: Record<number, string> = {
   1: "name",
 };
 
+/**
+ * Every cached read carries `all` and one of the others, so the revalidate
+ * endpoint can expire all of RentCarSoft or one kind of data.
+ */
 export const CACHE_TAGS = {
+  all: "rcs",
   keys: "rcs:keys",
   catalog: "rcs:catalog",
+  search: "rcs:search",
 } as const;
+
+/**
+ * Dated searches (offers and extras for given dates, a code or a long-term
+ * quote): two minutes, enough for the booking steps and the back button,
+ * short enough that availability and prices stay current.
+ */
+export const SEARCH_CACHE_LIFE = { stale: 30, revalidate: 60, expire: 120 };

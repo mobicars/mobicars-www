@@ -36,31 +36,41 @@ export function ChooseButton({
   selected,
   onClick,
   className = "",
-  radio,
+  describedBy,
 }: {
   selected: boolean;
   onClick: () => void;
   className?: string;
-  /** Inside a `radiogroup` (the protection table): a radio named after the option. */
-  radio?: { label: string };
+  /** Id of what is chosen (e.g. the package's heading), so "Wybierz" says what it picks. */
+  describedBy?: string;
 }) {
-  const { cars } = useMessages();
   return (
     <button
       type="button"
-      {...(radio
-        ? { role: "radio", "aria-checked": selected, "aria-label": radio.label }
-        : { "aria-pressed": selected })}
+      aria-pressed={selected}
+      aria-describedby={describedBy}
       onClick={onClick}
-      className={`flex h-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-bold transition-colors duration-200 ease-out motion-reduce:transition-none ${
-        selected
-          ? "bg-green-medium text-white hover:bg-green-dark"
-          : "bg-blue-medium text-white hover:bg-blue-dark"
-      } ${className}`}
+      className={`${chooseClass(selected)} ${className}`}
     >
+      <ChooseFace selected={selected} />
+    </button>
+  );
+}
+
+/** The look of `ChooseButton`, for a control that is not a button (the zone radios). */
+export function chooseClass(selected: boolean): string {
+  return `flex h-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-bold text-white transition-colors duration-200 ease-out motion-reduce:transition-none ${
+    selected ? "bg-green-medium hover:bg-green-dark" : "bg-blue-medium hover:bg-blue-dark"
+  }`;
+}
+
+export function ChooseFace({ selected }: { selected: boolean }) {
+  const { cars } = useMessages();
+  return (
+    <>
       {selected ? <SquareCheck className="size-4" aria-hidden /> : <Square className="size-4" aria-hidden />}
       {selected ? cars.chosen : cars.choose}
-    </button>
+    </>
   );
 }
 

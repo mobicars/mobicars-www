@@ -74,6 +74,6 @@ describe("protection options", () => {
       { key: "tiresRimsDamage", value: "100% kosztu naprawy", covered: false },
       { key: "replacementCar", value: "Bezpłatnie", covered: true },
     ]);
-    assert.equal(options[0].description, "Ochrona Standard jest bezpłatna.");
+    assert.equal(options[0].description, "<p>Ochrona Standard jest <strong>bezpłatna</strong>.</p>");
   });
 });

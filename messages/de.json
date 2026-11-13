@@ -1,5 +1,19 @@
 {
   "layout": {
+    "closeAnnouncement": "Hinweis schließen",
+    "menu": "Menü",
+    "closeMenu": "Menü schließen",
+    "mainNav": "Hauptmenü",
+    "allCars": "Gesamte Flotte",
+    "fromPerDay": "ab {price} / Tag",
+    "airport": "Flughafen",
+    "trainStation": "Bahnhof",
+    "office": "Büro",
+    "otherPlaces": "Weitere Orte",
+    "allPosts": "Alle Beiträge",
+    "followUs": "Folgen Sie uns",
+    "contact": "Kontakt",
+    "legal": "Rechtliches",
     "account": "Mein Konto",
     "hotline": "Hotline",
     "home": "MobiCars Startseite",
@@ -8,6 +22,12 @@
     "documents": "Dokumente",
     "languageCurrent": "Sprache: {label}",
     "languageChoose": "Sprache wählen",
+    "languageNames": {
+      "pl": "Polnisch",
+      "en": "Englisch",
+      "de": "Deutsch",
+      "uk": "Ukrainisch"
+    },
     "description": "Autovermietung",
     "fleet": "Flotte"
   },
@@ -513,8 +533,6 @@
     "oneTime": "einmalig",
     "wholeRental": "{price} für die gesamte Miete",
     "perItem": "pro Stück",
-    "add": "Hinzufügen",
-    "remove": "Entfernen",
     "quantity": "Anzahl: {name}",
     "less": "Weniger",
     "more": "Mehr",
@@ -526,7 +544,8 @@
       "button": "Zu {name} wechseln",
       "changing": "Wird geändert…",
       "perDay": "/ Tag",
-      "perMonth": "/ Monat"
+      "perMonth": "/ Monat",
+      "confirmTitle": "Möchten Sie Ihren Schutz erweitern und entspannt fahren?"
     }
   },
   "upsell": {
@@ -542,10 +561,7 @@
       "other": "Sitze"
     },
     "wholeRental": "+{price} für die gesamte Miete",
-    "confirmTitle": "Bestätigen Sie den Wechsel der Fahrzeugklasse?",
-    "to": "zu",
-    "surcharge": "Aufpreis",
-    "recheck": "Wir prüfen Ihren Schutz und Ihre Extras für das neue Fahrzeug und berechnen den Preis neu.",
+    "confirmTitle": "Möchten Sie die Fahrzeugklasse wechseln?",
     "cancel": "Nein, zurück",
     "confirm": "Ja, bestätigen",
     "perMonth": "/ Monat"
@@ -563,6 +579,9 @@
     "failed": "Der Preis konnte nicht abgerufen werden.",
     "retry": "Erneut versuchen",
     "total": "Gesamt",
+    "priceDetails": "Preisdetails",
+    "forPeriod": "für {period}",
+    "tripTitle": "Abholung und Rückgabe",
     "calculating": "Preis wird berechnet",
     "noPrice": "Kein Preis",
     "share": "Teilen",
@@ -690,7 +709,8 @@
       "cost": "Für die gesamte Miete nur +{cost}.",
       "free": "Ohne Aufpreis.",
       "button": "Auf {days} verlängern",
-      "extending": "Wird verlängert…"
+      "extending": "Wird verlängert…",
+      "confirmTitle": "Möchten Sie die Mietdauer verlängern, um die Kosten pro Tag zu senken?"
     },
     "resume": {
       "title": "Sie haben eine unvollständige Buchung",

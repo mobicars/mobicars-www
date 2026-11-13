@@ -3,10 +3,10 @@
 import { useEffect, useId, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Dialog } from "react-aria-components";
+import { ToggleButton, ToggleButtonGroup } from "react-aria-components";
 import { LayoutGrid, Rows3, SlidersHorizontal, X, type LucideIcon } from "lucide-react";
 
-import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { DialogHeader } from "@/components/reservation/dialog-parts";
 import {
   ChooseButton,
   CompactOfferCard,
@@ -26,7 +26,10 @@ import {
 } from "@/components/reservation/summary";
 import { useQuote } from "@/components/reservation/use-quote";
 import { currentHrefWith, replaceParam } from "@/components/reservation/url";
+import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
 import { buttonClass } from "@/components/ui/button";
+import { BottomSheet } from "@/components/ui/sheet";
+import { ChoiceChips } from "@/components/ui/choice-chips";
 import { fill } from "@/i18n/fill";
 import type { Lang } from "@/i18n/config";
 import { useMessages } from "@/i18n/messages-context";
@@ -72,7 +75,7 @@ export function OfferList({
   initialView,
   trip,
   lang,
-  searchQuery,
+  searchQuery: serverSearchQuery,
   initialQuote,
   lostCar,
 }: {
@@ -92,6 +95,7 @@ export function OfferList({
    */
   lostCar?: boolean;
 }) {
+  const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
   const { cars } = useMessages();
   const [sort, setSort] = useState<Sort>("popular");
@@ -144,25 +148,19 @@ export function OfferList({
 
   const filterRows = (
     <>
-      <FilterRow label={cars.gearbox}>
-        {GEARBOXES.map((id) => (
-          <Chip key={id} pressed={gearbox === id} onClick={() => setGearbox(gearbox === id ? null : id)}>
-            {cars.gearboxes[id]}
-          </Chip>
-        ))}
-      </FilterRow>
+      <FilterRow
+        label={cars.gearbox}
+        options={GEARBOXES.map((id) => ({ id, label: cars.gearboxes[id] }))}
+        value={gearbox}
+        onChange={setGearbox}
+      />
       {offeredCategories.length > 0 ? (
-        <FilterRow label={cars.category}>
-          {offeredCategories.map((option) => (
-            <Chip
-              key={option.id}
-              pressed={category === option.id}
-              onClick={() => setCategory(category === option.id ? null : option.id)}
-            >
-              {cars.categories[option.id]}
-            </Chip>
-          ))}
-        </FilterRow>
+        <FilterRow
+          label={cars.category}
+          options={offeredCategories.map((option) => ({ id: option.id, label: cars.categories[option.id] }))}
+          value={category}
+          onChange={setCategory}
+        />
       ) : null}
     </>
   );
@@ -232,21 +230,21 @@ export function OfferList({
         onClear={activeFilters > 0 ? clearFilters : null}
       >
         {term === "short" ? (
-          <FilterRow label={cars.view}>
-            {viewOptions.map((option) => (
-              <Chip key={option.id} pressed={view === option.id} onClick={() => changeView(option.id)}>
-                {option.label}
-              </Chip>
-            ))}
-          </FilterRow>
+          <FilterRow
+            label={cars.view}
+            options={viewOptions.map(({ id, label }) => ({ id, label }))}
+            value={view}
+            onChange={(next) => (next ? changeView(next) : undefined)}
+            required
+          />
         ) : null}
-        <FilterRow label={cars.sort}>
-          {sortOptions.map((option) => (
-            <Chip key={option.id} pressed={sort === option.id} onClick={() => setSort(option.id)}>
-              {option.label}
-            </Chip>
-          ))}
-        </FilterRow>
+        <FilterRow
+          label={cars.sort}
+          options={sortOptions}
+          value={sort}
+          onChange={(next) => (next ? setSort(next) : undefined)}
+          required
+        />
         {filterRows}
       </FilterSheet>
 
@@ -330,12 +328,15 @@ export function OfferList({
         action={action}
         searchQuery={searchQuery}
       />
-      <MobileSummaryBar car={selected} prices={prices} action={action} />
+      <MobileSummaryBar trip={trip} car={selected} prices={prices} action={action} />
     </div>
   );
 }
 
-/** Pill radio group, e.g. the sort and the view switch. */
+/**
+ * Pill switch, e.g. the sort and the view: one always chosen. A toggle button
+ * group, so it is one tab stop and arrow keys move between the pills.
+ */
 function Segmented<T extends string>({
   label,
   options,
@@ -348,21 +349,30 @@ function Segmented<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex gap-1 rounded-full bg-white p-1 shadow-sm">
+    <ToggleButtonGroup
+      aria-label={label}
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[value]}
+      onSelectionChange={(keys) => {
+        const [next] = keys;
+        if (next !== undefined) {
+          onChange(next as T);
+        }
+      }}
+      className="flex gap-1 rounded-full bg-white p-1 shadow-sm"
+    >
       {options.map(({ id, label: optionLabel, icon: Icon }) => (
-        <button
+        <ToggleButton
           key={id}
-          type="button"
-          role="radio"
-          aria-checked={value === id}
-          onClick={() => onChange(id)}
-          className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-blue-dark/70 transition-colors duration-200 ease-out hover:bg-muted-light aria-checked:bg-blue-medium aria-checked:text-white motion-reduce:transition-none"
+          id={id}
+          className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-blue-dark/70 outline-none transition-colors duration-200 ease-out hover:bg-muted-light data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-selected:bg-blue-medium data-selected:text-white motion-reduce:transition-none"
         >
           {Icon ? <Icon className="size-3.5" aria-hidden /> : null}
           {optionLabel}
-        </button>
+        </ToggleButton>
       ))}
-    </div>
+    </ToggleButtonGroup>
   );
 }
 
@@ -380,7 +390,7 @@ function ClearButton({ onClick }: { onClick: () => void }) {
   );
 }
 
-/** Bottom sheet below `lg`. Choices apply at once; the button only closes it. */
+/** Bottom sheet below `lg` (swipe down to close). Choices apply at once; the button only closes it. */
 function FilterSheet({
   open,
   onClose,
@@ -398,15 +408,11 @@ function FilterSheet({
   const titleId = useId();
   const { cars } = useMessages();
   return (
-    <WidgetModal
-      open={open}
-      onOpenChange={(value) => (value ? undefined : onClose())}
-      className="mx-0 mb-0 max-h-[85dvh] w-full rounded-t-3xl shadow-2xl lg:hidden"
-    >
-      <Dialog aria-labelledby={titleId} className="flex min-h-0 flex-col outline-none">
-        <DialogHeader titleId={titleId} title={cars.filtersTitle} className="pt-4 pb-2" />
-        <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overscroll-contain px-5 py-3">{children}</div>
-        <div className="flex shrink-0 items-center gap-3 border-t border-muted-light px-5 py-4">
+    <BottomSheet open={open} onOpenChange={(value) => (value ? undefined : onClose())} labelledBy={titleId} className="lg:hidden">
+        <DialogHeader titleId={titleId} title={cars.filtersTitle} className="pt-6 pb-2" />
+        <div className="flex flex-col gap-5 px-5 py-3">{children}</div>
+        {/* Stays at the bottom while the content scrolls under it. */}
+        <div className="sticky bottom-0 flex items-center gap-3 border-t border-muted-light bg-white px-5 py-4">
           {onClear ? <ClearButton onClick={onClear} /> : null}
           <button
             type="button"
@@ -416,38 +422,40 @@ function FilterSheet({
             {fill(cars.showResults, { cars: resultLabel })}
           </button>
         </div>
-      </Dialog>
-    </WidgetModal>
+    </BottomSheet>
   );
 }
 
-function FilterRow({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div role="group" aria-label={label} className="flex flex-wrap items-center gap-2">
-      <span className="w-full text-xs font-semibold text-blue-dark sm:w-32">{label}</span>
-      {children}
-    </div>
-  );
-}
-
-function Chip({
-  pressed,
-  onClick,
-  children,
+/** A label and its chips (`ChoiceChips`): one choice at most, cleared by pressing it again unless `required`. */
+function FilterRow<T extends string>({
+  label,
+  options,
+  value,
+  onChange,
+  required = false,
 }: {
-  pressed: boolean;
-  onClick: () => void;
-  children: ReactNode;
+  label: string;
+  options: readonly { id: T; label: string }[];
+  value: T | null;
+  onChange: (value: T | null) => void;
+  required?: boolean;
 }) {
+  const labelId = useId();
   return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className="cursor-pointer rounded-full border border-blue-dark/15 px-3 py-1.5 text-xs font-semibold text-blue-dark/80 uppercase transition-colors duration-200 ease-out hover:border-blue-medium/50 aria-pressed:border-blue-medium aria-pressed:bg-blue-medium aria-pressed:text-white motion-reduce:transition-none"
-    >
-      {children}
-    </button>
+    <div className="flex flex-wrap items-center gap-2">
+      <span id={labelId} className="w-full text-xs font-semibold text-blue-dark sm:w-32">
+        {label}
+      </span>
+      <ChoiceChips
+        labelledBy={labelId}
+        options={options.map((option) => ({ value: option.id, label: option.label }))}
+        value={value}
+        onChange={onChange}
+        required={required}
+        size="sm"
+        className="flex flex-wrap items-center gap-2"
+      />
+    </div>
   );
 }
 

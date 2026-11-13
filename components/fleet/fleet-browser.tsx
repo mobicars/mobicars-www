@@ -4,6 +4,7 @@ import { SearchX, SlidersHorizontal, X } from "lucide-react";
 import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
+import { ChoiceChips } from "@/components/ui/choice-chips";
 import type { Lang } from "@/i18n/config";
 import type { FleetCard as FleetCardData } from "@/lib/fleet/cars";
 import { countLabel } from "@/lib/fleet/format";
@@ -93,56 +94,36 @@ export function FleetBrowser({ cars, lang, t }: { cars: FleetCardData[]; lang: L
         <div id={panelId} className={`${panelOpen ? "mt-4 flex" : "hidden"} flex-col gap-4 lg:mt-0 lg:flex`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-start lg:gap-x-8">
             {categories.length > 0 ? (
-              <ChipGroup label={t.category}>
-                {categories.map((category) => (
-                  <Chip
-                    key={category}
-                    pressed={filters.category === category}
-                    onClick={() => update({ category: filters.category === category ? null : category })}
-                  >
-                    {t.categories[category]}
-                  </Chip>
-                ))}
-              </ChipGroup>
+              <ChipGroup
+                label={t.category}
+                options={categories.map((category) => ({ value: category, label: t.categories[category] }))}
+                value={filters.category}
+                onChange={(category) => update({ category })}
+              />
             ) : null}
             {hasGearboxChoice ? (
-              <ChipGroup label={t.gearbox}>
-                {(["manual", "automatic"] as const).map((gearbox) => (
-                  <Chip
-                    key={gearbox}
-                    pressed={filters.gearbox === gearbox}
-                    onClick={() => update({ gearbox: filters.gearbox === gearbox ? null : gearbox })}
-                  >
-                    {t[gearbox]}
-                  </Chip>
-                ))}
-              </ChipGroup>
+              <ChipGroup
+                label={t.gearbox}
+                options={(["manual", "automatic"] as const).map((gearbox) => ({ value: gearbox, label: t[gearbox] }))}
+                value={filters.gearbox}
+                onChange={(gearbox) => update({ gearbox })}
+              />
             ) : null}
             {fuels.length > 1 ? (
-              <ChipGroup label={t.fuel}>
-                {fuels.map(([id, label]) => (
-                  <Chip
-                    key={id}
-                    pressed={filters.fuel === id}
-                    onClick={() => update({ fuel: filters.fuel === id ? null : id })}
-                  >
-                    {label}
-                  </Chip>
-                ))}
-              </ChipGroup>
+              <ChipGroup
+                label={t.fuel}
+                options={fuels.map(([id, label]) => ({ value: id, label }))}
+                value={filters.fuel}
+                onChange={(fuel) => update({ fuel })}
+              />
             ) : null}
             {seatOptions.length > 1 ? (
-              <ChipGroup label={t.seats}>
-                {seatOptions.map((seats) => (
-                  <Chip
-                    key={seats}
-                    pressed={filters.seats === seats}
-                    onClick={() => update({ seats: filters.seats === seats ? null : seats })}
-                  >
-                    {t.seatsAtLeast.replace("{count}", String(seats))}
-                  </Chip>
-                ))}
-              </ChipGroup>
+              <ChipGroup
+                label={t.seats}
+                options={seatOptions.map((seats) => ({ value: seats, label: t.seatsAtLeast.replace("{count}", String(seats)) }))}
+                value={filters.seats}
+                onChange={(seats) => update({ seats })}
+              />
             ) : null}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-muted-light pt-3">
@@ -230,32 +211,26 @@ function sortCars(cars: FleetCardData[], sort: FleetSort): FleetCardData[] {
   });
 }
 
-function ChipGroup({ label, children }: { label: string; children: ReactNode }) {
+/** A filter's label and its chips: one choice at most, cleared by pressing it again (`ChoiceChips`). */
+function ChipGroup<T>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string;
+  options: { value: T; label: ReactNode }[];
+  value: T | null;
+  onChange: (value: T | null) => void;
+}) {
   const id = useId();
   return (
-    <div role="group" aria-labelledby={id} className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2">
       <span id={id} className="text-xs font-semibold text-muted-dark">
         {label}
       </span>
-      <div className="flex flex-wrap gap-2">{children}</div>
+      <ChoiceChips labelledBy={id} options={options} value={value} onChange={onChange} />
     </div>
-  );
-}
-
-function Chip({ pressed, onClick, children }: { pressed: boolean; onClick: () => void; children: ReactNode }) {
-  return (
-    <button
-      type="button"
-      aria-pressed={pressed}
-      onClick={onClick}
-      className={`h-9 cursor-pointer rounded-full border px-3.5 text-sm font-semibold transition-colors duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-offset-1 motion-reduce:transition-none ${
-        pressed
-          ? "border-blue-medium bg-blue-medium text-white hover:bg-blue-dark"
-          : "border-muted bg-white text-blue-dark hover:border-blue-medium/60 hover:bg-blue-light/40"
-      }`}
-    >
-      {children}
-    </button>
   );
 }
 

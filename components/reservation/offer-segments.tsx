@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Image from "next/image";
+import { ToggleButton, ToggleButtonGroup } from "react-aria-components";
 
 import { ChooseButton, CompactOfferCard, Price, PromotionLine, SpecList } from "@/components/reservation/offer-parts";
 import { ScrollRow } from "@/components/reservation/scroll-row";
@@ -90,18 +91,17 @@ export function SegmentRow({
         preload={preload}
       >
         {segment.offers.length > 1 ? (
-          <ScrollRow label={fill(cars.carsInClass, { name: segment.name })}>
+          <ScrollRow>
+            <CarPicker segment={segment} previewId={preview.id} onPick={pick} className="flex gap-2">
             {segment.offers.map((offer) => (
-              <button
+              <ToggleButton
                 key={offer.id}
-                type="button"
-                aria-pressed={offer.id === preview.id}
-                onClick={() => pick(offer.id)}
+                id={offer.id}
                 // Green for the chosen car, blue for a car only previewed.
-                className={`flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 bg-white pr-3 pl-1 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                className={`flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 bg-white pr-3 pl-1 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none ${
                   offer.id === selectedId
                     ? "border-green-medium"
-                    : "border-muted-light aria-pressed:border-blue-medium"
+                    : "border-muted-light data-selected:border-blue-medium"
                 }`}
               >
                 <span className="relative block h-8 w-14 shrink-0">
@@ -110,8 +110,9 @@ export function SegmentRow({
                   ) : null}
                 </span>
                 <span className="text-xs font-semibold whitespace-nowrap text-blue-dark">{offer.name}</span>
-              </button>
+              </ToggleButton>
             ))}
+            </CarPicker>
           </ScrollRow>
         ) : null}
       </CompactOfferCard>
@@ -153,18 +154,16 @@ export function SegmentRow({
         </div>
         <SpecList offer={preview} />
         {segment.offers.length > 1 ? (
-          <div role="group" aria-label={fill(cars.carsInClass, { name: segment.name })} className="mt-auto flex flex-wrap gap-2">
+          <CarPicker segment={segment} previewId={preview.id} onPick={pick} className="mt-auto flex flex-wrap gap-2">
             {segment.offers.map((offer) => (
-              <button
+              <ToggleButton
                 key={offer.id}
-                type="button"
-                aria-pressed={offer.id === preview.id}
-                onClick={() => pick(offer.id)}
+                id={offer.id}
                 // Green for the chosen car, blue for a car only previewed.
-                className={`flex w-28 cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white text-left transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                className={`flex w-28 cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-1 motion-reduce:transition-none ${
                   offer.id === selectedId
                     ? "border-green-medium"
-                    : "border-muted-light hover:border-blue-medium/40 aria-pressed:border-blue-medium"
+                    : "border-muted-light hover:border-blue-medium/40 data-selected:border-blue-medium"
                 }`}
               >
                 <span className="relative block aspect-[16/10] w-full bg-white">
@@ -175,9 +174,9 @@ export function SegmentRow({
                 <span className="px-2 py-1.5 text-xxs font-semibold text-blue-dark">
                   {offer.name}
                 </span>
-              </button>
+              </ToggleButton>
             ))}
-          </div>
+          </CarPicker>
         ) : null}
       </div>
 
@@ -193,5 +192,42 @@ export function SegmentRow({
       </div>
     </article>
     </>
+  );
+}
+
+/**
+ * The cars of a class, the previewed one pressed: a toggle button group, so it
+ * is one tab stop, arrow keys move between the cars and Enter or Space shows one.
+ */
+function CarPicker({
+  segment,
+  previewId,
+  onPick,
+  className,
+  children,
+}: {
+  segment: OfferSegment;
+  previewId: number;
+  onPick: (id: number) => void;
+  className: string;
+  children: ReactNode;
+}) {
+  const { cars } = useMessages();
+  return (
+    <ToggleButtonGroup
+      aria-label={fill(cars.carsInClass, { name: segment.name })}
+      selectionMode="single"
+      disallowEmptySelection
+      selectedKeys={[previewId]}
+      onSelectionChange={(keys) => {
+        const [id] = keys;
+        if (typeof id === "number") {
+          onPick(id);
+        }
+      }}
+      className={className}
+    >
+      {children}
+    </ToggleButtonGroup>
   );
 }

@@ -3,18 +3,19 @@
 import { useEffect, useId, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Dialog } from "react-aria-components";
+import { Dialog, GridList, GridListItem, type Selection } from "react-aria-components";
 import { ArrowLeft, Check, ShieldCheck } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
 import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
 import { formatMoney } from "@/components/reservation/format";
-import { ExtendHint } from "@/components/reservation/nudges";
-import { ChooseButton } from "@/components/reservation/offer-parts";
+import { ExtendHintSlot } from "@/components/reservation/nudges";
+import { ChooseFace, chooseClass } from "@/components/reservation/offer-parts";
 import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@/components/reservation/summary";
 import { Slider } from "@/components/reservation/slider";
 import { useQuote } from "@/components/reservation/use-quote";
 import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/reservation/url";
+import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
@@ -30,7 +31,7 @@ import { QUERY_KEYS } from "@/lib/reservation/search";
  */
 export function ProtectionStep({
   lang,
-  searchQuery,
+  searchQuery: serverSearchQuery,
   car,
   options,
   initialProtection,
@@ -52,8 +53,9 @@ export function ProtectionStep({
   /** The URL named a package this car (segment, dates) does not offer. */
   protectionDropped?: boolean;
   /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). */
-  extension?: ExtensionHint | null;
+  extension?: Promise<ExtensionHint | null> | null;
 }) {
+  const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
   const t = useMessages().protection;
   const [selectedId, setSelectedId] = useState<number | null>(initialProtection);
@@ -129,11 +131,7 @@ export function ProtectionStep({
             {t.dropped}
           </p>
         ) : null}
-        {extension && car.days ? (
-          <div className="mb-4">
-            <ExtendHint hint={extension} currentDays={car.days} />
-          </div>
-        ) : null}
+        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} className="mb-4" /> : null}
         {options.length === 0 ? (
           <p className="rounded-2xl bg-white p-6 text-sm text-blue-dark shadow-sm">
             {t.none}
@@ -153,16 +151,21 @@ export function ProtectionStep({
                 )}
                 className="-mx-3 scroll-px-3 px-3 pt-5 pb-2"
                 itemClassName="w-[82%]"
-              >
-                {options.map((option) => (
-                  <ProtectionCard
-                    key={option.id}
-                    option={option}
-                    selected={option.id === selectedId}
-                    onChoose={() => choose(option.id)}
-                  />
-                ))}
-              </Slider>
+                count={options.length}
+                list={({ ref, className, itemClassName }) => (
+                  <GridList
+                    ref={ref}
+                    aria-labelledby="protection-title"
+                    layout="grid"
+                    {...packageSelection(selectedId, choose)}
+                    className={`${className} outline-none`}
+                  >
+                    {options.map((option) => (
+                      <ProtectionCard key={option.id} option={option} className={itemClassName} />
+                    ))}
+                  </GridList>
+                )}
+              />
             </div>
           </>
         )}
@@ -175,7 +178,7 @@ export function ProtectionStep({
         onChangeCar={backToCars}
         searchQuery={searchQuery}
       />
-      <MobileSummaryBar car={car} prices={quotePrices(quote)} action={action} />
+      <MobileSummaryBar trip={trip} car={car} prices={quotePrices(quote)} action={action} />
       <DowngradeDialog
         from={selected}
         to={downgradeTo}
@@ -250,10 +253,8 @@ function ProtectionTable({
 
   return (
     <div
-      role="radiogroup"
-      aria-labelledby="protection-title"
       className="hidden gap-3 pt-8 md:grid"
-      style={{ gridTemplateColumns: `minmax(8rem,1.1fr) repeat(${options.length}, minmax(0,1fr))` }}
+      style={{ gridTemplateColumns: `minmax(8rem,1.1fr) minmax(0,${options.length}fr)` }}
     >
       <div aria-hidden className="rounded-3xl bg-white shadow-sm">
         <div className={head} />
@@ -265,72 +266,109 @@ function ProtectionTable({
         <div className="h-20" />
       </div>
 
-      {options.map((option) => {
-        const selected = option.id === selectedId;
-        return (
-          <div
+      <GridList
+        aria-labelledby="protection-title"
+        layout="grid"
+        {...packageSelection(selectedId, onChoose)}
+        className="grid gap-3 outline-none"
+        style={{ gridTemplateColumns: `repeat(${options.length}, minmax(0,1fr))` }}
+      >
+        {options.map((option) => (
+          <GridListItem
             key={option.id}
-            className={`relative rounded-3xl bg-white transition-shadow duration-200 ease-out motion-reduce:transition-none ${
-              selected ? "shadow-lg" : "shadow-sm"
-            }`}
+            id={option.id}
+            textValue={option.name}
+            className={({ isSelected }) =>
+              `relative cursor-pointer rounded-3xl bg-white outline-none transition-shadow duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-4 motion-reduce:transition-none ${
+                isSelected ? "shadow-lg" : "shadow-sm hover:shadow-md"
+              }`
+            }
           >
-            {option.recommended ? (
-              // Narrower than the column: it starts where the column's rounded corners end,
-              // overlaps the top border by 2px so the two read as one piece, and grows
-              // upwards when the label wraps in a narrow column. It takes the frame's colour.
-              <span
-                className={`absolute inset-x-6 bottom-[calc(100%-2px)] z-30 flex min-h-7 items-center justify-center rounded-t-xl px-2 py-1 text-center text-xxs leading-tight font-bold text-white transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                  selected ? "bg-green-medium" : "bg-blue-medium"
-                }`}
-              >
-                {t.recommended}
-              </span>
-            ) : null}
-            {/* The frame is its own top layer, so the chosen column's border runs over the green tab. */}
-            <span
-              aria-hidden
-              className={`pointer-events-none absolute inset-0 z-20 rounded-3xl border-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                selected ? "border-green-medium" : option.recommended ? "border-blue-medium" : "border-transparent"
-              }`}
-            />
-            <div className={`${head} relative z-10 rounded-t-3xl bg-white`}>
-              <Shield option={option} size="small" />
-              <h3 className="flex items-center gap-1 text-sm font-semibold text-blue-dark">
-                {option.name}
-                {option.description ? <DescriptionButton title={option.name} description={option.description} tone="light" /> : null}
-              </h3>
-              <PackagePrice option={option} />
-            </div>
-            {keys.map((key) => {
-              const row = option.rows.find((item) => item.key === key);
-              return (
-                <div key={key} className={`${cell} justify-center text-center font-semibold`}>
-                  <span className="sr-only">{t.rows[key]}: </span>
-                  {!row ? (
-                    <span className="text-muted-dark">—</span>
-                  ) : row.covered ? (
-                    <>
-                      <Check className="size-5 text-green-medium" aria-hidden />
-                      <span className="sr-only">{row.value}</span>
-                    </>
-                  ) : (
-                    <span className="text-blue-dark">{row.value}</span>
-                  )}
+            {({ isSelected }) => (
+              <>
+                {option.recommended ? (
+                  // Narrower than the column: it starts where the column's rounded corners end,
+                  // overlaps the top border by 2px so the two read as one piece, and grows
+                  // upwards when the label wraps in a narrow column. It takes the frame's colour.
+                  <span
+                    className={`absolute inset-x-6 bottom-[calc(100%-2px)] z-30 flex min-h-7 items-center justify-center rounded-t-xl px-2 py-1 text-center text-xxs leading-tight font-bold text-white transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                      isSelected ? "bg-green-medium" : "bg-blue-medium"
+                    }`}
+                  >
+                    {t.recommended}
+                  </span>
+                ) : null}
+                {/* The frame is its own top layer, so the chosen column's border runs over the green tab. */}
+                <span
+                  aria-hidden
+                  className={`pointer-events-none absolute inset-0 z-20 rounded-3xl border-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    isSelected ? "border-green-medium" : option.recommended ? "border-blue-medium" : "border-transparent"
+                  }`}
+                />
+                <div className={`${head} relative z-10 rounded-t-3xl bg-white`}>
+                  <Shield option={option} size="small" />
+                  <h3 className="flex items-center gap-1 text-sm font-semibold text-blue-dark">
+                    {option.name}
+                    {option.description ? <DescriptionButton title={option.name} description={option.description} tone="light" /> : null}
+                  </h3>
+                  <PackagePrice option={option} />
                 </div>
-              );
-            })}
-            <div className="flex h-20 items-center justify-center border-t border-muted-light px-3">
-              <ChooseButton
-                selected={selected}
-                onClick={() => onChoose(option.id)}
-                radio={{ label: option.name }}
-                className="w-full max-w-40"
-              />
-            </div>
-          </div>
-        );
-      })}
+                {keys.map((key) => {
+                  const row = option.rows.find((item) => item.key === key);
+                  return (
+                    <div key={key} className={`${cell} justify-center text-center font-semibold`}>
+                      <span className="sr-only">{t.rows[key]}: </span>
+                      {!row ? (
+                        <span className="text-muted-dark">—</span>
+                      ) : row.covered ? (
+                        <>
+                          <Check className="size-5 text-green-medium" aria-hidden />
+                          <span className="sr-only">{row.value}</span>
+                        </>
+                      ) : (
+                        <span className="text-blue-dark">{row.value}</span>
+                      )}
+                    </div>
+                  );
+                })}
+                <div className="flex h-20 items-center justify-center border-t border-muted-light px-3">
+                  <ChooseLook selected={isSelected} className="w-full max-w-40" />
+                </div>
+              </>
+            )}
+          </GridListItem>
+        ))}
+      </GridList>
     </div>
+  );
+}
+
+/**
+ * The packages are a grid list of selectable cards (table and phone cards
+ * alike): one tab stop, arrow keys move between packages without choosing,
+ * Enter, Space or a click chooses and moves on, and the "i" opens the details.
+ * The chosen package stays selected while a downgrade waits for its answer.
+ */
+function packageSelection(selectedId: number | null, onChoose: (id: number) => void) {
+  return {
+    selectionMode: "single" as const,
+    disallowEmptySelection: true,
+    selectedKeys: selectedId === null ? [] : [selectedId],
+    onSelectionChange: (keys: Selection) => {
+      const [id] = keys === "all" ? [] : keys;
+      if (typeof id === "number") {
+        onChoose(id);
+      }
+    },
+  };
+}
+
+/** "Wybierz" / "Wybrany" on a card that is itself the control. */
+function ChooseLook({ selected, className }: { selected: boolean; className: string }) {
+  return (
+    <span aria-hidden className={`${chooseClass(selected)} ${className}`}>
+      <ChooseFace selected={selected} />
+    </span>
   );
 }
 
@@ -363,58 +401,58 @@ function PackagePrice({ option }: { option: ProtectionOption }) {
   );
 }
 
-function ProtectionCard({
-  option,
-  selected,
-  onChoose,
-}: {
-  option: ProtectionOption;
-  selected: boolean;
-  onChoose: () => void;
-}) {
+function ProtectionCard({ option, className }: { option: ProtectionOption; className: string }) {
   const t = useMessages().protection;
   return (
-    <article
-      className={`relative flex w-full flex-col rounded-2xl border-2 bg-white shadow-sm transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
-        selected ? "border-green-medium shadow-lg" : option.recommended ? "border-blue-medium" : "border-transparent"
-      }`}
+    <GridListItem
+      id={option.id}
+      textValue={option.name}
+      className={({ isSelected }) =>
+        `${className} relative cursor-pointer flex-col rounded-2xl border-2 bg-white shadow-sm outline-none transition-[border-color,box-shadow] duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+          isSelected ? "border-green-medium shadow-lg" : option.recommended ? "border-blue-medium" : "border-transparent"
+        }`
+      }
     >
-      {option.recommended ? (
-        <span
-          className={`absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xxs font-bold whitespace-nowrap text-white ${
-            selected ? "bg-green-medium" : "bg-blue-medium"
-          }`}
-        >
-          {t.recommended}
-        </span>
-      ) : null}
-      <header className="flex items-center justify-center gap-2 rounded-t-[14px] bg-blue-medium px-4 py-3 text-white">
-        <ShieldCheck className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
-        <h3 className="text-base font-bold">{option.name}</h3>
-        {option.description ? <DescriptionButton title={option.name} description={option.description} /> : null}
-      </header>
+      {({ isSelected }) => (
+        <>
+          {option.recommended ? (
+            <span
+              className={`absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xxs font-bold whitespace-nowrap text-white ${
+                isSelected ? "bg-green-medium" : "bg-blue-medium"
+              }`}
+            >
+              {t.recommended}
+            </span>
+          ) : null}
+          <header className="flex items-center justify-center gap-2 rounded-t-[14px] bg-blue-medium px-4 py-3 text-white">
+            <ShieldCheck className="size-5 shrink-0" strokeWidth={1.75} aria-hidden />
+            <h3 className="text-base font-bold">{option.name}</h3>
+            {option.description ? <DescriptionButton title={option.name} description={option.description} /> : null}
+          </header>
 
-      <div className="flex justify-center bg-white py-3">
-        <Shield option={option} size="small" />
-      </div>
-
-      <dl className="flex flex-col px-4 text-sm">
-        {option.rows.map((row) => (
-          <div key={row.key} className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-muted-light py-2">
-            <dt className="text-xs text-muted-dark">{t.rows[row.key]}</dt>
-            <dd className={`flex items-center gap-1 text-right font-semibold ${row.covered ? "text-green-dark" : "text-blue-dark"}`}>
-              {row.covered ? <Check className="size-4 shrink-0" aria-hidden /> : null}
-              {row.value}
-            </dd>
+          <div className="flex justify-center bg-white py-3">
+            <Shield option={option} size="small" />
           </div>
-        ))}
-      </dl>
 
-      <div className="mt-auto flex flex-col gap-3 p-4">
-        <PackagePrice option={option} />
-        <ChooseButton selected={selected} onClick={onChoose} className="w-full" />
-      </div>
-    </article>
+          <dl className="flex flex-col px-4 text-sm">
+            {option.rows.map((row) => (
+              <div key={row.key} className="grid grid-cols-[1fr_auto] items-baseline gap-3 border-b border-muted-light py-2">
+                <dt className="text-xs text-muted-dark">{t.rows[row.key]}</dt>
+                <dd className={`flex items-center gap-1 text-right font-semibold ${row.covered ? "text-green-dark" : "text-blue-dark"}`}>
+                  {row.covered ? <Check className="size-4 shrink-0" aria-hidden /> : null}
+                  {row.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="mt-auto flex flex-col gap-3 p-4">
+            <PackagePrice option={option} />
+            <ChooseLook selected={isSelected} className="w-full" />
+          </div>
+        </>
+      )}
+    </GridListItem>
   );
 }
 

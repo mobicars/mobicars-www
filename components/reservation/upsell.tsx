@@ -1,12 +1,11 @@
 "use client";
 
-import { useId, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { Dialog } from "react-aria-components";
-import { ArrowRight, Fuel, LoaderCircle, Settings2, Users } from "lucide-react";
+import { Fuel, LoaderCircle, Settings2, Users } from "lucide-react";
 
-import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { ConfirmQuestion } from "@/components/reservation/dialog-parts";
 import { formatMoney } from "@/components/reservation/format";
 import { ChooseButton } from "@/components/reservation/offer-parts";
 import { Slider } from "@/components/reservation/slider";
@@ -15,7 +14,6 @@ import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import { plural } from "@/i18n/plural";
-import type { OfferCard } from "@/lib/reservation/offers";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 import type { UpsellOption } from "@/lib/reservation/upsell";
 
@@ -24,7 +22,7 @@ import type { UpsellOption } from "@/lib/reservation/upsell";
  * (rules in `lib/reservation/upsell.ts`). Picking one asks first; then the
  * car changes and the page checks protection and extras for the new class.
  */
-export function Upsell({ current, options }: { current: OfferCard; options: UpsellOption[] }) {
+export function Upsell({ options }: { options: UpsellOption[] }) {
   const router = useRouter();
   const t = useMessages().upsell;
   const [pending, startTransition] = useTransition();
@@ -73,9 +71,9 @@ export function Upsell({ current, options }: { current: OfferCard; options: Upse
       ) : (
         <UpsellCard option={options[0]} wide disabled={pending} onChoose={() => setConfirm(options[0])} />
       )}
-      <ConfirmDialog
-        current={current}
-        option={confirm}
+      <ConfirmQuestion
+        open={confirm !== null}
+        title={t.confirmTitle}
         onCancel={() => setConfirm(null)}
         onConfirm={() => confirm && switchCar(confirm)}
       />
@@ -112,7 +110,8 @@ function UpsellCard({
 
   return (
     <article
-      className={`relative flex w-full rounded-2xl border-2 border-transparent bg-white p-4 shadow-sm transition-shadow duration-200 ease-out hover:shadow-md motion-reduce:transition-none ${
+      // Hover darkens the frame, like the extras, zone and protection cards.
+      className={`relative flex w-full rounded-2xl border-2 border-transparent bg-white p-4 shadow-sm transition-colors duration-200 ease-out hover:border-blue-medium/40 motion-reduce:transition-none ${
         wide ? "flex-col gap-4 @xl:flex-row @xl:items-center @xl:p-6" : "flex-col"
       }`}
     >
@@ -164,55 +163,5 @@ function UpsellCard({
       </span>
       </div>
     </article>
-  );
-}
-
-function ConfirmDialog({
-  current,
-  option,
-  onCancel,
-  onConfirm,
-}: {
-  current: OfferCard;
-  option: UpsellOption | null;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  const t = useMessages().upsell;
-  const lang = useLang();
-  const titleId = useId();
-  return (
-    <WidgetModal
-      open={option !== null}
-      onOpenChange={(open) => (open ? undefined : onCancel())}
-      className="w-[min(30rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
-    >
-      <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
-        <DialogHeader titleId={titleId} title={t.confirmTitle} className="pt-4 pb-1" />
-        {option ? (
-          <div className="flex flex-col items-center gap-4 px-5 pb-5 text-center">
-            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-sm text-blue-dark/80">
-              <span>
-                {current.name} <span className="text-muted-dark">({current.segment})</span>
-              </span>
-              <ArrowRight className="size-4 text-blue-medium" aria-label={t.to} />
-              <span className="font-semibold text-blue-dark">
-                {option.car.name} <span className="font-normal text-muted-dark">({option.car.segment})</span>
-              </span>
-            </p>
-            <p className="text-sm text-blue-dark">
-              {t.surcharge} <span className="font-bold text-green-medium">+{formatMoney(lang, option.increase)}</span>{" "}
-              {option.unit === "month" ? t.perMonth : t.perDay}
-              <span className="text-muted-dark">
-                {" "}
-                ({fill(t.wholeRental, { price: formatMoney(lang, option.totalIncrease) })})
-              </span>
-            </p>
-            <p className="text-xs text-muted-dark">{t.recheck}</p>
-            <DialogActions cancel={t.cancel} confirm={t.confirm} onCancel={onCancel} onConfirm={onConfirm} />
-          </div>
-        ) : null}
-      </Dialog>
-    </WidgetModal>
   );
 }

@@ -201,6 +201,7 @@ Sort options:
 `components/reservation/summary.tsx` is the booking summary, like carfree.pl:
 
 - **From `lg`:** a sticky panel on the right (`SummaryPanel`). It shows the place and dates (`TripSummary`, formatted on the server in `search-page.tsx`), then the car: name and class, a "Zmień" button beside the name (like carfree.pl's "Edytuj", from step 2 on), and a large photo. Below come one line per price (the promotional price with the regular one struck through), the total, and the next-step button.
+- **Discount code** (`promo-code.tsx`): checked with `/api/reservation/promo`, then written to the URL with `replaceParam`, not a navigation. The steps read it through `useLiveSearchQuery`, so only the summary quote runs again (as on the old site) and the code shows as active at once; "Rezerwuj" sends it in the search query. The "Weź 4 dni" hint keeps the prices of the last server render until the next one.
 - **Below `lg`:** a bar at the bottom (`MobileSummaryBar`) with the car, the total and the button. It shows only once there is a car and an action.
 - **Layout:** each step renders its content in `lg:grid-cols-[minmax(0,1fr)_20rem]` with the panel as the second column. The section is `max-w-7xl`.
 - **Container queries:** the class rows switch layout by their column width (`@xl`, `@3xl`), not the window, because the panel takes 20rem.
@@ -254,6 +255,7 @@ Monthly rental shows the list's `monthlyPrice` as sent; it has no quote yet.
 - **From `md`: a comparison table, like carfree.pl** (`ProtectionTable`).
   - A label column, then one rounded column per package. Every row has the same height, so the values line up.
   - The column head has the shield, the name with the description button, and the per-day price as the API sends it ("Darmowy" at 0) plus the period total.
+  - Descriptions (here, on addons and on zones) are the API's HTML cleaned by `richText` in `text.ts`: only paragraphs, emphasis, lists, headings, tables and https links remain, without attributes, and the text is escaped again. The "i" dialog shows them with Tailwind Typography (`prose` plus the `.rich-text` colours in `globals.css`).
   - Covered rows ("0 zł", "bezpłatnie") show a green check. Other rows show the value.
   - The chosen package has a green frame, matching its green "Wybrany" button. The recommended one has a blue frame and a blue "Najczęściej wybierany" tab above the column; once chosen, the tab turns green with the frame.
   - The table is a `radiogroup`; each column's button is a `radio`.

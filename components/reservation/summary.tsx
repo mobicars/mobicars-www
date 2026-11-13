@@ -1,16 +1,20 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import Image from "next/image";
+import { Button, Dialog } from "react-aria-components";
 import { ArrowRight, CalendarDays, LoaderCircle, MapPin } from "lucide-react";
 
-import { formatMoney } from "@/components/reservation/format";
+import { AnimatedMoney } from "@/components/reservation/animated-money";
+import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { formatDayCount, formatMonths } from "@/components/reservation/format";
 import { PromoCode } from "@/components/reservation/promo-code";
 import { QuoteLines, Spinner } from "@/components/reservation/quote-lines";
 import { ShareBooking } from "@/components/reservation/share-booking";
 import type { QuoteState } from "@/components/reservation/use-quote";
 import { buttonClass } from "@/components/ui/button";
 import { fill } from "@/i18n/fill";
+import type { Lang } from "@/i18n/config";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import type { OfferCard } from "@/lib/reservation/offers";
@@ -20,6 +24,9 @@ import type { MonthlyQuote, QuoteLineView } from "@/lib/reservation/quote";
  * Booking summary beside the steps, like carfree.pl: a sticky panel on the
  * right from `lg`, a bar at the bottom below that. It shows prices exactly as
  * RentCarSoft returns them and adds nothing up.
+ *
+ * Only the car, the promo code and the total are on top; "Szczegóły ceny"
+ * opens a dialog with every quote line and the pick-up and return.
  */
 
 /** Search context, formatted on the server. */
@@ -86,6 +93,8 @@ export function quotePrices(state: QuoteState): SummaryPrices {
 export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQuery }: SummaryProps) {
   const t = useMessages().summary;
   const loading = prices?.loading ?? false;
+  const [details, setDetails] = useState(false);
+  const disabled = !car || !action || !actionable(action) || loading;
   return (
     <aside aria-label={t.title} aria-busy={loading} className="hidden lg:block">
       <div className="sticky top-4 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
@@ -93,53 +102,14 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQue
           <h2 className="text-lg font-semibold text-blue-dark">{t.title}</h2>
           {car ? <ShareBooking car={car.name} variant="text" /> : null}
         </div>
-        <dl className="flex flex-col gap-2 text-xs text-blue-dark/80">
-          <div className="flex gap-2">
-            <MapPin className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-            <div className="min-w-0">
-              <dt className="sr-only">{t.place}</dt>
-              <dd>{trip.pickup}</dd>
-              {trip.dropoff ? <dd className="text-muted-dark">{fill(t.returnAt, { place: trip.dropoff })}</dd> : null}
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <CalendarDays className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-            <div>
-              <dt className="sr-only">{t.dates}</dt>
-              <dd>
-                {trip.start} – {trip.end}
-              </dd>
-            </div>
-          </div>
-        </dl>
 
         {car ? (
-          <div className="border-t border-muted-light pt-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="font-semibold text-blue-dark">{car.name}</p>
-                <p className="text-xs text-muted-dark">{fill(t.orSimilar, { segment: car.segment })}</p>
-              </div>
-              {onChangeCar ? (
-                <button
-                  type="button"
-                  onClick={onChangeCar}
-                  className="shrink-0 cursor-pointer rounded-full border border-blue-dark/20 px-3 py-1 text-xs font-semibold text-blue-dark transition-colors duration-200 ease-out hover:border-blue-medium hover:text-blue-medium motion-reduce:transition-none"
-                >
-                  {t.change}
-                </button>
-              ) : null}
-            </div>
-            {car.image ? (
-              <span className="relative mt-2 block h-24 w-full">
-                <Image src={car.image.src} alt="" fill sizes="280px" className="object-contain" />
-              </span>
-            ) : null}
-          </div>
+          <CarBlock car={car} onChangeCar={onChangeCar} />
         ) : (
-          <p className="border-t border-muted-light pt-4 text-sm text-muted-dark">
-            {t.chooseCar}
-          </p>
+          <>
+            <TripList trip={trip} />
+            <p className="border-t border-muted-light pt-4 text-sm text-muted-dark">{t.chooseCar}</p>
+          </>
         )}
 
         {car && searchQuery !== undefined ? (
@@ -147,13 +117,169 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQue
             <PromoCode searchQuery={searchQuery} />
           </div>
         ) : null}
-        {car && prices ? <PriceLines prices={prices} /> : null}
+        {car && prices ? <PriceSummary car={car} prices={prices} onDetails={() => setDetails(true)} /> : null}
 
-        {action ? (
-          <ActionButton action={action} disabled={!car || !actionable(action) || loading} className="w-full" />
+        {action ? <ActionButton action={action} disabled={disabled} className="w-full" /> : null}
+      </div>
+      {car && prices ? (
+        <PriceDetails
+          open={details}
+          onOpenChange={setDetails}
+          trip={trip}
+          car={car}
+          prices={prices}
+          action={action}
+          actionDisabled={disabled}
+        />
+      ) : null}
+    </aside>
+  );
+}
+
+function CarBlock({ car, onChangeCar }: { car: OfferCard; onChangeCar?: () => void }) {
+  const t = useMessages().summary;
+  return (
+    <div className="flex items-center gap-3">
+      <div className="min-w-0 flex-1">
+        <p className="font-semibold text-blue-dark">{car.name}</p>
+        <p className="text-xs text-muted-dark">{fill(t.orSimilar, { segment: car.segment })}</p>
+        {onChangeCar ? (
+          <button
+            type="button"
+            onClick={onChangeCar}
+            className="mt-2 cursor-pointer rounded-full border border-blue-dark/20 px-3 py-1 text-xs font-semibold text-blue-dark transition-colors duration-200 ease-out hover:border-blue-medium hover:text-blue-medium motion-reduce:transition-none"
+          >
+            {t.change}
+          </button>
         ) : null}
       </div>
-    </aside>
+      {car.image ? (
+        <span className="relative block h-16 w-28 shrink-0">
+          <Image src={car.image.src} alt="" fill sizes="112px" className="object-contain" />
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function TripList({ trip }: { trip: TripSummary }) {
+  const t = useMessages().summary;
+  return (
+    <dl className="flex flex-col gap-2 text-xs text-blue-dark/80">
+      <div className="flex gap-2">
+        <MapPin className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
+        <div className="min-w-0">
+          <dt className="sr-only">{t.place}</dt>
+          <dd>{trip.pickup}</dd>
+          {trip.dropoff ? <dd className="text-muted-dark">{fill(t.returnAt, { place: trip.dropoff })}</dd> : null}
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <CalendarDays className="mt-px size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
+        <div>
+          <dt className="sr-only">{t.dates}</dt>
+          <dd>
+            {trip.start} – {trip.end}
+          </dd>
+        </div>
+      </div>
+    </dl>
+  );
+}
+
+/** "za 3 dni" or, monthly, the month count; null when the car has neither. */
+function periodLabel(lang: Lang, car: OfferCard, prices: SummaryPrices, forPeriod: string): string | null {
+  if (prices.monthly) {
+    return fill(forPeriod, { period: formatMonths(lang, prices.monthly.months) });
+  }
+  return car.days ? fill(forPeriod, { period: formatDayCount(lang, car.days) }) : null;
+}
+
+/** "Szczegóły ceny" on the left, the period and the counting total on the right. */
+function PriceSummary({ car, prices, onDetails }: { car: OfferCard; prices: SummaryPrices; onDetails: () => void }) {
+  const messages = useMessages();
+  const t = messages.summary;
+  const lang = useLang();
+  if (prices.failed || prices.lines.length === 0) {
+    return <PriceLines prices={prices} />;
+  }
+  const period = periodLabel(lang, car, prices, t.forPeriod);
+  return (
+    <div className="flex items-end justify-between gap-3 border-t border-muted-light pt-4">
+      <Button
+        onPress={onDetails}
+        className="shrink-0 cursor-pointer rounded text-sm font-semibold whitespace-nowrap text-blue-medium underline underline-offset-4 outline-none hover:text-blue-dark data-focus-visible:ring-2 data-focus-visible:ring-blue-medium"
+      >
+        {t.priceDetails}
+      </Button>
+      <p className="flex min-h-8 flex-wrap items-baseline justify-end gap-x-1.5 text-right">
+        {period ? <span className="text-sm whitespace-nowrap text-blue-dark/80">{period}</span> : null}
+        <span className="text-xl font-bold whitespace-nowrap text-blue-dark">
+          {prices.total === null ? (
+            <Spinner label={t.calculating} />
+          ) : (
+            <>
+              <AnimatedMoney id="summary-total" value={prices.total} lang={lang} pending={prices.loading} pendingLabel={t.calculating} />
+              {prices.totalSuffix ? <span className="text-xs font-semibold"> {prices.totalSuffix}</span> : null}
+            </>
+          )}
+        </span>
+      </p>
+    </div>
+  );
+}
+
+/** Every quote line, the car and the trip, with the step's action at the bottom. */
+function PriceDetails({
+  open,
+  onOpenChange,
+  trip,
+  car,
+  prices,
+  action,
+  actionDisabled,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trip?: TripSummary;
+  car: OfferCard;
+  prices: SummaryPrices;
+  action?: SummaryAction;
+  actionDisabled: boolean;
+}) {
+  const t = useMessages().summary;
+  const titleId = useId();
+  return (
+    <WidgetModal
+      open={open}
+      onOpenChange={onOpenChange}
+      className="max-h-[min(44rem,calc(100dvh-1.5rem))] w-[min(32rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+    >
+      <Dialog aria-labelledby={titleId} className="flex max-h-[inherit] min-h-0 flex-col outline-none">
+        <DialogHeader titleId={titleId} title={t.priceDetails} className="py-4" />
+        <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overscroll-contain px-5 pb-5">
+          <div className="rounded-2xl border border-muted p-4">
+            <CarBlock car={car} />
+          </div>
+          <PriceLines prices={prices} />
+          {trip ? (
+            <section className="flex flex-col gap-3 border-t border-muted-light pt-4">
+              <h3 className="text-sm font-semibold text-blue-dark">{t.tripTitle}</h3>
+              <TripList trip={trip} />
+            </section>
+          ) : null}
+        </div>
+        {action ? (
+          <div className="border-t border-muted-light px-5 py-4">
+            <ActionButton
+              action={{ ...action, onClick: action.onClick ? () => { onOpenChange(false); action.onClick?.(); } : undefined }}
+              disabled={actionDisabled}
+              className="w-full"
+            />
+          </div>
+        ) : null}
+      </Dialog>
+    </WidgetModal>
   );
 }
 
@@ -195,8 +321,8 @@ export function PriceLines({ prices }: { prices: SummaryPrices }) {
       </div>
     );
   }
-  // While a newer quote loads, the amounts give way to placeholders and the
-  // total to a spinner, so no stale price stays on screen (as on carfree.pl).
+  // While a newer quote loads, the line amounts give way to placeholders and
+  // the total stays greyed behind a spinner, then counts to the new one.
   return (
     <QuoteLines
       lines={prices.lines}
@@ -216,14 +342,17 @@ export function MobileSummaryBar({
   car,
   prices,
   action,
-}: Pick<SummaryProps, "car" | "prices" | "action">) {
+  trip,
+}: Pick<SummaryProps, "car" | "prices" | "action"> & { trip?: TripSummary }) {
   const messages = useMessages();
   const t = messages.summary;
   const lang = useLang();
+  const [details, setDetails] = useState(false);
   if (!car || !action) {
     return null;
   }
   const loading = prices?.loading ?? false;
+  const canShowDetails = prices && !prices.failed && prices.lines.length > 0;
   return (
     <div
       aria-busy={loading}
@@ -237,24 +366,49 @@ export function MobileSummaryBar({
           <p className="flex h-6 items-center text-base font-bold text-blue-dark">
             {prices?.failed ? (
               <span className="text-xs font-semibold text-red-700">{t.noPrice}</span>
-            ) : loading || prices?.total == null ? (
+            ) : prices?.total == null ? (
               <Spinner label={t.calculating} />
             ) : (
               <>
                 {/* Monthly rental: the bar leads with the monthly amount, the figure people compare. */}
-                {formatMoney(lang, prices.monthly ? prices.monthly.perMonth : prices.total)}
+                <AnimatedMoney
+                  id={prices.monthly ? "summary-per-month" : "summary-total"}
+                  value={prices.monthly ? prices.monthly.perMonth : prices.total}
+                  lang={lang}
+                  pending={loading}
+                  pendingLabel={t.calculating}
+                />
                 {prices.monthly || prices.totalSuffix ? (
                   <span className="text-xs font-semibold"> {prices.monthly ? messages.quoteLines.perMonth : prices.totalSuffix}</span>
                 ) : null}
               </>
             )}
           </p>
+          {canShowDetails ? (
+            <Button
+              onPress={() => setDetails(true)}
+              className="cursor-pointer rounded text-xxs font-semibold text-blue-medium underline underline-offset-2 outline-none data-focus-visible:ring-2 data-focus-visible:ring-blue-medium"
+            >
+              {t.priceDetails}
+            </Button>
+          ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ShareBooking car={car.name} variant="icon" />
           <ActionButton action={action} disabled={!actionable(action) || loading} />
         </div>
       </div>
+      {prices && canShowDetails ? (
+        <PriceDetails
+          open={details}
+          onOpenChange={setDetails}
+          trip={trip}
+          car={car}
+          prices={prices}
+          action={action}
+          actionDisabled={!actionable(action) || loading}
+        />
+      ) : null}
     </div>
   );
 }

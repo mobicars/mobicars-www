@@ -13,6 +13,7 @@ import {
 import { rentCarSoftRequest } from "../internal/http";
 import { CACHE_TAGS } from "../internal/labels";
 import { buildServicePointQuery, type QueryParams } from "../internal/params";
+import { cacheEnabled } from "../../cache";
 
 export async function listServicePoints(input: {
   lang?: string;
@@ -20,10 +21,9 @@ export async function listServicePoints(input: {
   departmentIds?: number[];
   includeInactive?: boolean;
 } = {}): Promise<ServicePoint[]> {
-  const points = await loadCachedServicePoints(
-    buildServicePointQuery(input),
-    input.lang ?? "pl",
-  );
+  const query = buildServicePointQuery(input);
+  const lang = input.lang ?? "pl";
+  const points = await (cacheEnabled() ? loadCachedServicePoints(query, lang) : loadServicePoints(query, lang));
   if (input.includeInactive) {
     return points;
   }
@@ -34,19 +34,17 @@ export async function getServicePoint(
   id: number,
   input: { lang?: string; keyIds?: number[] } = {},
 ): Promise<ServicePoint> {
-  return loadCachedServicePoint(
-    id,
-    buildServicePointQuery(input),
-    input.lang ?? "pl",
-  );
+  const query = buildServicePointQuery(input);
+  const lang = input.lang ?? "pl";
+  return cacheEnabled() ? loadCachedServicePoint(id, query, lang) : loadServicePoint(id, query, lang);
 }
 
 export async function listDepartments(): Promise<Department[]> {
-  return loadDepartments();
+  return cacheEnabled() ? loadCachedDepartments() : loadDepartments();
 }
 
 export async function getDepartment(id: number): Promise<Department> {
-  return loadDepartment(id);
+  return cacheEnabled() ? loadCachedDepartment(id) : loadDepartment(id);
 }
 
 async function loadCachedServicePoints(
@@ -55,7 +53,11 @@ async function loadCachedServicePoints(
 ): Promise<ServicePoint[]> {
   "use cache";
   cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
+  return loadServicePoints(query, lang);
+}
+
+async function loadServicePoints(query: QueryParams, lang: string): Promise<ServicePoint[]> {
   const [payload, definitions] = await Promise.all([
     rentCarSoftRequest({ path: "/service_points.json", query }),
     listServicePointKeys(lang),
@@ -70,7 +72,11 @@ async function loadCachedServicePoint(
 ): Promise<ServicePoint> {
   "use cache";
   cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
+  return loadServicePoint(id, query, lang);
+}
+
+async function loadServicePoint(id: number, query: QueryParams, lang: string): Promise<ServicePoint> {
   const [payload, definitions] = await Promise.all([
     rentCarSoftRequest({ path: `/service_point/${id}.json`, query }),
     listServicePointKeys(lang),
@@ -78,19 +84,27 @@ async function loadCachedServicePoint(
   return parseServicePoint(payload, definitions);
 }
 
-async function loadDepartments(): Promise<Department[]> {
+async function loadCachedDepartments(): Promise<Department[]> {
   "use cache";
   cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
+  return loadDepartments();
+}
+
+async function loadCachedDepartment(id: number): Promise<Department> {
+  "use cache";
+  cacheLife("hours");
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
+  return loadDepartment(id);
+}
+
+async function loadDepartments(): Promise<Department[]> {
   return parseDepartments(
     await rentCarSoftRequest({ path: "/departments.json" }),
   );
 }
 
 async function loadDepartment(id: number): Promise<Department> {
-  "use cache";
-  cacheLife("hours");
-  cacheTag(CACHE_TAGS.catalog);
   return parseDepartment(
     await rentCarSoftRequest({ path: `/department/${id}.json` }),
   );

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
   --background: #ffffff;
@@ -111,6 +112,17 @@ body {
   transform-origin: center;
 }
 
+/* `BottomSheet` (components/ui/sheet.tsx): React Aria plays it with the swipe and the slide in and out. */
+@keyframes sheet-backdrop {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pickup-overlay[data-entering],
   .pickup-overlay[data-exiting],
@@ -152,5 +164,66 @@ body {
 
   body:has([data-preview-banner]):has([data-mobile-summary-bar]) {
     padding-bottom: 8.75rem;
+  }
+}
+
+/* Descriptions from RentCarSoft (addons, zones, protection) in the "i" dialogs: `prose` in the site's colours, tighter. */
+.rich-text {
+  --tw-prose-body: color-mix(in srgb, var(--color-blue-dark) 85%, transparent);
+  --tw-prose-headings: var(--color-blue-dark);
+  --tw-prose-bold: var(--color-blue-dark);
+  --tw-prose-links: var(--color-blue-medium);
+  --tw-prose-bullets: var(--color-green-medium);
+  --tw-prose-counters: var(--color-green-medium);
+  --tw-prose-th-borders: var(--color-muted);
+  --tw-prose-td-borders: var(--color-muted-light);
+  line-height: 1.6;
+}
+.rich-text > :first-child {
+  margin-top: 0;
+}
+.rich-text > :last-child {
+  margin-bottom: 0;
+}
+.rich-text h3 {
+  margin-top: 1.25em;
+  margin-bottom: 0.5em;
+  font-size: 1em;
+}
+.rich-text p,
+.rich-text ul,
+.rich-text ol {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+.rich-text li {
+  margin-top: 0.25em;
+  margin-bottom: 0.25em;
+}
+.rich-text li > p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.rich-text table {
+  margin-top: 0.75em;
+  margin-bottom: 0.75em;
+}
+.rich-text thead th {
+  padding-top: 0.4em;
+  padding-bottom: 0.4em;
+}
+.rich-text tbody td {
+  padding-top: 0.35em;
+  padding-bottom: 0.35em;
+}
+
+/* Menu sheet (`components/layout/main-nav.tsx`): React Aria plays this while the
+   sheet slides or is swiped, so the backdrop follows the finger. */
+@keyframes sheet-backdrop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }

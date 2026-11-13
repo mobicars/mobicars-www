@@ -1,5 +1,19 @@
 {
   "layout": {
+    "closeAnnouncement": "Zamknij komunikat",
+    "menu": "Menu",
+    "closeMenu": "Zamknij menu",
+    "mainNav": "Menu główne",
+    "allCars": "Cała flota",
+    "fromPerDay": "od {price} / doba",
+    "airport": "Lotnisko",
+    "trainStation": "Dworzec",
+    "office": "Biuro",
+    "otherPlaces": "Inne miejsca",
+    "allPosts": "Wszystkie wpisy",
+    "followUs": "Obserwuj nas",
+    "contact": "Kontakt",
+    "legal": "Informacje prawne",
     "account": "Moje konto",
     "hotline": "Infolinia",
     "home": "Strona główna MobiCars",
@@ -8,6 +22,12 @@
     "documents": "Dokumenty",
     "languageCurrent": "Język: {label}",
     "languageChoose": "Wybierz język",
+    "languageNames": {
+      "pl": "Polski",
+      "en": "Angielski",
+      "de": "Niemiecki",
+      "uk": "Ukraiński"
+    },
     "description": "Wynajem samochodów",
     "fleet": "Flota"
   },
@@ -513,8 +533,6 @@
     "oneTime": "jednorazowo",
     "wholeRental": "{price} za cały wynajem",
     "perItem": "za sztukę",
-    "add": "Dodaj",
-    "remove": "Usuń",
     "quantity": "Ilość: {name}",
     "less": "Mniej",
     "more": "Więcej",
@@ -526,7 +544,8 @@
       "button": "Zmień na {name}",
       "changing": "Zmieniamy…",
       "perDay": "/ doba",
-      "perMonth": "/ mies."
+      "perMonth": "/ mies.",
+      "confirmTitle": "Czy chcesz podnieść wariant ubezpieczenia i mieć spokojną głowę?"
     }
   },
   "upsell": {
@@ -542,10 +561,7 @@
       "other": "miejsca"
     },
     "wholeRental": "+{price} za cały wynajem",
-    "confirmTitle": "Czy potwierdzasz zmianę klasy samochodu?",
-    "to": "na",
-    "surcharge": "Dopłata",
-    "recheck": "Wybraną ochronę i dodatki sprawdzimy dla nowego auta; cenę policzymy od nowa.",
+    "confirmTitle": "Czy chcesz zmienić klasę auta?",
     "cancel": "Nie, cofnij",
     "confirm": "Tak, potwierdzam",
     "perMonth": "/ mies."
@@ -563,6 +579,9 @@
     "failed": "Nie udało się pobrać ceny.",
     "retry": "Spróbuj ponownie",
     "total": "Razem",
+    "priceDetails": "Szczegóły ceny",
+    "forPeriod": "za {period}",
+    "tripTitle": "Odbiór i zwrot",
     "calculating": "Liczymy cenę",
     "noPrice": "Brak ceny",
     "share": "Udostępnij",
@@ -690,7 +709,8 @@
       "cost": "Za cały wynajem tylko +{cost}.",
       "free": "Bez żadnej dopłaty.",
       "button": "Przedłuż do {days}",
-      "extending": "Przedłużamy…"
+      "extending": "Przedłużamy…",
+      "confirmTitle": "Czy chcesz wydłużyć okres najmu, aby obniżyć koszty dobowe?"
     },
     "resume": {
       "title": "Masz niedokończoną rezerwację",

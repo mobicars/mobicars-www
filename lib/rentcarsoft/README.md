@@ -68,7 +68,7 @@ That request sends `longTerm=1`, which is the encoding that returned the long-te
 
 ## Public surface
 
-Catalog, cached when the arguments are not date- or code-dependent:
+Catalog, cached for hours when the arguments are not date- or code-dependent, and for two minutes when they are (a search). `CACHE_ENABLED` switches all of it off; see `docs/caching.md`:
 
 - `listLanguages`, `listCurrencies`, `listPaymentTypes`
 - `listOfferKeys`, `listServicePointKeys`, `listClientKeys`, `listPriceGroupKeys`
@@ -87,7 +87,7 @@ Realtime, never cached:
 - `changeClientPassword`, `createClient`, `clientEmailExists`, `updateClient`
 - `startPasswordRecovery`, `getPasswordRecoveryToken`, `completePasswordRecovery`
 
-`listOffers` and the extras list switch to the uncached path when the input includes dates, a promo code, `onlyAvailable`, `onlyAvailableAtLocation`, a long-term quote, or client ids.
+`listOffers` and the extras list switch to the two-minute search cache (`rcs:search`) when the input includes dates, a promo code, `onlyAvailable`, `onlyAvailableAtLocation` or a long-term quote. Extras with client ids are never cached.
 
 ## Errors
 
@@ -102,7 +102,7 @@ Mutations are not retried.
 ## Business rules in the bridge
 
 - Offer lists sort with `order=default`. `order=pozycja` is not sent.
-- Long-term offer search can send `longTermKalukator`, `okresLongTerm`, and `limitLongTerm` through `longTermQuote`. That path is not cached. `longTermQuote` selects the long-term list and does not also send `shortTerm`.
+- Long-term offer search can send `longTermKalukator`, `okresLongTerm`, and `limitLongTerm` through `longTermQuote`. That path gets the two-minute search cache. `longTermQuote` selects the long-term list and does not also send `shortTerm`.
 - `onlyAvailable` requires both dates. `onlyAvailableAtLocation` requires service points and both dates. The bridge throws `invalid_request` and does not call the API when those inputs are missing. Without the location flag, availability stays company-wide.
 - Service points are active when custom field 2 equals `6` (`Aktywny`). `listServicePoints` returns those points unless `includeInactive` is set.
 - `ServicePoint.city` and `ServicePoint.address` are trimmed custom fields 3 and 4. An empty value is `null`.

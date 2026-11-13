@@ -257,6 +257,21 @@ async function Offers({
     step === "car" && selected !== null
       ? serverQuote(lang, search, searchQuery, selected, [])
       : null;
+  // The summary quote for the choices in the URL, started now rather than after
+  // the offers and extras it is checked against; used when the check keeps them all.
+  const earlyQuote =
+    step !== "car" && selected !== null
+      ? startQuote(
+          lang,
+          search,
+          searchQuery,
+          selected,
+          step === "protection"
+            ? protection === null ? [] : [protection]
+            : [...(protection === null ? [] : [protection]), ...selectedAddonIds({ ...extras, addons: [...new Set(extras.addons)] })],
+          step === "protection" ? [] : selectedAccessories(extras),
+        )
+      : null;
   const offers = await listOfferCards(lang, search);
 
   if (offers.length === 0) {
@@ -296,7 +311,7 @@ async function Offers({
       // The extras depend on the car's segment and the dates; a change can leave some out.
       const dropped = droppedChoices(extras, selection);
       const addonIds = [...(chosen === null ? [] : [chosen]), ...selectedAddonIds(selection)];
-      const quote = await serverQuote(lang, search, searchQuery, car.id, addonIds, selectedAccessories(selection));
+      const quote = await quoteOrEarly(earlyQuote, lang, search, searchQuery, car.id, addonIds, selectedAccessories(selection));
 
       // A choice that dropped out goes back to the extras step, which says so.
       if (account && dropped === 0) {
@@ -320,7 +335,7 @@ async function Offers({
               trip={trip}
               airport={places.find((place) => place.id === search.pickup.id)?.airport ?? false}
               account={prefill}
-              extension={await extension}
+              extension={extension}
               upgrade={protectionUpgrade(options, chosen)}
             />
           </>
@@ -341,7 +356,7 @@ async function Offers({
             initialSelection={selection}
             droppedCount={dropped}
             upsell={upsellOptions(car, offers, undefined, search.term === "long" ? search.months : null)}
-            extension={await extension}
+            extension={extension}
             upgrade={protectionUpgrade(options, chosen)}
             initialQuote={quote}
             trip={trip}
@@ -362,8 +377,8 @@ async function Offers({
           options={options}
           initialProtection={chosen}
           protectionDropped={protection !== null && chosen === null}
-          initialQuote={await serverQuote(lang, search, searchQuery, car.id, chosen === null ? [] : [chosen])}
-          extension={await extension}
+          initialQuote={await quoteOrEarly(earlyQuote, lang, search, searchQuery, car.id, chosen === null ? [] : [chosen])}
+          extension={extension}
           trip={trip}
         />
       </>
@@ -441,6 +456,37 @@ function withPromo(query: URLSearchParams, promo: string | null): URLSearchParam
     query.set(QUERY_KEYS.promo, promo);
   }
   return query;
+}
+
+type StartedQuote = { request: string; result: ReturnType<typeof serverQuote> };
+
+function startQuote(
+  lang: string,
+  search: ReservationSearch,
+  searchQuery: string,
+  offerId: number,
+  addonIds: number[],
+  accessories: QuoteAccessory[] = [],
+): StartedQuote {
+  return {
+    request: quoteQuery(lang, searchQuery, offerId, addonIds, accessories),
+    result: serverQuote(lang, search, searchQuery, offerId, addonIds, accessories),
+  };
+}
+
+/** The early quote when it asked for exactly these choices, else a new one. */
+function quoteOrEarly(
+  early: StartedQuote | null,
+  lang: string,
+  search: ReservationSearch,
+  searchQuery: string,
+  offerId: number,
+  addonIds: number[],
+  accessories: QuoteAccessory[] = [],
+): ReturnType<typeof serverQuote> {
+  return early?.request === quoteQuery(lang, searchQuery, offerId, addonIds, accessories)
+    ? early.result
+    : serverQuote(lang, search, searchQuery, offerId, addonIds, accessories);
 }
 
 async function serverQuote(

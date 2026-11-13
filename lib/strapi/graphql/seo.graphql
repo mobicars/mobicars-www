@@ -1,7 +1,0 @@
-query getSeo($locale: I18NLocaleCode) {
-  global(locale: $locale) {
-    defaultSeo {
-      ...Seo
-    }
-  }
-}
