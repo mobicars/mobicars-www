@@ -5,7 +5,8 @@ import { listServicePoints } from "@/lib/rentcarsoft";
 import { isDarkBackground, type MapSection } from "@/lib/strapi";
 
 import type { MapKind } from "./map-kinds";
-import { PointsExplorer, type ExplorerTexts } from "./points-explorer";
+import { LazyPointsExplorer as PointsExplorer } from "./lazy";
+import type { ExplorerTexts } from "./points-explorer";
 import type { MapPoint } from "./points-map";
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
 

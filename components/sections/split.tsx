@@ -7,6 +7,7 @@ import type { Lang } from "@/i18n/config";
 import { isDarkBackground, type Media, type SplitSection } from "@/lib/strapi";
 
 import { InlineItem, palette } from "./features";
+import { halfSizes } from "./image-sizes";
 import { ContactFormView } from "./form";
 import { loadMapPoints, PointsMapView } from "./map";
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
@@ -34,7 +35,7 @@ export async function Split({ section, lang }: { section: SplitSection; lang: La
   const points = media.kind === "map" ? await loadMapPoints(lang, `sections.split ${section.id}`) : [];
   const aside =
     media.kind === "image" ? (
-      <Photos media={media} />
+      <Photos media={media} width={section.width} />
     ) : points.length > 0 ? (
       <PointsMapView points={points} lang={lang} dark={dark} legend={media.legend} />
     ) : null;
@@ -82,7 +83,11 @@ export async function Split({ section, lang }: { section: SplitSection; lang: La
           ) : null}
         </div>
         {/* First on phones (the photo or map above the text), then on the CMS's side. */}
-        {aside ? <div className={`order-first min-w-0 ${section.mediaSide === "end" ? "lg:order-last" : ""}`}>{aside}</div> : null}
+        {aside ? (
+          <div className={`order-first min-w-0 ${section.mediaSide === "end" ? "lg:order-last" : ""} ${media.kind === "image" && media.fit === "contain" ? "lg:self-center" : ""}`}>
+            {aside}
+          </div>
+        ) : null}
       </div>
     </SectionShell>
   );
@@ -99,15 +104,18 @@ function bodyLevel(body: Extract<SplitSection["content"], { kind: "text" }>["bod
  * content beside it, cropped), or the collage: the second, smaller photo over
  * its lower corner; the stat badge on top.
  */
-function Photos({ media }: { media: Extract<SplitSection["media"], { kind: "image" }> }) {
+function Photos({ media, width }: { media: Extract<SplitSection["media"], { kind: "image" }>; width: SplitSection["width"] }) {
+  if (media.fit === "contain") {
+    return <WholePhoto image={media.image} width={width} />;
+  }
   const collage = media.imageSecond !== null;
   return (
     <div className={`relative h-full ${collage ? "pr-[14%] pb-[14%]" : ""}`}>
-      <Photo image={media.image} sizes="(min-width: 1024px) 45vw, 100vw" className="relative h-full" frame="aspect-[4/3] lg:aspect-[4/5]" />
+      <Photo image={media.image} sizes={halfSizes(width, collage ? 0.86 : 1)} className="relative h-full" frame="aspect-[4/3] lg:aspect-[4/5]" />
       {media.imageSecond ? (
         <Photo
           image={media.imageSecond}
-          sizes="(min-width: 1024px) 22vw, 50vw"
+          sizes={halfSizes(width, 0.48)}
           className="absolute right-0 bottom-0 aspect-square w-[48%] ring-8 ring-white"
         />
       ) : null}
@@ -130,6 +138,18 @@ function Photo({ image, sizes, className, frame }: { image: Media; sizes: string
       <img {...props} alt={image.alt} className={`size-full object-cover ${frame ? "absolute inset-0" : ""}`} />
     </div>
   );
+}
+
+/**
+ * The whole image in its own proportions (a screenshot, a graphic picked to
+ * fit): the column's full width, its own height, nothing cropped and no
+ * background under it (a transparent PNG stays clean). Its width and height
+ * reserve the space, so nothing shifts. The site's top quality (75), so small
+ * text in a screenshot stays sharp.
+ */
+function WholePhoto({ image, width }: { image: Media; width: SplitSection["width"] }) {
+  const { props } = getImageProps({ src: image.url, alt: image.alt, width: image.width ?? 1200, height: image.height ?? 900, sizes: halfSizes(width), quality: 75 });
+  return <img {...props} alt={image.alt} className="block h-auto w-full rounded-card" />;
 }
 
 function FaqData({ items }: { items: Extract<SplitSection["content"], { kind: "faq" }>["items"] }) {

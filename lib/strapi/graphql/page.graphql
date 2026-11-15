@@ -770,6 +770,7 @@ fragment SplitSection on ComponentSectionsSplit {
   splitImage: image {
     ...Media
   }
+  imageFit
   imageStyle
   imageSecond {
     ...Media

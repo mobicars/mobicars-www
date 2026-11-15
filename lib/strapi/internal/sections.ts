@@ -270,6 +270,8 @@ export type SplitSection = {
     | {
         kind: "image";
         image: Media;
+        /** `cover`: cropped to the frame; `contain`: the whole image in its own proportions (a screenshot), no collage or badge. */
+        fit: "cover" | "contain";
         /** The smaller photo of a collage; `null`: one photo. */
         imageSecond: Media | null;
         stat: { value: string; label: string | null } | null;
@@ -678,11 +680,13 @@ function parseSplitMedia(raw: SplitSectionFragment): SplitSection["media"] | nul
     return null;
   }
   const stat = raw.statValue?.trim();
+  const fit = raw.imageFit === "contain" ? "contain" : "cover";
   return {
     kind: "image",
     image: parseMedia(raw.splitImage),
-    imageSecond: raw.imageStyle === "collage" && raw.imageSecond?.url ? parseMedia(raw.imageSecond) : null,
-    stat: stat ? { value: stat, label: raw.statLabel?.trim() || null } : null,
+    fit,
+    imageSecond: fit === "cover" && raw.imageStyle === "collage" && raw.imageSecond?.url ? parseMedia(raw.imageSecond) : null,
+    stat: fit === "cover" && stat ? { value: stat, label: raw.statLabel?.trim() || null } : null,
   };
 }
 

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 
 import { isDarkBackground, type SectionBackground } from "@/lib/strapi";
 
+import { frameSizes } from "./image-sizes";
 import { Pattern } from "./pattern";
 
 /**
@@ -62,7 +63,7 @@ export function SectionShell({
     <div className={frame.outer}>
       {/* `overflow-clip`, not `hidden`: it still clips the rounded corners and the photo, but makes no scroll container, so `sticky` inside (the FAQ menu) works. */}
       <section aria-labelledby={labelledBy} className={`relative isolate overflow-clip ${TONES[background.tone]} ${SPACING[spacing]} ${frame.box}`}>
-        {background.tone === "image" ? <BackgroundPhoto image={background.image} imageMobile={background.imageMobile} /> : null}
+        {background.tone === "image" ? <BackgroundPhoto image={background.image} imageMobile={background.imageMobile} sizes={frameSizes(width)} /> : null}
         {"pattern" in background && background.pattern ? <Pattern tone={background.tone} place="section" /> : null}
         {/* Above the photo and its layer by markup order (no negative z-index, which accessibility checkers misread). */}
         <div className={`relative mx-auto w-full ${frame.inner}`}>{children}</div>
@@ -72,8 +73,8 @@ export function SectionShell({
 }
 
 /** Below the fold: loaded lazily, at the lower quality, under a strong navy layer so white text reads on any photo. */
-function BackgroundPhoto({ image, imageMobile }: { image: { url: string; width: number | null; height: number | null }; imageMobile: typeof image | null }) {
-  const common = { alt: "", sizes: "100vw", quality: 60 };
+function BackgroundPhoto({ image, imageMobile, sizes }: { image: { url: string; width: number | null; height: number | null }; imageMobile: typeof image | null; sizes: string }) {
+  const common = { alt: "", sizes, quality: 60 };
   const { props: desktop } = getImageProps({ ...common, src: image.url, width: image.width ?? 1920, height: image.height ?? 1080 });
   const mobile = imageMobile
     ? getImageProps({ ...common, src: imageMobile.url, width: imageMobile.width ?? 768, height: imageMobile.height ?? 1024 }).props

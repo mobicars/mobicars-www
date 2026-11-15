@@ -1,6 +1,5 @@
 import { getImageProps } from "next/image";
 import { Suspense } from "react";
-import { preload } from "react-dom";
 
 import { CtaLink } from "@/components/blocks/cta-link";
 import { ReservationPicker } from "@/components/reservation/picker";
@@ -11,6 +10,7 @@ import type { HeroSection, Media } from "@/lib/strapi";
 
 import { HeroVideo } from "./hero-video";
 import { FRAME, SECTION_CTA_SIZE, SPACING } from "./section-shell";
+import { frameSizes } from "./image-sizes";
 
 
 /**
@@ -60,7 +60,7 @@ export function Hero({ section, lang, priority, pickupId }: { section: HeroSecti
   return (
     <div className={frame.outer}>
       <section className={`relative isolate overflow-hidden bg-blue-dark ${frame.box}`}>
-        {section.image ? <Background image={section.image} imageMobile={section.imageMobile} priority={priority} /> : null}
+        {section.image ? <Background image={section.image} imageMobile={section.imageMobile} priority={priority} sizes={frameSizes(section.width)} /> : null}
         {section.video ? <HeroVideo desktop={clip(section.video)} mobile={section.videoMobile ? clip(section.videoMobile) : null} /> : null}
         <div aria-hidden className={`absolute inset-0 ${overlay}`} />
 
@@ -140,10 +140,10 @@ async function HeroSearch({
   );
 }
 
-function Background({ image, imageMobile, priority }: { image: Media; imageMobile: Media | null; priority: boolean }) {
+function Background({ image, imageMobile, priority, sizes }: { image: Media; imageMobile: Media | null; priority: boolean; sizes: string }) {
   const common = {
     alt: image.alt,
-    sizes: "100vw",
+    sizes,
     quality: 75,
     ...(priority ? { loading: "eager" as const, fetchPriority: "high" as const } : {}),
   };
@@ -152,22 +152,19 @@ function Background({ image, imageMobile, priority }: { image: Media; imageMobil
     ? getImageProps({ ...common, src: imageMobile.url, width: imageMobile.width ?? 768, height: imageMobile.height ?? 1024 }).props
     : null;
 
-  if (priority) {
-    // A preload per crop, each for its own screens, so the browser starts the one it will show before it reaches the `<picture>`.
-    preload(desktop.src, {
-      as: "image",
-      fetchPriority: "high",
-      imageSrcSet: desktop.srcSet,
-      imageSizes: desktop.sizes,
-      ...(mobile ? { media: DESKTOP_QUERY } : {}),
-    });
-    if (mobile) {
-      preload(mobile.src, { as: "image", fetchPriority: "high", imageSrcSet: mobile.srcSet, imageSizes: mobile.sizes, media: MOBILE_QUERY });
-    }
-  }
-
   return (
     <picture>
+      {/*
+        A preload per crop, each for its own screens, so the browser starts the one it will show from the first bytes of
+        the HTML. Rendered as `<link>` elements, which React hoists into `<head>`: `preload()` from react-dom reaches the
+        browser only in the RSC data of a cached page, so the request waited for the scripts.
+      */}
+      {priority ? (
+        <link rel="preload" as="image" href={desktop.src} imageSrcSet={desktop.srcSet} imageSizes={desktop.sizes} fetchPriority="high" media={mobile ? DESKTOP_QUERY : undefined} />
+      ) : null}
+      {priority && mobile ? (
+        <link rel="preload" as="image" href={mobile.src} imageSrcSet={mobile.srcSet} imageSizes={mobile.sizes} fetchPriority="high" media={MOBILE_QUERY} />
+      ) : null}
       {mobile ? <source media={MOBILE_QUERY} srcSet={mobile.srcSet} sizes={mobile.sizes} /> : null}
       {/* Decorative: the title carries the meaning. */}
       <img {...desktop} alt="" className="absolute inset-0 size-full object-cover" />

@@ -1,10 +1,10 @@
 import type { CSSProperties } from "react";
 
 import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
-import { Carousel } from "@/components/ui/carousel";
 import { isDarkBackground, type FeaturesSection } from "@/lib/strapi";
 
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
+import { LazyCarousel as Carousel } from "./lazy";
 
 type Item = FeaturesSection["items"][number];
 type Heading = "h2" | "h3";

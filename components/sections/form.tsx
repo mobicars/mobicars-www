@@ -3,7 +3,7 @@ import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { getChrome, type FormSection } from "@/lib/strapi";
 
-import { ContactForm } from "./contact-form";
+import { LazyContactForm as ContactForm } from "./lazy";
 import { SectionHeading, SectionShell } from "./section-shell";
 
 /**

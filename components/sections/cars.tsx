@@ -1,9 +1,7 @@
 import { connection } from "next/server";
 
 import { CtaLink } from "@/components/blocks/cta-link";
-import { FleetBrowser } from "@/components/fleet/fleet-browser";
 import { FleetCard } from "@/components/fleet/fleet-card";
-import { Carousel } from "@/components/ui/carousel";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { cacheEnabled } from "@/lib/cache";
@@ -12,6 +10,8 @@ import { selectSectionCars } from "@/lib/fleet/cars-block";
 import { isDarkBackground, type CarsSection } from "@/lib/strapi";
 
 import { CardItem } from "./cards";
+import { LazyCarousel as Carousel, LazyFleetBrowser as FleetBrowser } from "./lazy";
+import { cardSizes } from "./image-sizes";
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
 
 /** Cars per "Show more" step in the full list. */
@@ -44,7 +44,12 @@ export async function Cars({ section, lang, pickupId }: { section: CarsSection; 
   const label = section.title ?? t.fleet.title;
   const card = (car: FleetCardData, sizes?: string) => <FleetCard car={car} lang={lang} t={t.fleet} headingLevel={heading} sizes={sizes} />;
   // The Cards section's card, as tall as the car cards beside it.
-  const more = section.moreCard ? <CardItem card={section.moreCard} heading={heading} sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 80vw" banner={false} /> : null;
+  // `GRID`: four a row from 1280 px, three from 1024 px, two on tablets; `SLIDE`: three in view.
+  const gridSizes = cardSizes(section.width, { desktop: 3, wide: 4 });
+  const slideSizes = cardSizes(section.width, { desktop: 3, slide: true });
+  const more = section.moreCard ? (
+    <CardItem card={section.moreCard} heading={heading} sizes={section.layout === "carousel" ? slideSizes : gridSizes} banner={false} />
+  ) : null;
 
   let list;
   if (section.layout === "full") {
@@ -64,7 +69,7 @@ export async function Cars({ section, lang, pickupId }: { section: CarsSection; 
         <ul className="flex gap-6 pb-2">
           {cars.map((car) => (
             <li key={car.id} className={SLIDE}>
-              {card(car, "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 80vw")}
+              {card(car, slideSizes)}
             </li>
           ))}
           {more ? <li className={SLIDE}>{more}</li> : null}
@@ -75,7 +80,7 @@ export async function Cars({ section, lang, pickupId }: { section: CarsSection; 
     list = (
       <ul className={GRID}>
         {cars.map((car) => (
-          <li key={car.id}>{card(car)}</li>
+          <li key={car.id}>{card(car, gridSizes)}</li>
         ))}
         {more ? <li className="flex">{more}</li> : null}
       </ul>

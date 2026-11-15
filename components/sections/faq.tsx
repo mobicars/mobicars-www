@@ -6,7 +6,7 @@ import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { isDarkBackground, type FaqSection } from "@/lib/strapi";
 
-import { FaqGroups } from "./faq-groups";
+import { LazyFaqGroups as FaqGroups } from "./lazy";
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
 
 /**

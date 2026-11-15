@@ -8,6 +8,7 @@ import { getMessages } from "@/i18n/messages";
 import { isDarkBackground, type BlogSection } from "@/lib/strapi";
 
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
+import { cardSizes, leadPostSizes } from "./image-sizes";
 
 type Post = BlogSection["posts"][number];
 type Heading = "h2" | "h3";
@@ -32,7 +33,7 @@ export function Blog({ section, lang }: { section: BlogSection; lang: Lang }) {
   const heading: Heading = section.title ? "h3" : "h2";
   const label = section.title ?? undefined;
   const date = new Intl.DateTimeFormat(intlLocales[lang], { day: "2-digit", month: "2-digit", year: "numeric" });
-  const common = { heading, dark, date, more: t.readArticle };
+  const common = { heading, dark, date, more: t.readArticle, width: section.width };
   const [first, ...rest] = section.posts;
   const featured = section.layout === "featured" && rest.length > 0;
 
@@ -70,7 +71,8 @@ export function Blog({ section, lang }: { section: BlogSection; lang: Lang }) {
   );
 }
 
-type PostProps = { post: Post; heading: Heading; dark: boolean; date: Intl.DateTimeFormat; more: string };
+/** `width`: the section's frame, for the pictures' `sizes`. */
+type PostProps = { post: Post; heading: Heading; dark: boolean; date: Intl.DateTimeFormat; more: string; width: BlogSection["width"] };
 
 /** The link on the title, stretched over the whole entry: one link per post, named by its title. */
 function TitleLink({ post }: { post: Post }) {
@@ -97,10 +99,10 @@ const ENTRY = "group relative isolate rounded-card has-[a:focus-visible]:ring-2 
  * column with the 4:3 photo, the opening lines and "Read article" at the
  * foot, so entries of one row end level.
  */
-function GridPost({ post, heading: Title, dark, date, more }: PostProps) {
+function GridPost({ post, heading: Title, dark, date, more, width }: PostProps) {
   return (
     <article className={`${ENTRY} flex w-full items-center gap-4 sm:flex-col sm:items-stretch sm:gap-0`}>
-      <Thumb post={post} className="aspect-square w-24 shrink-0 sm:aspect-[4/3] sm:w-full" sizes="(min-width: 1024px) 25vw, (min-width: 640px) 50vw, 96px" />
+      <Thumb post={post} className="aspect-square w-24 shrink-0 sm:aspect-[4/3] sm:w-full" sizes={cardSizes(width, { desktop: 4, phone: "96px" })} />
       <div className="flex min-w-0 flex-1 flex-col gap-1.5 sm:mt-5 sm:gap-2">
         <PostDate post={post} date={date} className={dark ? "text-white" : "text-blue-dark/70"} />
         <Title className={`line-clamp-3 text-base leading-snug font-bold text-balance sm:text-lg ${dark ? "text-white" : "text-blue-dark"} group-hover:underline`}>
@@ -130,12 +132,12 @@ function ListPost({ post, heading: Title, dark, date, more }: PostProps) {
 }
 
 /** The `featured` layout's first post: the photo fills it (taller on desktops), the date and title on it under a navy fade, and the arrow. */
-function FeaturedPost({ post, heading: Title, date }: PostProps) {
+function FeaturedPost({ post, heading: Title, date, width }: PostProps) {
   return (
     <article className={`${ENTRY} flex aspect-[4/3] flex-col justify-end overflow-clip p-6 text-white sm:aspect-[16/9] sm:p-8 lg:aspect-auto lg:min-h-[28rem]`}>
       {post.image ? (
         <img
-          {...getImageProps({ src: post.image.url, alt: "", width: post.image.width ?? 1200, height: post.image.height ?? 800, sizes: "(min-width: 1024px) 55vw, 100vw", quality: 70 }).props}
+          {...getImageProps({ src: post.image.url, alt: "", width: post.image.width ?? 1200, height: post.image.height ?? 800, sizes: leadPostSizes(width), quality: 70 }).props}
           alt=""
           className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />

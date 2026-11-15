@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
     formats: ["image/avif", "image/webp"],
     // 60 for photos below the first screen (cards, tiles, media-text, blog), 75 elsewhere.
     qualities: [60, 75],
+    // File widths matched to the sections' `sizes` (components/sections/image-sizes.ts) on
+    // PageSpeed's devices, so each picture has a file a few % above what it shows:
+    // phone 412 px at 1.75× (content 92vw → 672, slide 78vw → 576, collage 44vw → 320,
+    // thumbnail 96px → 176, full photo → 750) and desktop 1350 px at 1× (4 columns → 304,
+    // 3 → 416, half → 608, collage → 528, card banner → 1280, full photo → 1350).
+    imageSizes: [32, 48, 64, 96, 128, 176, 192, 256, 304, 320, 384, 416, 528],
+    deviceSizes: [576, 608, 640, 672, 750, 828, 1080, 1280, 1350, 1920, 2048, 3840],
     remotePatterns: [
       // Car photos from the RentCarSoft offer gallery.
       new URL("https://mobicars.rentcarsoft.pl/grafiki/**"),

@@ -375,6 +375,15 @@ function CtaLink({ link, className }: { link: NavLink; className: string }) {
   );
 }
 
+/**
+ * `/pl/dokumenty/…` and `/en/documents/…` redirect to a PDF in the CMS (`app/[lang]/dokumenty/[slug]/route.ts`),
+ * so they are plain links: `<Link>` prefetched them, the prefetch followed the redirect to Strapi and the browser
+ * logged a CORS error on every page.
+ */
+function isDocumentHref(href: string): boolean {
+  return /^\/[a-z]{2}\/(dokumenty|documents)\//.test(href);
+}
+
 function FooterLinks({ links, className = "flex flex-col gap-2.5" }: { links: NavLink[]; className?: string }) {
   return (
     <ul className={className}>
@@ -382,6 +391,10 @@ function FooterLinks({ links, className = "flex flex-col gap-2.5" }: { links: Na
         <li key={`${link.href}-${link.label}`}>
           {link.newTab ? (
             <a href={link.href} target="_blank" rel="noopener noreferrer" className={footerLinkClass}>
+              {link.label}
+            </a>
+          ) : isDocumentHref(link.href) ? (
+            <a href={link.href} className={footerLinkClass}>
               {link.label}
             </a>
           ) : (

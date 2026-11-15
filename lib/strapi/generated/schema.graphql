@@ -404,6 +404,13 @@ type ComponentBlocksReviews {
   source: ENUM_COMPONENTBLOCKSREVIEWS_SOURCE
 }
 
+type ComponentBlocksRichText {
+  content: String!
+  id: ID!
+  settings: ComponentElementsSettings
+  title: String
+}
+
 type ComponentBlocksScenarios {
   header: ComponentElementsSectionHeader
   id: ID!
@@ -1085,6 +1092,7 @@ type ComponentSectionsSplit {
   features(filters: ComponentPartsFeatureItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsFeatureItem]
   id: ID!
   image: UploadFile
+  imageFit: ENUM_COMPONENTSECTIONSSPLIT_IMAGEFIT!
   imageSecond: UploadFile
   imageStyle: ENUM_COMPONENTSECTIONSSPLIT_IMAGESTYLE!
   media: ENUM_COMPONENTSECTIONSSPLIT_MEDIA!
@@ -2142,6 +2150,11 @@ enum ENUM_COMPONENTSECTIONSSPLIT_CONTENT {
   text
 }
 
+enum ENUM_COMPONENTSECTIONSSPLIT_IMAGEFIT {
+  contain
+  cover
+}
+
 enum ENUM_COMPONENTSECTIONSSPLIT_IMAGESTYLE {
   collage
   single
@@ -2395,7 +2408,7 @@ type FooterRelationResponseCollection {
   nodes: [Footer!]!
 }
 
-union GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | Review | ReviewSource | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
+union GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksRichText | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | Review | ReviewSource | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
 
 type Global {
   createdAt: DateTime

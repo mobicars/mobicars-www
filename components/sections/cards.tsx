@@ -3,11 +3,12 @@ import { getImageProps } from "next/image";
 
 import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
 import { buttonClass } from "@/components/ui/button";
-import { Carousel } from "@/components/ui/carousel";
 import { isDarkBackground, type Card, type CardsSection, type Media } from "@/lib/strapi";
 
 import { Pattern } from "./pattern";
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
+import { LazyCarousel as Carousel } from "./lazy";
+import { cardSizes } from "./image-sizes";
 
 type Heading = "h2" | "h3";
 
@@ -18,7 +19,21 @@ const GRID_LG: Record<number, string> = {
   3: "lg:basis-[calc((100%-3rem)/3)]",
   4: "lg:basis-[calc((100%-4.5rem)/4)]",
 };
-const gridLg = (count: number) => GRID_LG[count <= 4 ? count : count <= 6 ? 3 : 4];
+const gridCols = (count: number) => (count <= 4 ? count : count <= 6 ? 3 : 4);
+const gridLg = (count: number) => GRID_LG[gridCols(count)];
+
+/**
+ * `sizes` of the card at `index` in the grid, by its row: the cards of a short
+ * last row grow to fill it (five in rows of three: the last two are halves), and
+ * on tablets an odd last card takes the whole width.
+ */
+function gridCardSizes(index: number, count: number, width: CardsSection["width"]): string {
+  const cols = gridCols(count);
+  const lastRow = count % cols || cols;
+  const perRow = index >= count - lastRow ? lastRow : cols;
+  const tabletFull = count === 1 || (count % 2 === 1 && index === count - 1);
+  return cardSizes(width, { desktop: perRow, tablet: tabletFull ? 1 : 2 });
+}
 
 /** Desktop slide widths in the carousel: three or four in view. */
 const SLIDE_LG = { 3: "lg:w-[calc((100%-3rem)/3)]", 4: "lg:w-[calc((100%-4.5rem)/4)]" };
@@ -49,10 +64,6 @@ export function Cards({ section }: { section: CardsSection }) {
   const heading: Heading = section.title ? "h3" : "h2";
   const label = section.title ?? section.cards.map((card) => card.title).join(", ");
   const lgWidth = carousel ? SLIDE_LG[section.visibleCards] : gridLg(count);
-  const sizes =
-    count === 1 && !carousel
-      ? "100vw"
-      : `(min-width: 1024px) ${carousel ? Math.round(100 / section.visibleCards) : Math.round(100 / Math.min(4, count <= 4 ? count : count <= 6 ? 3 : 4))}vw, (min-width: 640px) 50vw, 90vw`;
 
   const items = section.cards.map((card, index) => (
     <li
@@ -63,7 +74,7 @@ export function Cards({ section }: { section: CardsSection }) {
           : `flex grow basis-full sm:basis-[calc((100%-1.5rem)/2)] ${lgWidth}`
       }
     >
-      <CardItem card={card} heading={heading} sizes={sizes} banner={count === 1 && !carousel} />
+      <CardItem card={card} heading={heading} sizes={carousel ? cardSizes(section.width, { desktop: section.visibleCards, slide: true }) : gridCardSizes(index, count, section.width)} banner={count === 1 && !carousel} />
     </li>
   ));
 
