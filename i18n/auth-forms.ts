@@ -68,6 +68,22 @@ export type AuthFormsCopy = {
     pendingNotice: string;
     finish: string;
   };
+  /** Company fields and "Pobierz dane" from the VAT register (registration and booking). */
+  company: {
+    street: string;
+    postalCode: string;
+    city: string;
+    fetch: string;
+    fetchLabel: string;
+    fetching: string;
+    hint: string;
+    badTaxId: string;
+    filled: string;
+    notFound: string;
+    invalid: string;
+    limit: string;
+    error: string;
+  };
   register: {
     title: string;
     intro: string;

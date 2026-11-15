@@ -358,11 +358,11 @@ export function MobileSummaryBar({
       aria-busy={loading}
       // `globals.css` keeps room for this bar at the end of the page, so it never covers the footer.
       data-mobile-summary-bar
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-muted bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(8,48,82,0.08)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-muted bg-white/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(8,48,82,0.08)] backdrop-blur lg:hidden"
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate text-xxs text-muted-dark">{fill(t.carOrSimilar, { name: car.name })}</p>
+          <p className="line-clamp-2 text-xxs leading-tight break-words text-muted-dark">{fill(t.carOrSimilar, { name: car.name })}</p>
           <p className="flex h-6 items-center text-base font-bold text-blue-dark">
             {prices?.failed ? (
               <span className="text-xs font-semibold text-red-700">{t.noPrice}</span>

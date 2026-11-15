@@ -44,7 +44,7 @@ import {
 import { createSession, readSession } from "./session";
 
 /** Client key ids used by the account forms. */
-const KEY = { firstName: 1, lastName: 2, phone: 4, email: 5, vatNumber: 7, companyName: 9 } as const;
+const KEY = { firstName: 1, lastName: 2, phone: 4, email: 5, vatNumber: 7, companyName: 9, companyAddress: 11, companyCity: 13, companyPostalCode: 14 } as const;
 
 function logFailure(label: string, error: unknown) {
   console.error(label, error instanceof RentCarSoftError ? error.code : error);
@@ -304,6 +304,9 @@ export async function register(
     phone: formText(formData, "phone", 32),
     companyName: isCompany ? formText(formData, "companyName") : "",
     vatNumber: isCompany ? formText(formData, "vatNumber", 32) : "",
+    companyAddress: isCompany ? formText(formData, "companyAddress") : "",
+    companyPostalCode: isCompany ? formText(formData, "companyPostalCode", 16) : "",
+    companyCity: isCompany ? formText(formData, "companyCity", 100) : "",
   };
   const fail = (error: NonNullable<RegisterState>["error"], fields: RegisterField[] = []) => ({
     error,
@@ -359,6 +362,10 @@ export async function register(
     if (isCompany) {
       keyValues[KEY.companyName] = values.companyName;
       keyValues[KEY.vatNumber] = values.vatNumber;
+      // Optional, usually filled from the VAT register ("Pobierz dane").
+      if (values.companyAddress) keyValues[KEY.companyAddress] = values.companyAddress;
+      if (values.companyPostalCode) keyValues[KEY.companyPostalCode] = values.companyPostalCode;
+      if (values.companyCity) keyValues[KEY.companyCity] = values.companyCity;
     }
     ({ clientId } = await createClient({ isCompany, password, keys: keyValues }));
   } catch (error) {

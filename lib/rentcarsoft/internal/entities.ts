@@ -1,6 +1,7 @@
 import { RentCarSoftError } from "./errors";
 import {
   ACTIVE_SERVICE_POINT_STATUS_VALUE,
+  RCS_LANGUAGE_IDS,
   OFFICE_YES_VALUE,
   OFFER_KEY_LABELS,
   POPULAR_OFFER_VALUE,
@@ -293,21 +294,61 @@ function parseGallery(value: unknown): OfferImage[] {
   });
 }
 
+export type ServicePointLang = keyof typeof RCS_LANGUAGE_IDS;
+
+/** "… - od 79 zł" at the end of a point's address. */
+const ADDRESS_FEE = /(?:^|\s*-\s*)(od\s+)?(\d+(?:[.,]\d+)?)\s*zł\s*$/i;
+/** What address points (`customAddresses`) hold instead of an address. */
+const ADDRESS_PLACEHOLDER = /^wpisz adres$/i;
+
+/**
+ * RentCarSoft keeps directions and the fee in one Polish text in every
+ * language: "Parking P2 - wjazd obok Renaissance Hotel - od 79 zł",
+ * "od 49 zł", "Wpisz adres - 60 zł". Split into the directions and the fee.
+ */
+export function splitAddress(address: string | null): Pick<ServicePoint, "addressNote" | "fee"> {
+  if (!address) {
+    return { addressNote: null, fee: null };
+  }
+  const match = ADDRESS_FEE.exec(address);
+  const rest = (match ? address.slice(0, match.index) : address).replace(/[\s-]+$/, "").trim();
+  return {
+    addressNote: rest && !ADDRESS_PLACEHOLDER.test(rest) ? rest : null,
+    fee: match ? { amount: Number(match[2].replace(",", ".")), from: Boolean(match[1]) } : null,
+  };
+}
+
 export type ServicePoint = {
   id: number;
   name: string;
+  /** The name in each site language RentCarSoft has it in (`names`), e.g. `{ pl, en, de, uk }`. */
+  names: Partial<Record<ServicePointLang, string>>;
   active: boolean;
   instruction: string | null;
+  /** From `latitude`, else custom field 18 (where RentCarSoft keeps it for most points). */
   latitude: number | null;
+  /** From `longitude`, else custom field 19. */
   longitude: number | null;
+  /** Custom field 5. */
+  phone: string | null;
+  /** Custom field 6. */
+  email: string | null;
   departmentId: number | null;
   airport: boolean;
   /** Custom field 22. True when the live dictionary says "Tak" (value 13). */
   office: boolean;
   /** Custom field 21. True when the live dictionary says "Tak" (value 9). */
   trainStation: boolean;
+  /** Custom field 3, the town, in Polish in every language ("Warszawa"). */
   city: string | null;
+  /** The town in the list's language ("Warsaw"), from the points' names (`localizeCities`); else `city`. */
+  cityName: string | null;
+  /** Custom field 2 as RentCarSoft has it, in Polish: directions and the fee, e.g. "Parking P2 - od 79 zł". */
   address: string | null;
+  /** `address` without the fee and without the "Wpisz adres" placeholder of address points. */
+  addressNote: string | null;
+  /** The pickup or delivery fee at the end of `address` ("od 79 zł" → `{ amount: 79, from: true }`). */
+  fee: { amount: number; from: boolean } | null;
   minDays: number | null;
   maxDays: number | null;
   /** Point allows a customer pickup or return address. */
@@ -341,22 +382,156 @@ export function parseServicePoint(
   return {
     id: requireId(record.id),
     name: asString(record.name) ?? attributes.name?.value ?? "",
+    names: parseNames(record.names),
     active,
-    instruction: asString(record.customerInstruction),
-    latitude: asNumber(record.latitude),
-    longitude: asNumber(record.longitude),
+    instruction: asString(record.customerInstruction) ?? textAttribute(attributes.instructions),
+    latitude: asNumber(record.latitude) ?? coordinate(attributes.latitude),
+    longitude: asNumber(record.longitude) ?? coordinate(attributes.longitude),
+    phone: textAttribute(attributes.phone),
+    email: textAttribute(attributes.email),
     departmentId: asId(record.department),
     airport: asBoolean(record.isAirport) ?? false,
     office: isAffirmative(attributes.isOffice, OFFICE_YES_VALUE),
     trainStation: isAffirmative(attributes.isTrainStation, TRAIN_STATION_YES_VALUE),
     city: textAttribute(attributes.city),
+    cityName: textAttribute(attributes.city),
     address: textAttribute(attributes.address),
-    minDays: asId(record.minDays),
-    maxDays: asId(record.maxDays),
+    ...splitAddress(textAttribute(attributes.address)),
+    minDays: asId(record.minDays) ?? asId(textAttribute(attributes.minTime)),
+    maxDays: asId(record.maxDays) ?? asId(textAttribute(attributes.maxTime)),
     customAddresses: asBoolean(record.customAddresses) ?? false,
     addressRequired: asBoolean(record.addressRequired) ?? false,
     attributes,
   };
+}
+
+export type RcsSegment = {
+  /** `segmentId`: what the CMS stores (names change, the id is the price list's key). */
+  id: number;
+  /** Name per site language; a language whose list lacks the segment falls back to Polish. */
+  names: Record<ServicePointLang, string>;
+  /** Cars of the segment on the by-the-day list. */
+  cars: number;
+  /** Offered by the day (`short`) and/or by the month (`long`). */
+  terms: ("short" | "long")[];
+};
+
+/**
+ * Segments from offer lists: by-the-day lists per language, the monthly list
+ * in any language. A segment with no cars on either list is left out; Polish
+ * name order, as the CMS shows it.
+ */
+export function collectSegments(
+  byDay: Partial<Record<ServicePointLang, readonly Offer[]>>,
+  byMonth: readonly Offer[],
+): RcsSegment[] {
+  const segments = new Map<number, RcsSegment>();
+  const entry = (offer: Offer): RcsSegment | null => {
+    const id = Number(offer.segmentId);
+    if (!offer.segmentId || !Number.isInteger(id)) {
+      return null;
+    }
+    let segment = segments.get(id);
+    if (!segment) {
+      segment = { id, names: { pl: "", en: "", de: "", uk: "" }, cars: 0, terms: [] };
+      segments.set(id, segment);
+    }
+    return segment;
+  };
+  for (const [lang, offers] of Object.entries(byDay) as [ServicePointLang, readonly Offer[]][]) {
+    for (const offer of offers) {
+      const segment = entry(offer);
+      if (!segment) continue;
+      segment.names[lang] ||= offer.segmentName.trim();
+      if (lang === "pl") segment.cars += 1;
+      if (!segment.terms.includes("short")) segment.terms.push("short");
+    }
+  }
+  for (const offer of byMonth) {
+    const segment = entry(offer);
+    if (!segment) continue;
+    segment.names.pl ||= offer.segmentName.trim();
+    if (!segment.terms.includes("long")) segment.terms.push("long");
+  }
+  const list = [...segments.values()];
+  for (const segment of list) {
+    for (const lang of Object.keys(segment.names) as ServicePointLang[]) {
+      segment.names[lang] ||= segment.names.pl;
+    }
+  }
+  return list.toSorted((left, right) => left.names.pl.localeCompare(right.names.pl, "pl"));
+}
+
+/**
+ * RentCarSoft has the town only in Polish, but most translated names start
+ * with it: "Warsaw – Chopin Airport", "Варшава – офіс". Each town's
+ * `cityName` is the most common such prefix among its points' names in
+ * `lang`; Polish, or a town whose names have no prefix, keeps `city`.
+ */
+export function localizeCities<T extends Pick<ServicePoint, "city" | "cityName" | "name">>(points: readonly T[], lang: string): T[] {
+  if (lang === "pl") {
+    return [...points];
+  }
+  const prefixes = new Map<string, Map<string, number>>();
+  for (const point of points) {
+    const prefix = /^(.+?)\s+[–-]\s+/.exec(point.name)?.[1]?.trim();
+    if (point.city && prefix) {
+      const counts = prefixes.get(point.city) ?? new Map<string, number>();
+      counts.set(prefix, (counts.get(prefix) ?? 0) + 1);
+      prefixes.set(point.city, counts);
+    }
+  }
+  const names = new Map(
+    [...prefixes].map(([city, counts]) => [city, [...counts].toSorted((a, b) => b[1] - a[1])[0][0]] as const),
+  );
+  return points.map((point) => (point.city && names.has(point.city) ? { ...point, cityName: names.get(point.city)! } : point));
+}
+
+export type LocationStats = {
+  /** Active fixed points (not "own address" delivery points). */
+  points: number;
+  /** Distinct towns of those points (custom field 3; RentCarSoft files a few points under a nearby town). */
+  cities: number;
+  /** Of those points, the airports. */
+  airports: number;
+};
+
+/** Counts for copy such as "32 punkty odbioru w 10 miastach, w tym 8 lotnisk". */
+export function countLocations(points: readonly ServicePoint[]): LocationStats {
+  const fixed = points.filter((point) => point.active && !point.customAddresses);
+  const cities = new Set(
+    fixed.flatMap((point) => (point.city ? [point.city.trim().toLocaleLowerCase("pl")] : [])),
+  );
+  return {
+    points: fixed.length,
+    cities: cities.size,
+    airports: fixed.filter((point) => point.airport).length,
+  };
+}
+
+/** `names` keyed by RentCarSoft language id → by site language; blanks left out. */
+function parseNames(value: unknown): Partial<Record<ServicePointLang, string>> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return {};
+  }
+  const raw = value as Record<string, unknown>;
+  const names: Partial<Record<ServicePointLang, string>> = {};
+  for (const [lang, id] of Object.entries(RCS_LANGUAGE_IDS) as [ServicePointLang, string][]) {
+    const name = asString(raw[id])?.trim();
+    if (name) {
+      names[lang] = name;
+    }
+  }
+  return names;
+}
+
+/** A coordinate from a text field: "52.2297", also with a comma; anything else is null. */
+function coordinate(attribute: FieldAttribute | undefined): number | null {
+  const text = textAttribute(attribute)?.replace(",", ".");
+  if (!text || !/^-?\d+(\.\d+)?$/.test(text)) {
+    return null;
+  }
+  return Number(text);
 }
 
 function rawStatus(keys: unknown): string | null {

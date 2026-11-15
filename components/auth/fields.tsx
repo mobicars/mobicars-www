@@ -4,8 +4,10 @@ import { Eye, EyeOff } from "lucide-react";
 import { useState, type InputHTMLAttributes, type ReactNode } from "react";
 import { Button, FieldError, Input, Label, Text, TextField as AriaTextField } from "react-aria-components";
 
+import { buttonClass } from "@/components/ui/button";
+
 const inputClass =
-  "h-12 w-full rounded-lg border bg-white px-4 font-normal text-ink outline-none transition-colors focus:border-blue-medium focus:ring-2 focus:ring-blue-light aria-invalid:border-red-500";
+  "h-12 w-full rounded-lg border bg-white px-4 text-base font-normal text-ink outline-none transition-colors focus:border-blue-medium focus:ring-2 focus:ring-blue-light aria-invalid:border-red-500";
 
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
@@ -108,11 +110,7 @@ export function FormAlert({ tone, children }: { tone: "error" | "success"; child
 
 export function SubmitButton({ pending, label, pendingLabel }: { pending: boolean; label: string; pendingLabel: string }) {
   return (
-    <button
-      type="submit"
-      disabled={pending}
-      className="mt-2 h-12 rounded-lg bg-green-medium px-6 text-sm font-semibold text-white transition-colors hover:bg-green-dark disabled:opacity-60"
-    >
+    <button type="submit" disabled={pending} className={buttonClass("success", "md", "mt-2 px-6")}>
       {pending ? pendingLabel : label}
     </button>
   );

@@ -16,16 +16,19 @@ export const reservationConfig = {
   slotMinutes: 30,
   /**
    * When true, the bar opens with a pickup date and time already filled in.
-   * The time is the earliest generated slot after `pickupLeadMinutes`.
+   * The pickup is `defaultPickup` (tomorrow at 10:00), or the earliest slot
+   * after `pickupLeadMinutes` if that were ever later.
    * When false, the pickup field stays empty.
    */
   prefillDates: true,
+  /** The prefilled pickup: this many days ahead, at this time (the client's choice: tomorrow 10:00). */
+  defaultPickup: { daysAhead: 1, hour: 10, minute: 0 },
   /**
    * Default rental length in days, added to the pickup date.
    * Daily rental only. Monthly rental has no return date; it still uses the same pickup start.
    * The return time stays on the same generated slot as pickup.
    */
-  defaultRentalDays: 2,
+  defaultRentalDays: 3,
   /** How many months the short-term calendar shows at once. */
   shortTermCalendarMonths: {
     mobile: 5,

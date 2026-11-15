@@ -3,10 +3,11 @@
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Banknote, Car, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
+import { ArrowLeft, Banknote, Car, MailCheck, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
 import { FieldError, Label, TextArea, TextField as AriaTextField } from "react-aria-components";
 import { toast } from "sonner";
 
+import { CompanyFields } from "@/components/auth/company-fields";
 import { PasswordField, TextField } from "@/components/auth/fields";
 import { PhoneField } from "@/components/auth/phone-field";
 import { AccountBox } from "@/components/reservation/account-box";
@@ -42,6 +43,7 @@ import {
   type CustomerField,
   type CustomerType,
 } from "@/lib/reservation/customer";
+import { termOfSearchQuery, useBookingStep } from "@/lib/reservation/analytics";
 import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
 import type { ProtectionOption } from "@/lib/reservation/protection";
@@ -107,6 +109,7 @@ export function CustomerStep({
 }) {
   const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
+  useBookingStep("details", termOfSearchQuery(serverSearchQuery));
   const messages = useMessages();
   const t = messages.details;
   const fieldError = (code: CustomerError) => fill(t.errors[code], { count: MIN_PASSWORD_LENGTH });
@@ -197,7 +200,7 @@ export function CustomerStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="@container flex min-w-0 flex-col gap-6">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 className="text-2xl font-semibold text-blue-dark">{t.reviewTitle}</h2>
+          <h2 tabIndex={-1} data-step-heading className="text-2xl font-semibold text-blue-dark outline-none">{t.reviewTitle}</h2>
           <button
             type="button"
             onClick={() => goTo("extras")}
@@ -288,6 +291,7 @@ export function CustomerStep({
             <div className="grid gap-4 @xl:grid-cols-2">
               <TextField
                 label={`${t.firstName} *`}
+                required
                 name="firstName"
                 autoComplete="given-name"
                 maxLength={100}
@@ -298,6 +302,7 @@ export function CustomerStep({
               />
               <TextField
                 label={`${t.lastName} *`}
+                required
                 name="lastName"
                 autoComplete="family-name"
                 maxLength={100}
@@ -308,42 +313,43 @@ export function CustomerStep({
               />
             </div>
           ) : (
-            <div className="grid gap-4 @xl:grid-cols-2">
-              <TextField
-                label={`${t.companyName} *`}
-                name="companyName"
-                autoComplete="organization"
-                maxLength={200}
-                defaultValue={account?.companyName}
-                disabled={signedIn}
-                invalid={!!errors.companyName}
-                hint={error("companyName")}
-              />
-              <TextField
-                label={`${t.vatNumber} *`}
-                name="vatNumber"
-                inputMode="numeric"
-                maxLength={32}
-                defaultValue={account?.vatNumber}
-                disabled={signedIn}
-                invalid={!!errors.vatNumber}
-                hint={error("vatNumber")}
-              />
+            <CompanyFields
+              labels={{ companyName: `${t.companyName} *`, vatNumber: `${t.vatNumber} *` }}
+              defaults={{ companyName: account?.companyName, vatNumber: account?.vatNumber }}
+              invalid={{
+                companyName: !!errors.companyName,
+                vatNumber: !!errors.vatNumber,
+                companyAddress: !!errors.companyAddress,
+                companyPostalCode: !!errors.companyPostalCode,
+                companyCity: !!errors.companyCity,
+              }}
+              hints={{
+                companyName: error("companyName"),
+                vatNumber: errors.vatNumber ? error("vatNumber") : undefined,
+                companyAddress: error("companyAddress"),
+                companyPostalCode: error("companyPostalCode"),
+                companyCity: error("companyCity"),
+              }}
+              locked={signedIn}
+              gridClass="grid gap-4 @xl:grid-cols-2"
+            >
               <TextField
                 label={`${t.contactPerson} *`}
+                required
                 name="contactPerson"
                 autoComplete="name"
                 maxLength={200}
-                className="@xl:col-span-2"
+                className="col-span-full"
                 invalid={!!errors.contactPerson}
                 hint={error("contactPerson", t.contactPersonHint)}
               />
-            </div>
+            </CompanyFields>
           )}
 
           <div className="grid gap-4 @xl:grid-cols-2">
             <TextField
               label={`${t.email} *`}
+              required
               name="email"
               type="email"
               autoComplete="email"
@@ -361,8 +367,13 @@ export function CustomerStep({
                 defaultValue={account?.phone || undefined}
                 required
                 invalid={!!errors.phone}
+                errorId={errors.phone ? "phone-error" : undefined}
               />
-              {errors.phone ? <span className="text-xs text-red-700">{fieldError(errors.phone)}</span> : null}
+              {errors.phone ? (
+                <span id="phone-error" className="text-xs text-red-700">
+                  {fieldError(errors.phone)}
+                </span>
+              ) : null}
             </div>
           </div>
 
@@ -371,6 +382,7 @@ export function CustomerStep({
               <div className="grid gap-4 @xl:grid-cols-2">
                 <PasswordField
                   label={`${t.password} *`}
+                  required
                   name="password"
                   autoComplete="new-password"
                   minLength={MIN_PASSWORD_LENGTH}
@@ -382,6 +394,7 @@ export function CustomerStep({
                 />
                 <PasswordField
                   label={`${t.confirm} *`}
+                  required
                   name="confirm"
                   autoComplete="new-password"
                   maxLength={MAX_PASSWORD_LENGTH}
@@ -413,6 +426,7 @@ export function CustomerStep({
               {invoice ? (
                 <TextField
                   label={`${t.vatNumber} *`}
+                  required
                   name="vatNumber"
                   inputMode="numeric"
                   maxLength={32}
@@ -490,7 +504,9 @@ export function CustomerStep({
                   name={`consent-${name}`}
                   checked={consents[name]}
                   onChange={(event) => setConsents((current) => ({ ...current, [name]: event.target.checked }))}
+                  required={needed}
                   aria-invalid={errors.consents && needed && !consents[name] ? true : undefined}
+                  aria-describedby={errors.consents && needed && !consents[name] ? "consents-error" : undefined}
                   className="mt-0.5 size-4 shrink-0 accent-green-medium"
                 />
                 <span>
@@ -500,13 +516,22 @@ export function CustomerStep({
                 </span>
               </label>
             ))}
-            {errors.consents ? <p className="text-sm text-red-700">{fieldError("consents")}</p> : null}
+            {errors.consents ? (
+              <p id="consents-error" className="text-sm text-red-700">
+                {fieldError("consents")}
+              </p>
+            ) : null}
           </fieldset>
 
           <div className="flex flex-col gap-3 border-t border-muted-light pt-5">
+            {/* Moved here from above the car list (client feedback): what happens after sending, as a benefit. */}
+            <p className="flex items-start gap-2 text-xs text-muted-dark">
+              <MailCheck className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
+              {t.afterSubmit.confirm}
+            </p>
             <p className="flex items-start gap-2 text-xs text-muted-dark">
               <Wallet className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-              {messages.confirmation.text2} {messages.confirmation.text3}
+              {t.afterSubmit.payment}
             </p>
             {state ? (
               <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -525,7 +550,7 @@ export function CustomerStep({
             <button
               type="submit"
               disabled={!ready || pending}
-              className="hidden h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-green-medium px-5 text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-green-dark disabled:cursor-default disabled:bg-muted disabled:text-muted-dark motion-reduce:transition-none lg:flex @xl:ml-auto @xl:w-72"
+              className="hidden h-14 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-go-strong px-5 text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-green-dark disabled:cursor-default disabled:bg-muted disabled:text-muted-dark motion-reduce:transition-none lg:flex @xl:ml-auto @xl:w-72"
             >
               {action.label}
               {ready && quote.quote ? <span className="font-semibold">· {formatMoney(lang, quote.quote.total)}</span> : null}

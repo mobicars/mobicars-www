@@ -1,0 +1,114 @@
+import { connection } from "next/server";
+
+import { CtaLink } from "@/components/blocks/cta-link";
+import { FleetBrowser } from "@/components/fleet/fleet-browser";
+import { FleetCard } from "@/components/fleet/fleet-card";
+import { Carousel } from "@/components/ui/carousel";
+import type { Lang } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
+import { cacheEnabled } from "@/lib/cache";
+import { listFleetCarIdsAt, listFleetCars, type FleetCard as FleetCardData } from "@/lib/fleet/cars";
+import { selectSectionCars } from "@/lib/fleet/cars-block";
+import { isDarkBackground, type CarsSection } from "@/lib/strapi";
+
+import { CardItem } from "./cards";
+import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
+
+/** Cars per "Show more" step in the full list. */
+const STEP = 12;
+
+const GRID = "grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4";
+/** Carousel slides: one (85%) on phones, two on tablets, three on desktops. */
+const SLIDE = "flex w-[85%] shrink-0 snap-center sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-3rem)/3)]";
+
+/**
+ * Cars (`sections.cars`): RentCarSoft's cars on the fleet page's cards
+ * (`FleetCard`, unchanged), chosen in the CMS (`selectSectionCars`): the
+ * fleet, a category, classes or picked cars. With the page's pickup point only
+ * the cars offered there. The prices and the "Choose" link are the fleet's.
+ *
+ * `full`: the fleet page's list (`FleetBrowser`: its filters and sorting) of
+ * every car, 12 at a time with "Show more";
+ * `grid`: up to `limit` cards; `carousel`: our shared carousel. Grid and
+ * carousel end with the optional last card, the Cards section's card (`parts.card`). When RentCarSoft is
+ * down, or nothing matches, the section is left out and the page stays up.
+ */
+export async function Cars({ section, lang, pickupId }: { section: CarsSection; lang: Lang; pickupId: number | null }) {
+  const cars = await readCars(section, lang, pickupId);
+  if (!cars || cars.length === 0) {
+    return null;
+  }
+  const t = getMessages(lang);
+  const headingId = `cars-${section.id}`;
+  const heading = section.title ? "h3" : "h2";
+  const label = section.title ?? t.fleet.title;
+  const card = (car: FleetCardData, sizes?: string) => <FleetCard car={car} lang={lang} t={t.fleet} headingLevel={heading} sizes={sizes} />;
+  // The Cards section's card, as tall as the car cards beside it.
+  const more = section.moreCard ? <CardItem card={section.moreCard} heading={heading} sizes="(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 80vw" banner={false} /> : null;
+
+  let list;
+  if (section.layout === "full") {
+    // The fleet page's list: its filters (in the URL, run in the browser) over the section's cars, 12 at a time.
+    list = <FleetBrowser cars={cars} lang={lang} t={t.fleet} more={{ step: STEP, labels: { more: t.blocks.showMore, shownOf: t.blocks.shownOf } }} />;
+  } else if (section.layout === "carousel") {
+    list = (
+      <Carousel
+        label={label}
+        count={cars.length + (more ? 1 : 0)}
+        tone={isDarkBackground(section.background) ? "dark" : "light"}
+        align="center"
+        spotlight
+        bleed
+        className="snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        <ul className="flex gap-6 pb-2">
+          {cars.map((car) => (
+            <li key={car.id} className={SLIDE}>
+              {card(car, "(min-width: 1024px) 30vw, (min-width: 640px) 45vw, 80vw")}
+            </li>
+          ))}
+          {more ? <li className={SLIDE}>{more}</li> : null}
+        </ul>
+      </Carousel>
+    );
+  } else {
+    list = (
+      <ul className={GRID}>
+        {cars.map((car) => (
+          <li key={car.id}>{card(car)}</li>
+        ))}
+        {more ? <li className="flex">{more}</li> : null}
+      </ul>
+    );
+  }
+
+  return (
+    <SectionShell background={section.background} spacing={section.spacing} width={section.width} labelledBy={section.title ? headingId : undefined}>
+      <SectionHeading id={headingId} badge={section.badge} title={section.title} text={section.text} align={section.headerAlign} background={section.background} />
+      {list}
+      {section.ctas.length > 0 ? (
+        <div className={`mt-10 flex flex-col gap-3 sm:flex-row ${section.headerAlign === "center" ? "sm:justify-center" : ""}`}>
+          {section.ctas.map((cta) => (
+            <CtaLink key={`${cta.href}-${cta.label}`} cta={cta} size={SECTION_CTA_SIZE} />
+          ))}
+        </div>
+      ) : null}
+    </SectionShell>
+  );
+}
+
+/** The section's cars from the cached fleet list, or `null` when RentCarSoft is down (logged; the section is left out). */
+async function readCars(section: CarsSection, lang: Lang, pickupId: number | null): Promise<FleetCardData[] | null> {
+  // Without the cache the prices use the clock (`Date.now()`): read per request, not in a prerender.
+  if (!cacheEnabled()) {
+    await connection();
+  }
+  const [fleet, atPoint] = await Promise.all([listFleetCars(lang), pickupId ? listFleetCarIdsAt(pickupId) : null]).catch((error: unknown) => {
+    console.error(`[sections.cars ${section.id}] RentCarSoft unavailable, the section is left out`, error);
+    return [null, null] as const;
+  });
+  if (!fleet) {
+    return null;
+  }
+  return selectSectionCars(section, atPoint ? fleet.filter((car) => atPoint.has(car.id)) : fleet);
+}

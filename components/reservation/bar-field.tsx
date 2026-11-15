@@ -45,7 +45,7 @@ export function BarField({
         aria-hidden
       />
       <span className="min-w-0">
-        <span className="block truncate text-xxs text-blue-dark/55 group-data-invalid:text-red-700">
+        <span className="block truncate text-xs text-blue-dark/75 group-data-invalid:text-red-700">
           {label}
         </span>
         <span className="block truncate text-xs font-bold text-blue-dark">{value}</span>

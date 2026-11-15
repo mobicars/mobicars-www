@@ -17,6 +17,8 @@ const EXIT_MS = 200;
 const triggerClass = {
   header:
     "flex h-10 cursor-pointer items-center gap-2 rounded-full px-3 text-xs font-bold text-blue-dark uppercase outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none",
+  menu:
+    "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-control px-3 py-2 text-left text-base font-bold text-blue-dark outline-none hover:bg-blue-dark/[0.04] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium",
   footer:
     "flex cursor-pointer items-center gap-2 rounded-full py-1 text-sm font-bold text-white/85 outline-none underline-offset-4 hover:text-white hover:underline data-focus-visible:ring-2 data-focus-visible:ring-white",
 };
@@ -25,9 +27,11 @@ const triggerClass = {
  * Language button and its dialog: the languages one under another, each with its
  * own name and, below, its name in the page's language. Languages come from
  * `i18n/config`; flags from `public/assets/flags/{lang}.svg`. Picking one
- * opens the same page in that language (`switchLangHref`), search included.
+ * opens the same page in that language, search included: from the page's
+ * hreflang links when it has them (CMS pages and the fleet, whose slugs differ
+ * per language), otherwise by translating the path (`switchLangHref`).
  */
-export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; variant?: "header" | "footer" }) {
+export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; variant?: "header" | "menu" | "footer" }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const titleId = useId();
@@ -41,7 +45,7 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
     }
     // Read at the click, not with `usePathname`: that hook would make every page
     // with an unknown param (e.g. a reservation id) fail to prerender.
-    const href = switchLangHref(window.location.pathname, window.location.search, target);
+    const href = alternateHref(target, window.location.search) ?? switchLangHref(window.location.pathname, window.location.search, target);
     // After the closing animation: Next keeps the left page hidden for the back
     // button, and a dialog hidden mid-exit came back as an invisible overlay.
     window.setTimeout(() => router.push(href), EXIT_MS);
@@ -49,15 +53,18 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
 
   return (
     <>
-      <Button
-        aria-label={fill(t.languageCurrent, { label: current.label })}
-        onPress={() => setOpen(true)}
-        className={triggerClass[variant]}
-      >
-        {variant === "header" ? <Globe className="size-4" aria-hidden /> : null}
+      {/* Named by its own (hidden) text, not `aria-label`, holding what it shows ("PL" in the header) so the name and the
+          visible text agree and voice control ("click PL") finds it. */}
+      <Button onPress={() => setOpen(true)} className={triggerClass[variant]}>
+        {variant === "header" ? <Globe className="size-4 shrink-0" aria-hidden /> : null}
+        {variant === "menu" ? <Globe className="size-5 shrink-0 text-blue-medium" aria-hidden /> : null}
         {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG flag */}
         <img src={`/assets/flags/${current.lang}.svg`} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover" />
-        {variant === "header" ? current.lang : current.label}
+        <span aria-hidden>{variant === "header" ? current.lang : current.label}</span>
+        <span className="sr-only">
+          {fill(t.languageCurrent, { label: current.label })}
+          {variant === "header" ? ` (${current.lang.toUpperCase()})` : null}
+        </span>
       </Button>
       <WidgetModal open={open} onOpenChange={setOpen} className="w-[min(26rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl">
         <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
@@ -72,7 +79,7 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
                     aria-current={selected ? "true" : undefined}
                     lang={item.lang}
                     className={`relative flex w-full cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
-                      selected ? "border-green-medium bg-green-medium text-white" : "border-muted hover:border-blue-dark/30 hover:bg-blue-light/60"
+                      selected ? "border-go-strong bg-go-strong text-white" : "border-muted hover:border-blue-dark/30 hover:bg-blue-light/60"
                     }`}
                   >
                     {/* The booking steps' "Wybrany" state: green, a check before the rest. */}
@@ -98,4 +105,31 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
       </WidgetModal>
     </>
   );
+}
+
+/**
+ * The page in `target` from its `<link rel="alternate" hreflang>` tags, or `null`
+ * when the page has none (the booking and the account translate their paths).
+ * A page without a `target` version opens its English text at the English path
+ * under `target` (served as the EN fallback, like `/de/for-business`), and a page
+ * English lacks too opens the home page of `target` instead of a 404.
+ */
+function alternateHref(target: Lang, search: string): string | null {
+  const links = [...document.querySelectorAll<HTMLLinkElement>('link[rel="alternate"][hreflang]')];
+  if (links.length === 0) {
+    return null;
+  }
+  const pathOf = (hreflang: string) => {
+    const link = links.find((item) => item.hreflang === hreflang);
+    return link ? new URL(link.href).pathname : null;
+  };
+  const own = pathOf(target);
+  if (own) {
+    return `${own}${search}`;
+  }
+  const english = pathOf("en");
+  if (english) {
+    return `/${target}${english.replace(/^\/en(?=\/|$)/, "")}${search}`;
+  }
+  return `/${target}`;
 }

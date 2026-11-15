@@ -9,11 +9,12 @@
     "codegen:watch": "graphql-codegen --watch",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts i18n/routes.test.ts lib/fleet/fleet.test.ts lib/account/phone.test.ts lib/reservation/search.test.ts lib/reservation/protection.test.ts lib/reservation/quote.test.ts lib/reservation/extras.test.ts lib/reservation/upsell.test.ts lib/reservation/customer.test.ts lib/reservation/calendar.test.ts lib/reservation/monthly-hint.test.ts lib/reservation/extend.test.ts lib/reservation/text.test.ts lib/strapi/strapi.test.ts lib/revalidate.test.ts"
+    "test": "node --conditions=react-server --import tsx --test lib/rentcarsoft/rentcarsoft.test.ts i18n/routes.test.ts i18n/client-messages.test.ts lib/fleet/fleet.test.ts lib/account/phone.test.ts lib/reservation/search.test.ts lib/reservation/protection.test.ts lib/reservation/quote.test.ts lib/reservation/extras.test.ts lib/reservation/upsell.test.ts lib/reservation/customer.test.ts lib/reservation/calendar.test.ts lib/reservation/monthly-hint.test.ts lib/reservation/extend.test.ts lib/reservation/text.test.ts lib/strapi/strapi.test.ts lib/revalidate.test.ts lib/business/lead.test.ts lib/business/vat-registry.test.ts lib/business/contact.test.ts lib/contact/contact.test.ts lib/blog/article.test.ts lib/reservation/analytics.test.ts lib/seo/legacy-redirects.test.ts"
   },
   "dependencies": {
     "@internationalized/date": "^3.12.4",
     "@tailwindcss/typography": "^0.5.20",
+    "embla-carousel": "^8.6.0",
     "jose": "^6.2.17",
     "libphonenumber-js": "^1.13.15",
     "lucide-react": "^1.53.0",

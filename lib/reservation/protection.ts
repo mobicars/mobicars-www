@@ -1,3 +1,4 @@
+import { intlLocales, type Lang } from "@/i18n/config";
 import type { Extra, ExtraPresentation } from "@/lib/rentcarsoft";
 
 import type { PriceUnit } from "./extras";
@@ -25,6 +26,21 @@ export type ProtectionRow = {
   /** Nothing to pay: "0 zł" or a free replacement car. */
   covered: boolean;
 };
+
+/**
+ * A row's value in the page language. RentCarSoft writes them in Polish only
+ * ("1500 zł", "0 zł", "bezpłatnie"), whatever `lang` asks for: amounts are
+ * formatted for `lang` ("PLN 1,500"), a free word becomes `included`, and any
+ * other text stays as sent.
+ */
+export function rowValue(row: ProtectionRow, lang: Lang, included: string): string {
+  const amount = row.value.match(/^(\d[\d\s.]*)\s*(zł|pln)$/i);
+  if (amount) {
+    const number = Number(amount[1].replace(/[\s.]/g, ""));
+    return new Intl.NumberFormat(intlLocales[lang], { style: "currency", currency: "PLN", maximumFractionDigits: 0 }).format(number);
+  }
+  return row.covered ? included : row.value;
+}
 
 /** What a protection card shows. Built on the server from the dated addon list. */
 export type ProtectionOption = {

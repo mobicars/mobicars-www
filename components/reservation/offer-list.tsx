@@ -10,6 +10,7 @@ import { DialogHeader } from "@/components/reservation/dialog-parts";
 import {
   ChooseButton,
   CompactOfferCard,
+  PlaceFeesContext,
   Price,
   PromotionLine,
   SpecList,
@@ -35,7 +36,8 @@ import type { Lang } from "@/i18n/config";
 import { useMessages } from "@/i18n/messages-context";
 import type { Messages } from "@/i18n/messages";
 import { plural } from "@/i18n/plural";
-import { OFFER_CATEGORIES, type OfferCard, type OfferCategory } from "@/lib/reservation/offers";
+import { track, useBookingStep } from "@/lib/reservation/analytics";
+import { OFFER_CATEGORIES, type OfferCard, type OfferCategory, type PlaceFees } from "@/lib/reservation/offers";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS, type ReservationTerm } from "@/lib/reservation/search";
 
@@ -78,6 +80,7 @@ export function OfferList({
   searchQuery: serverSearchQuery,
   initialQuote,
   lostCar,
+  placeFees = null,
 }: {
   offers: OfferCard[];
   term: ReservationTerm;
@@ -94,9 +97,12 @@ export function OfferList({
    * default only `initialSelected` missing from `offers` counts.
    */
   lostCar?: boolean;
+  /** Daily: delivery, collection and one-way fees, added to every card's price. */
+  placeFees?: PlaceFees | null;
 }) {
   const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
+  useBookingStep("car", term);
   const { cars } = useMessages();
   const [sort, setSort] = useState<Sort>("popular");
   const [view, setView] = useState<OfferView>(initialView);
@@ -167,6 +173,13 @@ export function OfferList({
 
   /** Choosing a car goes straight to the protection step, for daily and monthly rental alike. */
   function choose(id: number) {
+    const offer = offers.find((item) => item.id === id);
+    track("select_item", {
+      item_list_name: term === "long" ? "monthly" : "daily",
+      items: offer
+        ? [{ item_id: String(offer.id), item_name: offer.name, item_category: offer.segment, price: priceOf(offer, term) }]
+        : [],
+    });
     setSelectedId(id);
     router.push(currentHrefWith({ [QUERY_KEYS.offer]: String(id), [QUERY_KEYS.step]: "protection" }), { scroll: false });
   }
@@ -201,6 +214,7 @@ export function OfferList({
   }
 
   return (
+    <PlaceFeesContext value={placeFees}>
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="min-w-0">
       {/* Below `lg`: one "Filtry" button; filters, sort and layout open in a sheet. */}
@@ -330,6 +344,7 @@ export function OfferList({
       />
       <MobileSummaryBar trip={trip} car={selected} prices={prices} action={action} />
     </div>
+    </PlaceFeesContext>
   );
 }
 

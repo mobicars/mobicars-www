@@ -26,7 +26,10 @@ export type MainNavEntry =
   | { label: string; panel: ReactNode };
 
 const itemClass =
-  "flex h-10 cursor-pointer items-center gap-1 rounded-full px-3 text-sm font-bold text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
+  "flex h-10 cursor-pointer items-center gap-1 whitespace-nowrap rounded-full px-3 text-sm font-bold text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
+
+/** Desktop menu items: tighter until `2xl`, so six items, the actions and the CTA fit at 1280 px in every language. */
+const desktopItemClass = itemClass.replace("px-3", "px-2 2xl:px-3");
 
 /**
  * The header menu, on React Aria's disclosure pattern (WAI-ARIA "disclosure
@@ -38,18 +41,36 @@ const itemClass =
  * keeps them in the DOM (`hidden="until-found"`), so the links are in the
  * prerendered HTML and find-in-page opens the panel holding a match.
  *
- * - From `lg`: one submenu open at a time, as a full-width panel under the
+ * - From `xl`: one submenu open at a time, as a full-width panel under the
  *   header. React Aria closes it on a press outside its button and panel
  *   (`useInteractOutside`), Escape (`useKeyboard`, focus back on the button)
  *   and focus leaving the menu (`useFocusWithin`).
- * - Below `lg`: a React Aria `Sheet` from the end edge: a modal dialog (focus
- *   kept inside, page scroll locked, Escape, focus back on the menu button)
- *   that can also be swiped away; submenus expand in place.
+ * - Below `xl`: a full-screen React Aria `Sheet` from the end edge: a modal
+ *   dialog (focus kept inside, page scroll locked, Escape, focus back on the
+ *   menu button) that can also be swiped away; submenus expand in place as an
+ *   accordion, and `menuFooter` (hotline, bookings, language) closes the list.
+ *
+ * `actions` sit between the desktop menu and the menu button, so the DOM, and
+ * with it the Tab order, follows the header as it is drawn.
  *
  * The header lives in the layout and survives navigation, so a new page also
  * closes whatever is open.
  */
-export function MainNav({ entries }: { entries: MainNavEntry[] }) {
+export function MainNav({
+  entries,
+  menuFooter,
+  actions,
+  className = "",
+  menuButtonClassName = "",
+}: {
+  entries: MainNavEntry[];
+  menuFooter?: ReactNode;
+  /** Header controls drawn after the desktop menu and before the menu button (phone, language, CTA). */
+  actions?: ReactNode;
+  /** On the desktop menu, e.g. its flex `order` in the header. */
+  className?: string;
+  menuButtonClassName?: string;
+}) {
   const t = useMessages().layout;
   const [expanded, setExpanded] = useState<Set<Key>>(new Set());
   const [sheet, setSheet] = useState(false);
@@ -77,20 +98,16 @@ export function MainNav({ entries }: { entries: MainNavEntry[] }) {
     }
   };
 
-  if (entries.length === 0) {
-    return <div className="flex-1" />;
-  }
-
   return (
     <>
-      <div className="hidden flex-1 lg:block" onClick={closeOnLink} {...focusWithinProps}>
+      <div className={`hidden flex-1 xl:block ${className}`} onClick={closeOnLink} {...focusWithinProps}>
         <nav aria-label={t.mainNav}>
           <DisclosureGroup expandedKeys={expanded} onExpandedChange={setExpanded}>
-            <ul className="flex items-center gap-1">
+            <ul className="flex items-center gap-0.5 2xl:gap-1">
               {entries.map((entry, index) => (
                 <li key={index}>
                   {"href" in entry ? (
-                    <EntryLink entry={entry} className={itemClass} />
+                    <EntryLink entry={entry} className={desktopItemClass} />
                   ) : (
                     // String ids: React Aria treats `0` as "no id" and makes up its own.
                     <Disclosure id={`entry-${index}`}>
@@ -118,18 +135,20 @@ export function MainNav({ entries }: { entries: MainNavEntry[] }) {
         </nav>
       </div>
 
+      {actions}
+
       <SheetTrigger isOpen={sheet} onOpenChange={setSheet}>
-        <Button className={`${itemClass} order-last lg:hidden`} aria-label={t.menu}>
+        <Button className={`${itemClass} xl:hidden ${menuButtonClassName}`} aria-label={t.menu}>
           <Menu className="size-5 text-blue-medium" aria-hidden />
         </Button>
-        <SheetOverlay position="end" className="z-50 lg:hidden">
+        <SheetOverlay position="end" className="z-50 xl:hidden">
           <SheetBackdrop swipeAnimation="sheet-backdrop" className="bg-blue-dark/40 backdrop-blur-[4px]" />
           {/* `box-content`: with `overscrollPadding` the sheet pads itself past the screen edge,
               and Tailwind's border-box would take that padding out of its width. */}
-          <Sheet overscrollPadding className="box-content h-full w-[min(24rem,88vw)] bg-white shadow-xl outline-none">
+          <Sheet overscrollPadding className="box-content h-full w-screen bg-white outline-none">
             <SheetContent className="flex h-full flex-col overflow-y-auto pb-[var(--sheet-scroll-padding-y)] outline-none">
-              <div className="flex h-16 shrink-0 items-center justify-between border-b border-muted px-3">
-                <Heading slot="title" className="px-3 text-base font-bold text-blue-dark">
+              <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-line bg-white px-gutter">
+                <Heading slot="title" className="text-base font-bold text-blue-dark">
                   {t.menu}
                 </Heading>
                 <Button slot="close" className={itemClass}>
@@ -137,9 +156,9 @@ export function MainNav({ entries }: { entries: MainNavEntry[] }) {
                   <span>{t.closeMenu}</span>
                 </Button>
               </div>
-              <nav aria-label={t.mainNav} className="px-3 py-4" onClick={closeOnLink}>
+              <nav aria-label={t.mainNav} className="px-gutter py-3" onClick={closeOnLink}>
                 <DisclosureGroup>
-                  <ul className="flex flex-col divide-y divide-muted">
+                  <ul className="flex flex-col divide-y divide-line">
                     {entries.map((entry, index) => (
                       <li key={index} className="py-1">
                         {"href" in entry ? (
@@ -152,7 +171,10 @@ export function MainNav({ entries }: { entries: MainNavEntry[] }) {
                                   {entry.label}
                                   <Chevron open={isExpanded} size="size-5" />
                                 </Button>
-                                <DisclosurePanel className="px-3 pt-2 pb-4">{entry.panel}</DisclosurePanel>
+                                <DisclosurePanel>
+                                  {/* Padding on an inner box: a hidden panel keeps its own box. */}
+                                  <div className="px-3 pt-2 pb-4">{entry.panel}</div>
+                                </DisclosurePanel>
                               </>
                             )}
                           </Disclosure>
@@ -162,6 +184,11 @@ export function MainNav({ entries }: { entries: MainNavEntry[] }) {
                   </ul>
                 </DisclosureGroup>
               </nav>
+              {menuFooter ? (
+                <div className="mt-auto border-t border-line px-gutter py-4" onClick={closeOnLink}>
+                  {menuFooter}
+                </div>
+              ) : null}
             </SheetContent>
           </Sheet>
         </SheetOverlay>
@@ -203,7 +230,7 @@ function Submenu({
 
   return (
     <div ref={ref} {...keyboardProps}>
-      <Button ref={trigger} slot="trigger" className={itemClass}>
+      <Button ref={trigger} slot="trigger" className={desktopItemClass}>
         {label}
         <Chevron open={isExpanded} />
       </Button>

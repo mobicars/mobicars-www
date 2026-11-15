@@ -15,10 +15,25 @@ import { findPageRoute, listLatestPosts, pageHref, type NavLink } from "@/lib/st
  * Submenu panels of the header (`MainNav`). Rendered on the server, so the
  * links are in the prerendered HTML. Data panels read the same cached sources
  * as the pages: the fleet and pickup points from RentCarSoft, posts from Strapi.
+ * They sit in the layout of every page, so a failing source shows a shorter
+ * panel (a link to the full list) instead of failing the page.
  */
+
+/** The data, or `fallback` after logging the failure (no details: they may hold URLs). */
+async function orFallback<T>(what: string, read: Promise<T>, fallback: T): Promise<T> {
+  try {
+    return await read;
+  } catch (error) {
+    console.error(`[menu] ${what} unavailable, showing a shorter panel: ${error instanceof Error ? error.name : "unknown"}`);
+    return fallback;
+  }
+}
 
 const linkClass =
   "rounded-lg text-sm font-semibold text-blue-dark outline-none underline-offset-4 hover:text-blue-medium hover:underline focus-visible:ring-2 focus-visible:ring-blue-medium";
+
+const chipClass =
+  "inline-flex h-9 items-center rounded-full border border-muted px-4 text-sm font-semibold text-blue-dark outline-none transition-colors duration-200 ease-out hover:border-blue-medium hover:bg-blue-light focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
 
 const moreClass =
   "inline-flex items-center gap-1 text-sm font-bold text-blue-medium outline-none underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-blue-medium";
@@ -47,18 +62,24 @@ export function LinksPanel({ links }: { links: NavLink[] }) {
 export async function FleetPanel({ lang }: { lang: Lang }) {
   const messages = getMessages(lang);
   const t = messages.layout;
-  const cars = await listFleetCars(lang);
+  const cars = await orFallback("fleet", listFleetCars(lang), []);
   const classes = OFFER_CATEGORIES.flatMap(({ id }) => {
     const inClass = cars.filter((car) => car.categories.includes(id));
     if (inClass.length === 0) {
       return [];
     }
-    const prices = inClass.flatMap((car) => (car.dailyFrom !== null ? [car.dailyFrom] : []));
     const cheapest = inClass.reduce((best, car) =>
       (car.dailyFrom ?? Infinity) < (best.dailyFrom ?? Infinity) ? car : best,
     );
-    return [{ id, label: messages.cars.categories[id], from: prices.length > 0 ? Math.min(...prices) : null, image: cheapest.image }];
+    // The cheapest car's "from" price with its condition, as on its fleet card (`DailyNotes`).
+    return [{ id, label: messages.cars.categories[id], daily: cheapest.daily, image: cheapest.image }];
   });
+  // Shortcuts to the filtered fleet, shown only when the fleet has such cars.
+  const quickLinks = [
+    { label: t.fleetVans, query: "category=delivery", show: cars.some((car) => car.categories.includes("delivery")) },
+    // 110 is "Elektryczny" on the RentCarSoft fuel key (`lib/fleet/filters.ts`).
+    { label: t.fleetElectric, query: "fuel=110", show: cars.some((car) => car.fuel?.id === 110) },
+  ].filter((link) => link.show);
 
   return (
     <div className="flex flex-col gap-6">
@@ -81,18 +102,41 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
               ) : null}
               <span className="flex flex-col">
                 <span className="font-bold text-blue-dark">{item.label}</span>
-                {item.from !== null ? (
-                  <span className="text-xs text-muted-dark">{fill(t.fromPerDay, { price: formatPrice(lang, item.from) })}</span>
+                {item.daily ? (
+                  <span className="text-xs text-muted-dark">
+                    {fill(t.fromPerDay, { price: formatPrice(lang, item.daily.price) })}
+                    {item.daily.fromDays > 1 ? (
+                      <>
+                        <br />
+                        {fill(messages.fleet.dailyFromNote, { days: item.daily.fromDays })}
+                      </>
+                    ) : null}
+                  </span>
                 ) : null}
               </span>
             </Link>
           </li>
         ))}
       </ul>
-      <Link href={fleetHref(lang)} className={moreClass}>
-        {t.allCars}
-        <ArrowRight className="size-4" aria-hidden />
-      </Link>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+        {quickLinks.length > 0 ? (
+          <nav aria-label={t.fleetQuickLinks}>
+            <ul className="flex flex-wrap gap-2">
+              {quickLinks.map((link) => (
+                <li key={link.query}>
+                  <Link href={`${fleetHref(lang)}?${link.query}`} className={chipClass}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ) : null}
+        <Link href={fleetHref(lang)} className={moreClass}>
+          {t.allCars}
+          <ArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
     </div>
   );
 }
@@ -100,10 +144,11 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
 /** Pickup points by city; each opens the booking with that point picked. */
 export async function LocationsPanel({ lang }: { lang: Lang }) {
   const t = getMessages(lang).layout;
-  const points = await listServicePoints({ lang });
+  const points = await orFallback("pickup points", listServicePoints({ lang }), []);
+  // Grouped by RentCarSoft's (Polish) town, headed by its name in this language ("Warschau").
   const cities = new Map<string, typeof points>();
   for (const point of points) {
-    const city = point.city ?? t.otherPlaces;
+    const city = point.cityName ?? point.city ?? t.otherPlaces;
     cities.set(city, [...(cities.get(city) ?? []), point]);
   }
   const sorted = [...cities].sort(([a], [b]) => a.localeCompare(b, lang));
@@ -116,7 +161,9 @@ export async function LocationsPanel({ lang }: { lang: Lang }) {
           <ul className="flex flex-col gap-2">
             {cityPoints.map((point) => {
               const Icon = point.airport ? Plane : point.trainStation ? TrainFront : point.office ? Building2 : MapPin;
-              const kind = point.airport ? t.airport : point.trainStation ? t.trainStation : point.office ? t.office : null;
+              const type = point.airport ? t.airport : point.trainStation ? t.trainStation : point.office ? t.office : null;
+              // Most names already say it ("Warschau – Büro"): the type is only added for screen readers when they do not.
+              const kind = type && !point.name.toLocaleLowerCase(lang).includes(type.toLocaleLowerCase(lang)) ? type : null;
               return (
                 <li key={point.id}>
                   <Link href={reservationHref(lang, "short", `pickup=${point.id}`)} className={`${linkClass} flex items-start gap-2`}>
@@ -139,7 +186,7 @@ export async function LocationsPanel({ lang }: { lang: Lang }) {
 /** The three newest posts and, when the CMS has a `blog` page, a link to all. */
 export async function BlogPanel({ lang }: { lang: Lang }) {
   const t = getMessages(lang).layout;
-  const [posts, listing] = await Promise.all([listLatestPosts(lang, 3), findPageRoute(lang, ["blog"])]);
+  const [posts, listing] = await Promise.all([listLatestPosts(lang, 3), orFallback("blog page", findPageRoute(lang, ["blog"]), null)]);
 
   return (
     <div className="flex flex-col gap-6">

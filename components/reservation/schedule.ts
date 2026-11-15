@@ -14,7 +14,8 @@ import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import type { Messages } from "@/i18n/messages";
 import { reservationConfig } from "@/lib/reservation/config";
-import { formatQueryDateTime, type ReservationSearch } from "@/lib/reservation/search";
+import { formatQueryDateTime } from "@/lib/reservation/search";
+import type { TripDates } from "@/lib/reservation/storage";
 
 /** Pickup and return slot math for the widget. No React here. */
 
@@ -70,7 +71,7 @@ export function formatSchedulePoint(lang: Lang, point: SchedulePoint): string {
  * "od 5 wrz, 10:00 · 3 miesiące". Takes the texts, so client code can use it
  * without loading every language (`compactTrip` is the server shortcut).
  */
-export function formatTripDates(lang: Lang, texts: Messages["search"], search: ReservationSearch): string {
+export function formatTripDates(lang: Lang, texts: Messages["search"], search: TripDates): string {
   const short = (value: string) => {
     const point = pointFromValue(value);
     if (!point) {
@@ -110,9 +111,19 @@ export function nextOpenSlot(date: CalendarDate): ClockTime | null {
   return null;
 }
 
-/** First pickup the widget offers, or null when `prefillDates` is off. */
+/**
+ * First pickup the widget offers, or null when `prefillDates` is off:
+ * `defaultPickup` (tomorrow at 10:00), whatever the time of the visit. Never
+ * earlier than the lead time; then the earliest open slot instead.
+ */
 export function defaultPickupPoint(): SchedulePoint | null {
-  return reservationConfig.prefillDates ? earliestPickupPoint() : null;
+  if (!reservationConfig.prefillDates) {
+    return null;
+  }
+  const { daysAhead, hour, minute } = reservationConfig.defaultPickup;
+  const date = today(reservationConfig.timeZone).add({ days: daysAhead });
+  const time = { hour, minute };
+  return isSlotPast(date, time) ? earliestPickupPoint() : { date, time };
 }
 
 /** The earliest slot that respects `pickupLeadMinutes`: today, or the next day after the last slot. */

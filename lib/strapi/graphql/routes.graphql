@@ -9,6 +9,7 @@ query PageRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: I
     nodes {
       documentId
       slug
+      updatedAt
       parentPage {
         documentId
       }

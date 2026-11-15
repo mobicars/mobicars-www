@@ -1,0 +1,173 @@
+# City and airport pages (`city`) and local pickup pages (`local-page`), served at
+# the old site's URLs. See `modules/places.ts`. The legacy `components` zone
+# belongs to mobicars-pl and is not read here; `blocks` is the same zone as a page's.
+query CityRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: Int!, $pageSize: Int!) {
+  cities_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+    }
+    pageInfo {
+      page
+      pageCount
+    }
+  }
+}
+
+query LocalPageRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: Int!, $pageSize: Int!) {
+  localPages_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+    }
+    pageInfo {
+      page
+      pageCount
+    }
+  }
+}
+
+query City($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  city(documentId: $documentId, locale: $locale, status: $status) {
+    documentId
+    title
+    # The page's RentCarSoft point (one for every language): the booking search starts there.
+    pickupPoint
+    seo {
+      metaTitle
+      metaDescription
+      noIndex
+      noFollow
+      shareImage {
+        ...Media
+      }
+    }
+    blocks {
+      __typename
+      ... on ComponentBlocksHero {
+        ...HeroBlock
+      }
+      ... on ComponentBlocksContent {
+        ...ContentBlock
+      }
+      ... on ComponentBlocksMediaText {
+        ...MediaTextBlock
+      }
+      ... on ComponentBlocksFeatures {
+        ...FeaturesBlock
+      }
+      ... on ComponentBlocksFaq {
+        ...FaqBlock
+      }
+      ... on ComponentBlocksReviews {
+        ...ReviewsBlock
+      }
+      ... on ComponentBlocksLocations {
+        ...LocationsBlock
+      }
+      ... on ComponentBlocksBlogPosts {
+        ...BlogPostsBlock
+      }
+      ... on ComponentBlocksScenarios {
+        ...ScenariosBlock
+      }
+      ... on ComponentBlocksComparison {
+        ...ComparisonBlock
+      }
+      ... on ComponentBlocksCars {
+        ...CarsBlock
+      }
+      ... on ComponentBlocksLogos {
+        ...LogosBlock
+      }
+      ... on ComponentBlocksLeadForm {
+        ...LeadFormBlock
+      }
+      ... on ComponentBlocksCtaBand {
+        ...CtaBandBlock
+      }
+      ... on ComponentBlocksTrustBar {
+        ...TrustBarBlock
+      }
+      ... on ComponentBlocksContact {
+        ...ContactBlock
+      }
+      ... on ComponentBlocksPromoCards {
+        ...PromoCardsBlock
+      }
+    }
+  }
+}
+
+query LocalPage($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  localPage(documentId: $documentId, locale: $locale, status: $status) {
+    documentId
+    title: Title
+    pickupPoint
+    seo {
+      metaTitle
+      metaDescription
+      noIndex
+      noFollow
+      shareImage {
+        ...Media
+      }
+    }
+    blocks {
+      __typename
+      ... on ComponentBlocksHero {
+        ...HeroBlock
+      }
+      ... on ComponentBlocksContent {
+        ...ContentBlock
+      }
+      ... on ComponentBlocksMediaText {
+        ...MediaTextBlock
+      }
+      ... on ComponentBlocksFeatures {
+        ...FeaturesBlock
+      }
+      ... on ComponentBlocksFaq {
+        ...FaqBlock
+      }
+      ... on ComponentBlocksReviews {
+        ...ReviewsBlock
+      }
+      ... on ComponentBlocksLocations {
+        ...LocationsBlock
+      }
+      ... on ComponentBlocksBlogPosts {
+        ...BlogPostsBlock
+      }
+      ... on ComponentBlocksScenarios {
+        ...ScenariosBlock
+      }
+      ... on ComponentBlocksComparison {
+        ...ComparisonBlock
+      }
+      ... on ComponentBlocksCars {
+        ...CarsBlock
+      }
+      ... on ComponentBlocksLogos {
+        ...LogosBlock
+      }
+      ... on ComponentBlocksLeadForm {
+        ...LeadFormBlock
+      }
+      ... on ComponentBlocksCtaBand {
+        ...CtaBandBlock
+      }
+      ... on ComponentBlocksTrustBar {
+        ...TrustBarBlock
+      }
+      ... on ComponentBlocksContact {
+        ...ContactBlock
+      }
+      ... on ComponentBlocksPromoCards {
+        ...PromoCardsBlock
+      }
+    }
+  }
+}

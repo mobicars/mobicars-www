@@ -1,3 +1,5 @@
+import { isLang, type Lang } from "@/i18n/config";
+
 import { draftFromQuery, type ReservationTerm, type SearchDraft } from "./search";
 
 /**
@@ -44,27 +46,41 @@ export function loadSearchDraft(): SearchDraft | null {
   }
 }
 
+/** One text in each site language that has it. */
+export type Localized = Partial<Record<Lang, string>>;
+
+/** The dates of a booking as the URL holds them, formatted only when shown (in the page's language). */
+export type TripDates =
+  | { term: "short"; start: string; end: string }
+  | { term: "long"; start: string; months: number };
+
 /**
  * A booking left on the protection, extras or details step, for the "finish
- * your booking" banner on the homepage. `start` is the raw pickup value, so the
- * banner can hide itself once that time is no longer bookable.
+ * your booking" banner on the homepage. The dates are kept raw: the banner
+ * formats them in the language it is shown in, and hides itself once the
+ * pickup is no longer bookable.
  */
 export type BookingDraft = {
   href: string;
   car: string;
+  /** The class and the place in the language the draft was saved in. */
   segment: string;
   image: string | null;
   place: string;
-  dates: string;
-  start: string;
+  dates: TripDates;
+  /** The same in every language RentCarSoft has them in (`draftLabels`); may be empty. */
+  segmentNames: Localized;
+  placeNames: Localized;
 };
 
 const DRAFT_KEY = "mobicars:reservation-draft";
+/** 3: raw `dates`. A version-2 draft held them as text in the language it was saved in and is dropped. */
+const DRAFT_VERSION = 3;
 const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
 
 export function saveBookingDraft(draft: BookingDraft): void {
   try {
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ v: VERSION, savedAt: Date.now(), ...draft }));
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ v: DRAFT_VERSION, savedAt: Date.now(), ...draft }));
   } catch {
     // Storage is unavailable; the banner is a convenience.
   }
@@ -76,9 +92,18 @@ export function loadBookingDraft(): BookingDraft | null {
     if (!raw) {
       return null;
     }
-    const stored = JSON.parse(raw) as Partial<BookingDraft & { v: number; savedAt: number }>;
+    const stored = JSON.parse(raw) as Partial<
+      Omit<BookingDraft, "dates" | "segmentNames" | "placeNames"> & {
+        v: number;
+        savedAt: number;
+        dates: unknown;
+        segmentNames: unknown;
+        placeNames: unknown;
+      }
+    >;
+    const dates = parseTripDates(stored.dates);
     if (
-      stored.v !== VERSION ||
+      stored.v !== DRAFT_VERSION ||
       typeof stored.savedAt !== "number" ||
       Date.now() - stored.savedAt > DRAFT_MAX_AGE_MS ||
       typeof stored.href !== "string" ||
@@ -89,8 +114,7 @@ export function loadBookingDraft(): BookingDraft | null {
       typeof stored.segment !== "string" ||
       (stored.image !== null && typeof stored.image !== "string") ||
       typeof stored.place !== "string" ||
-      typeof stored.dates !== "string" ||
-      typeof stored.start !== "string"
+      !dates
     ) {
       window.localStorage.removeItem(DRAFT_KEY);
       return null;
@@ -101,12 +125,40 @@ export function loadBookingDraft(): BookingDraft | null {
       segment: stored.segment,
       image: stored.image ?? null,
       place: stored.place,
-      dates: stored.dates,
-      start: stored.start,
+      dates,
+      segmentNames: parseLocalized(stored.segmentNames),
+      placeNames: parseLocalized(stored.placeNames),
     };
   } catch {
     return null;
   }
+}
+
+/** Only site languages and texts: anything else is dropped, never an error. */
+function parseLocalized(value: unknown): Localized {
+  if (typeof value !== "object" || value === null) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(value).filter(([lang, text]) => isLang(lang) && typeof text === "string" && text.trim() !== ""),
+  );
+}
+
+function parseTripDates(value: unknown): TripDates | null {
+  if (typeof value !== "object" || value === null) {
+    return null;
+  }
+  const { term, start, end, months } = value as Record<string, unknown>;
+  if (typeof start !== "string") {
+    return null;
+  }
+  if (term === "short" && typeof end === "string") {
+    return { term, start, end };
+  }
+  if (term === "long" && typeof months === "number") {
+    return { term, start, months };
+  }
+  return null;
 }
 
 export function clearBookingDraft(): void {

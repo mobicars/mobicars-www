@@ -28,6 +28,10 @@ export type CustomerInput = {
   lastName: string;
   companyName: string;
   vatNumber: string;
+  /** Optional company address, usually from the VAT register ("Pobierz dane"). */
+  companyAddress: string;
+  companyPostalCode: string;
+  companyCity: string;
   contactPerson: string;
   email: string;
   phone: string;
@@ -67,6 +71,9 @@ const MAX = {
   name: 100,
   companyName: 200,
   vatNumber: 32,
+  companyAddress: 200,
+  companyPostalCode: 16,
+  companyCity: 100,
   email: 254,
   comment: 2000,
   flightNumber: 20,
@@ -93,6 +100,9 @@ export function validateCustomer(
     } else {
       need("companyName", input.companyName, MAX.companyName);
       need("vatNumber", input.vatNumber, MAX.vatNumber);
+      for (const field of ["companyAddress", "companyPostalCode", "companyCity"] as const) {
+        if (input[field].length > MAX[field]) errors[field] = "tooLong";
+      }
     }
     need("email", input.email, MAX.email);
     if (!errors.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.email.trim())) {
@@ -132,6 +142,7 @@ export function validateCustomer(
 /**
  * Client keys for `createReservation`, as the old site sent them:
  * 1 first name, 2 last name, 4 phone, 5 email, 7 tax number, 9 company name,
+ * 11 / 14 / 13 company street, postal code and city (when given),
  * 46 contact person, 47 reservation transfer consent ("18" yes / "17" no).
  * A signed-in client's identity stays in the account; only the phone, the tax
  * number for an invoice, the contact person and the consent are sent.
@@ -147,6 +158,9 @@ export function customerClientKeys(input: CustomerInput, signedIn: boolean): { i
     } else {
       add(9, input.companyName);
       add(7, input.vatNumber);
+      if (input.companyAddress.trim()) add(11, input.companyAddress);
+      if (input.companyPostalCode.trim()) add(14, input.companyPostalCode);
+      if (input.companyCity.trim()) add(13, input.companyCity);
     }
     add(5, input.email);
   }
@@ -176,6 +190,9 @@ export function customerFromForm(form: FormData, fixedType: CustomerType | null)
     lastName: text("lastName"),
     companyName: text("companyName"),
     vatNumber: text("vatNumber"),
+    companyAddress: text("companyAddress"),
+    companyPostalCode: text("companyPostalCode"),
+    companyCity: text("companyCity"),
     contactPerson: text("contactPerson"),
     email: text("email"),
     phone: text("phone"),

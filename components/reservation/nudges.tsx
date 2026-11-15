@@ -12,7 +12,7 @@ import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import type { ExtensionHint } from "@/lib/reservation/extend";
-import type { ProtectionOption } from "@/lib/reservation/protection";
+import { rowValue, type ProtectionOption } from "@/lib/reservation/protection";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
 /**
@@ -28,7 +28,9 @@ let lastPromiseId = 0;
  * `ExtendHint` for a hint still being quoted: the step shows without waiting
  * for its two extra quotes, and the card appears once they arrive. Each new
  * promise (a new server render) gets a fresh boundary, so a navigation never
- * waits for the hint either.
+ * waits for the hint either. Meanwhile the card's place is kept (the page
+ * passes a promise only when a cheaper band is within reach), so the packages
+ * below do not jump when it arrives.
  */
 export function ExtendHintSlot({
   hint,
@@ -43,7 +45,7 @@ export function ExtendHintSlot({
     promiseIds.set(hint, ++lastPromiseId);
   }
   return (
-    <Suspense key={promiseIds.get(hint)} fallback={null}>
+    <Suspense key={promiseIds.get(hint)} fallback={currentDays ? <ExtendHintPlaceholder currentDays={currentDays} className={className} /> : null}>
       <ResolvedExtendHint hint={hint} currentDays={currentDays} className={className} />
     </Suspense>
   );
@@ -67,6 +69,20 @@ function ResolvedExtendHint({
   return className ? <div className={className}>{card}</div> : card;
 }
 
+/**
+ * The same card with stand-in numbers and its content hidden: the hint's own
+ * height at every width (the text wraps the same way), a quiet pulse instead
+ * of words. Hidden from screen readers and from the keyboard.
+ */
+function ExtendHintPlaceholder({ currentDays, className }: { currentDays: number; className?: string }) {
+  const stand: ExtensionHint = { addDays: 1, days: currentDays + 1, dailyBefore: 125.1, dailyAfter: 95.2, end: "", extraCost: 25.5 };
+  return (
+    <div aria-hidden inert className={`animate-pulse motion-reduce:animate-none [&_aside>*]:invisible ${className ?? ""}`.trim()}>
+      <ExtendHint hint={stand} currentDays={currentDays} />
+    </div>
+  );
+}
+
 function isThenable(value: unknown): value is Promise<ExtensionHint | null> {
   return typeof (value as { then?: unknown } | null)?.then === "function";
 }
@@ -85,7 +101,7 @@ export function ExtendHint({ hint, currentDays }: { hint: ExtensionHint; current
         <NudgeAction
           label={fill(t.button, { days })}
           pendingLabel={t.extending}
-          question={t.confirmTitle}
+          question={fill(t.confirmTitle, { days })}
           href={() => currentHrefWith({ [QUERY_KEYS.end]: hint.end })}
         />
       }
@@ -121,7 +137,8 @@ export function ProtectionUpgrade({ from, to }: { from: ProtectionOption; to: Pr
         <NudgeAction
           label={fill(t.button, { name: to.name })}
           pendingLabel={t.changing}
-          question={t.confirmTitle}
+          question={fill(t.confirmTitle, { name: to.name })}
+          confirmLabel={messages.upsell.confirmProtection}
           href={() => currentHrefWith({ [QUERY_KEYS.protection]: String(to.id) })}
         />
       }
@@ -135,7 +152,7 @@ export function ProtectionUpgrade({ from, to }: { from: ProtectionOption; to: Pr
           {gains.map((row) => (
             <span key={row.key} className="flex items-center gap-1">
               <Check className="size-3.5 shrink-0 text-green-medium" aria-hidden />
-              {rows[row.key]}: {row.value}
+              {rows[row.key]}: {rowValue(row, lang, messages.protection.included)}
             </span>
           ))}
         </span>
@@ -149,11 +166,14 @@ function NudgeAction({
   label,
   pendingLabel,
   question,
+  confirmLabel,
   href,
 }: {
   label: string;
   pendingLabel: string;
   question: string;
+  /** The dialog's yes button; the shared "Tak, zmień" without it. */
+  confirmLabel?: string;
   href: () => string;
 }) {
   const router = useRouter();
@@ -174,6 +194,7 @@ function NudgeAction({
       <ConfirmQuestion
         open={asking}
         title={question}
+        confirmLabel={confirmLabel}
         onCancel={() => setAsking(false)}
         onConfirm={() => {
           setAsking(false);

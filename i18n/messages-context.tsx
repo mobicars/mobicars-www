@@ -1,17 +1,21 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 
 import type { Messages } from "./messages";
 
 const MessagesContext = createContext<Messages | null>(null);
 
 /**
- * Texts of the page language for client components, set once in the `[lang]`
- * layout. Only that language travels to the browser, not all four files.
+ * Texts of the page language for client components. The `[lang]` layout sets
+ * the namespaces every page needs; a nested provider (the reservation and
+ * account layouts) adds its own on top. Only what `clientMessages` picks
+ * travels to the browser (see `i18n/client-messages.ts`).
  */
 export function MessagesProvider({ messages, children }: { messages: Messages; children: ReactNode }) {
-  return <MessagesContext value={messages}>{children}</MessagesContext>;
+  const parent = useContext(MessagesContext);
+  const value = useMemo(() => (parent ? { ...parent, ...messages } : messages), [parent, messages]);
+  return <MessagesContext value={value}>{children}</MessagesContext>;
 }
 
 export function useMessages(): Messages {

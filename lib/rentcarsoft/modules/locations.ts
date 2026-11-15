@@ -2,12 +2,15 @@ import { cacheLife, cacheTag } from "next/cache";
 
 import { listServicePointKeys } from "./catalog";
 import {
+  countLocations,
+  localizeCities,
   isActiveServicePoint,
   parseDepartment,
   parseDepartments,
   parseServicePoint,
   parseServicePoints,
   type Department,
+  type LocationStats,
   type ServicePoint,
 } from "../internal/entities";
 import { rentCarSoftRequest } from "../internal/http";
@@ -24,10 +27,21 @@ export async function listServicePoints(input: {
   const query = buildServicePointQuery(input);
   const lang = input.lang ?? "pl";
   const points = await (cacheEnabled() ? loadCachedServicePoints(query, lang) : loadServicePoints(query, lang));
+  // Town names from the whole list, so a town's inactive points still count.
+  const localized = localizeCities(points, lang);
   if (input.includeInactive) {
-    return points;
+    return localized;
   }
-  return points.filter(isActiveServicePoint);
+  return localized.filter(isActiveServicePoint);
+}
+
+/**
+ * How many fixed pickup points, towns and airports there are, from the active
+ * service points (same cache as `listServicePoints`). For copy that names the
+ * network; a page without RentCarSoft shows its text without numbers.
+ */
+export async function getLocationStats(input: { lang?: string } = {}): Promise<LocationStats> {
+  return countLocations(await listServicePoints({ lang: input.lang }));
 }
 
 export async function getServicePoint(

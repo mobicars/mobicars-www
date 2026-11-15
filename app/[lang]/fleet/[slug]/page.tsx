@@ -3,10 +3,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { Breadcrumbs } from "@/components/fleet/breadcrumbs";
+import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CarGallery } from "@/components/fleet/car-gallery";
+import { DailyNotes } from "@/components/fleet/daily-notes";
+import { FaqList } from "@/components/blocks/faq-list";
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
 import { PriceTable } from "@/components/fleet/price-table";
+import { Rail, RailItem } from "@/components/ui/surface";
+import { StickyBookBar } from "@/components/fleet/sticky-book-bar";
+import { Container } from "@/components/ui/section";
 import { ReservationPicker } from "@/components/reservation/picker";
 import { isLang, type Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
@@ -17,6 +22,7 @@ import { countLabel, formatPrice } from "@/lib/fleet/format";
 import { absoluteUrl, alternates, jsonLd } from "@/lib/fleet/seo";
 import { offerIdFromSlug } from "@/lib/fleet/slug";
 import { listServicePoints } from "@/lib/rentcarsoft";
+import { getChrome } from "@/lib/strapi";
 import { toPickupPlace } from "@/lib/reservation/places";
 
 type Props = PageProps<"/[lang]/fleet/[slug]">;
@@ -29,15 +35,30 @@ type Props = PageProps<"/[lang]/fleet/[slug]">;
 
 /**
  * Allowed to block: the page answers 404 or a 308 before it renders (see
- * `CarPage`). Every car of the daily catalog is prerendered, so only an id
- * outside it waits for RentCarSoft on its first visit.
+ * `CarPage`). One car is prerendered (`generateStaticParams`); every other
+ * renders on its first visit and is cached from then on (`use cache` in
+ * `lib/fleet/cars.ts`), so that visit waits for RentCarSoft.
  */
 export const instant = false;
 
-/** Every car of the daily catalog is prerendered; any other id renders on its first visit. */
+/**
+ * A slug with no offer id: answers 404 without asking RentCarSoft. The build
+ * prerenders it when the catalog cannot be read, so a RentCarSoft outage does
+ * not stop a deploy.
+ */
+const OFFLINE_SLUG = "catalog-unavailable";
+
+/**
+ * Cache Components needs at least one param to check the route's static
+ * shell. One car is enough: prerendering the whole catalog made every build
+ * depend on a hundred `getOffer` calls, and one 5xx stopped it.
+ */
 export async function generateStaticParams() {
-  const cars = await listFleetCars("pl");
-  return cars.map((car) => ({ slug: car.slug }));
+  const cars = await listFleetCars("pl").catch((error: unknown) => {
+    console.error(`[fleet] catalog unavailable at build, no car prerendered: ${error instanceof Error ? error.name : "unknown"}`);
+    return [];
+  });
+  return [{ slug: cars[0]?.slug ?? OFFLINE_SLUG }];
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -54,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const price = car.dailyFrom !== null ? formatPrice(lang, car.dailyFrom) : "";
   const title = car.metaTitle ?? fill(t.metaTitleFallback, { name: car.name, segment: car.segment });
   const description =
-    car.metaDescription ?? fill(t.metaDescriptionFallback, { name: car.name, segment: car.segment, price });
+    car.metaDescription ?? fill(t.metaDescriptionFallback, { name: car.name, segment: car.segment, price, days: car.daily?.fromDays ?? 1 });
   const image = car.gallery[0];
   return {
     // The RentCarSoft title already ends with the brand when staff wrote one.
@@ -109,9 +130,10 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
 
   return (
     <>
-      <div className="mx-auto grid w-full max-w-7xl gap-6 px-3 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_24rem] lg:gap-8 lg:py-10">
+      <Container className="grid gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-10 lg:py-10">
         <div className="flex min-w-0 flex-col gap-6">
           <Breadcrumbs
+            label={t.breadcrumbLabel}
             items={[
               { href: `/${lang}`, label: t.breadcrumbHome },
               { href: fleetHref(lang), label: t.breadcrumbFleet },
@@ -119,27 +141,39 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
             ]}
           />
           <header className="flex flex-col gap-2">
-            <p className="text-sm font-semibold tracking-wide text-blue-medium uppercase">{car.segment}</p>
-            <h1 className="text-3xl leading-tight font-bold text-blue-dark sm:text-4xl">
-              {fill(t.carTitle, { name: car.name })}
-            </h1>
+            <p className="text-eyebrow text-green-dark uppercase">{car.segment}</p>
+            <h1 className="text-title text-balance text-blue-dark">{fill(t.carTitle, { name: car.name })}</h1>
             <p className="text-sm text-muted-dark">
               {car.name} {t.orSimilar}
             </p>
           </header>
           <CarGallery images={car.gallery} name={car.name} t={t} />
           <KeyFacts car={car} lang={lang} t={t} />
-          <p className="flex gap-2 rounded-xl bg-blue-light px-4 py-3 text-sm text-blue-dark">
+          <SectionLinks
+            label={t.sectionsLabel}
+            links={[
+              car.priceBands.length > 0 ? { href: "#prices", label: t.pricesTitle } : null,
+              car.specs.length > 0 ? { href: "#specs", label: t.specsTitle } : null,
+              car.features.length > 0 || (lang === "pl" && car.equipment.length > 0) ? { href: "#equipment", label: t.featuresTitle } : null,
+              { href: "#terms", label: t.termsTitle },
+            ]}
+          />
+          <p className="flex gap-2 rounded-control bg-tint px-4 py-3 text-sm text-blue-dark">
             <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
             {t.classNote}
           </p>
         </div>
 
         <aside className="lg:row-span-2">
-          <div className="flex flex-col gap-4 lg:sticky lg:top-6">
-            <section aria-labelledby="book-title" className="rounded-2xl bg-white p-4 shadow-sm sm:p-5">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-24">
+            <section
+              id="book"
+              aria-labelledby="book-title"
+              className="scroll-mt-20 rounded-card border border-line bg-white p-5 shadow-float sm:p-6"
+            >
               <FromPrice car={car} lang={lang} t={t} />
-              <h2 id="book-title" className="mt-4 text-lg font-bold text-blue-dark">
+              <Included t={t} />
+              <h2 id="book-title" className="mt-5 border-t border-line pt-5 text-subtitle text-blue-dark">
                 {t.bookTitle}
               </h2>
               <p className="mb-4 text-sm text-muted-dark">{t.bookLead}</p>
@@ -149,6 +183,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
         </aside>
 
         <div className="flex min-w-0 flex-col gap-6">
+          {car.partial ? <DetailsUnavailable lang={lang} t={t} /> : null}
           {car.priceBands.length > 0 ? (
             <Section title={t.pricesTitle} id="prices">
               <p className="text-sm text-muted-dark">{t.pricesLead}</p>
@@ -165,6 +200,11 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
               <p className="text-xl font-bold text-blue-dark">
                 {fill(t.monthlyFrom, { price: formatPrice(lang, car.monthlyFrom) })}
               </p>
+              {car.monthlyTerms ? (
+                <p className="-mt-2 text-sm text-muted-dark">
+                  {fill(t.monthlyFromNote, monthlyNote(car.monthlyTerms, lang))}
+                </p>
+              ) : null}
               <Link
                 href={reservationHref(lang, "long")}
                 className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
@@ -202,6 +242,17 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
             </Section>
           ) : null}
 
+          <Section title={t.termsTitle} id="terms">
+            <FaqList items={t.terms.map((term) => ({ question: term.question, answer: <p>{term.answer}</p> }))} />
+            <Link
+              href={`/${lang}/faq`}
+              className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
+            >
+              {t.termsMore}
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+          </Section>
+
           {car.description ? (
             <Section title={t.descriptionTitle} id="description">
               <div
@@ -211,13 +262,13 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
             </Section>
           ) : null}
         </div>
-      </div>
+      </Container>
 
       {similar.length > 0 ? (
-        <section aria-labelledby="similar-title" className="border-t border-muted bg-white">
-          <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-3 py-10 sm:px-6">
+        <section aria-labelledby="similar-title" className="border-t border-line bg-canvas py-section-sm">
+          <Container className="flex flex-col gap-6">
             <div className="flex flex-wrap items-end justify-between gap-3">
-              <h2 id="similar-title" className="text-2xl font-bold text-blue-dark">
+              <h2 id="similar-title" className="text-title text-blue-dark">
                 {t.similarTitle}
               </h2>
               <Link
@@ -228,26 +279,71 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
                 {t.backToFleet}
               </Link>
             </div>
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Rail label={t.similarTitle} columns={4}>
               {similar.map((other) => (
-                <li key={other.id}>
-                  <FleetCard car={other} lang={lang} t={t} headingLevel="h3" />
-                </li>
+                <RailItem key={other.id}>
+                  <FleetCard car={other} lang={lang} t={t} headingLevel="h3" sizes="(min-width: 1280px) 300px, (min-width: 1024px) 23vw, (min-width: 640px) 45vw, 78vw" />
+                </RailItem>
               ))}
-            </ul>
-          </div>
+            </Rail>
+          </Container>
         </section>
       ) : null}
+
+      <StickyBookBar targetId="book" label={t.checkAvailability}>
+        <BarPrice car={car} lang={lang} t={t} />
+      </StickyBookBar>
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(carJsonLd(car, lang)) }} />
     </>
   );
 }
 
+/** Catalog C28: what every rental includes, only what the terms confirm. */
+function Included({ t }: { t: FleetTexts }) {
+  return (
+    <div className="mt-4 rounded-control bg-tint px-4 py-3">
+      <p className="text-sm font-bold text-blue-dark">{t.includedTitle}</p>
+      <ul className="mt-2 flex flex-col gap-1.5 text-sm text-blue-dark">
+        {t.included.map((item) => (
+          <li key={item} className="flex gap-2">
+            <Check className="mt-0.5 size-4 shrink-0 text-green-medium" aria-hidden />
+            {item}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Jump links to the sections below the gallery: the page is long on phones. Plain links, no JavaScript. */
+function SectionLinks({ label, links }: { label: string; links: ({ href: string; label: string } | null)[] }) {
+  return (
+    <nav aria-label={label}>
+      <ul className="-mx-gutter flex gap-2 overflow-x-auto px-gutter pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:px-0">
+        {links.flatMap((link) =>
+          link
+            ? [
+                <li key={link.href} className="shrink-0">
+                  <a
+                    href={link.href}
+                    className="inline-flex h-10 items-center rounded-full bg-white px-4 text-sm font-semibold text-blue-dark ring-1 ring-line transition-colors hover:bg-blue-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-medium motion-reduce:transition-none"
+                  >
+                    {link.label}
+                  </a>
+                </li>,
+              ]
+            : [],
+        )}
+      </ul>
+    </nav>
+  );
+}
+
 function Section({ title, id, children }: { title: string; id: string; children: React.ReactNode }) {
   return (
-    <section aria-labelledby={`${id}-title`} className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm sm:p-6">
-      <h2 id={`${id}-title`} className="text-xl font-bold text-blue-dark">
+    <section id={id} aria-labelledby={`${id}-title`} className="flex scroll-mt-32 flex-col gap-4 rounded-card border border-line bg-white p-5 sm:p-7">
+      <h2 id={`${id}-title`} className="text-subtitle text-blue-dark">
         {title}
       </h2>
       {children}
@@ -263,17 +359,57 @@ function FromPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts 
     <div className="flex flex-col gap-0.5">
       {car.dailyFrom !== null ? (
         <p className={car.promotion ? "text-green-dark" : "text-blue-dark"}>
-          {t.from} <span className="text-3xl font-bold">{formatPrice(lang, car.dailyFrom)}</span>{" "}
+          {t.from} <span className="text-4xl font-bold tracking-tight">{formatPrice(lang, car.dailyFrom)}</span>{" "}
           <span className="text-sm font-semibold">{t.perDay}</span>
         </p>
       ) : null}
+      {car.daily ? <DailyNotes daily={car.daily} lang={lang} t={t} className="text-sm text-muted-dark" /> : null}
       {car.monthlyFrom !== null ? (
-        <p className="text-sm text-muted-dark">
-          {t.from} {formatPrice(lang, car.monthlyFrom)} {t.perMonth}
+        <p className="mt-2 text-sm text-blue-dark">
+          {t.from} <span className="font-bold">{formatPrice(lang, car.monthlyFrom)}</span> {t.perMonth}{" "}
+          {car.monthlyTerms ? (
+            <span className="text-xs text-muted-dark">{fill(t.monthlyFromNote, monthlyNote(car.monthlyTerms, lang))}</span>
+          ) : null}
         </p>
       ) : null}
+      {/* Pickup and return fees depend on the place (airports, delivery to an address) and are not in the "from". */}
+      <p className="mt-2 text-xs text-muted-dark">{t.placeFeeNote}</p>
     </div>
   );
+}
+
+/** `{months}` and `{km}` of `fleet.monthlyFromNote`, the kilometres grouped by the locale. */
+function monthlyNote(terms: NonNullable<FleetCar["monthlyTerms"]>, lang: Lang) {
+  return { months: terms.months, km: new Intl.NumberFormat(lang).format(terms.kmPerMonth) };
+}
+
+/** The "from" price in the phone bar with its condition: the daily price first, else the monthly one. */
+function BarPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
+  if (car.daily) {
+    return (
+      <>
+        <p className={`whitespace-nowrap text-sm ${car.daily.promotional ? "text-green-dark" : "text-blue-dark"}`}>
+          {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.daily.price)}</span>{" "}
+          <span className="text-xs font-semibold">{t.perDay}</span>
+        </p>
+        <DailyNotes daily={car.daily} lang={lang} t={t} oneDay={false} className="truncate text-xs text-muted-dark" />
+      </>
+    );
+  }
+  if (car.monthlyFrom !== null) {
+    return (
+      <>
+        <p className="whitespace-nowrap text-sm text-blue-dark">
+          {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.monthlyFrom)}</span>{" "}
+          <span className="text-xs font-semibold">{t.perMonth}</span>
+        </p>
+        {car.monthlyTerms ? (
+          <p className="truncate text-xs text-muted-dark">{fill(t.monthlyFromNote, monthlyNote(car.monthlyTerms, lang))}</p>
+        ) : null}
+      </>
+    );
+  }
+  return <p className="truncate text-sm font-semibold text-blue-dark">{car.name}</p>;
 }
 
 function KeyFacts({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
@@ -295,12 +431,15 @@ function KeyFacts({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }
   return (
     <dl className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
       {facts.map((fact) => (
-        <div key={fact.label} className="flex items-center gap-3 rounded-xl bg-white p-3 shadow-sm">
-          <fact.icon className="size-6 shrink-0 text-blue-medium" strokeWidth={1.5} aria-hidden />
-          <div className="min-w-0">
-            <dt className="text-xxs font-semibold text-muted-dark uppercase">{fact.label}</dt>
-            <dd className="text-sm font-bold break-words text-blue-dark">{fact.value}</dd>
-          </div>
+        // `dt` and `dd` sit right in the group (a `dl` allows nothing else there); the icon rides in the `dt`.
+        <div key={fact.label} className="relative flex min-h-16 flex-col justify-center rounded-control border border-line bg-white py-3 pr-3 pl-16">
+          <dt className="text-xs text-muted-dark">
+            <span aria-hidden className="absolute top-1/2 left-3 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-tint text-blue-medium">
+              <fact.icon className="size-5" strokeWidth={1.75} />
+            </span>
+            {fact.label}
+          </dt>
+          <dd className="text-sm font-bold break-words text-blue-dark">{fact.value}</dd>
         </div>
       ))}
     </dl>
@@ -325,13 +464,42 @@ function Specs({ car, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
     <Section title={t.specsTitle} id="specs">
       <dl className="grid text-sm sm:grid-cols-2 sm:gap-x-8">
         {rows.map((row) => (
-          <div key={row.label} className="flex justify-between gap-4 border-b border-muted-light py-2.5">
+          <div key={row.label} className="flex justify-between gap-4 border-b border-line py-3">
             <dt className="text-muted-dark">{row.label}</dt>
             <dd className="text-right font-semibold text-blue-dark">{row.value}</dd>
           </div>
         ))}
       </dl>
     </Section>
+  );
+}
+
+/**
+ * In place of the specs, prices and description when RentCarSoft could not
+ * give them (`car.partial`): the hotline and the booking form above.
+ */
+async function DetailsUnavailable({ lang, t }: { lang: Lang; t: ReturnType<typeof getMessages>["fleet"] }) {
+  const contact = await getChrome(lang).then(
+    (chrome) => chrome.contact,
+    () => null,
+  );
+  const [before, after] = contact ? t.detailsUnavailable.split("{phone}") : [t.detailsUnavailableNoPhone, ""];
+  return (
+    <p role="status" className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-tint px-4 py-3 text-sm text-blue-dark">
+      <Info className="size-4 shrink-0" aria-hidden />
+      <span className="min-w-0 flex-1">
+        {before}
+        {contact ? (
+          <a href={contact.phoneHref} className="font-bold whitespace-nowrap underline underline-offset-2">
+            {contact.phone}
+          </a>
+        ) : null}
+        {after}
+      </span>
+      <a href="#book" className="font-bold text-blue-medium underline-offset-4 hover:underline">
+        {t.detailsUnavailableBook}
+      </a>
+    </p>
   );
 }
 
@@ -369,6 +537,10 @@ function carJsonLd(car: FleetCar, lang: Lang) {
               unitCode: "DAY",
               referenceQuantity: { "@type": "QuantitativeValue", value: 1, unitCode: "DAY" },
             },
+            // The "from" price holds from this rental length on (30 days for the cheapest band).
+            ...(car.daily && car.daily.fromDays > 1
+              ? { eligibleDuration: { "@type": "QuantitativeValue", minValue: car.daily.fromDays, unitCode: "DAY" } }
+              : {}),
             availability: "https://schema.org/InStock",
             seller: { "@type": "Organization", name: "MobiCars" },
           },

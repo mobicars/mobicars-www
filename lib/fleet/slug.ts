@@ -10,14 +10,19 @@
 const SPECIAL: Record<string, string> = { ł: "l", Ł: "l", ß: "ss", æ: "ae", ø: "o", đ: "d" };
 
 export function carSlug(name: string, id: number): string {
-  const words = name
+  const words = slugWords(name);
+  return words ? `${words}-${id}` : String(id);
+}
+
+/** Latin words of a text, lower case and joined by hyphens: `"Kaucja i ubezpieczenie"` → `kaucja-i-ubezpieczenie`. Empty for other scripts. */
+export function slugWords(text: string): string {
+  return text
     .replace(/[łŁßæøđ]/g, (letter) => SPECIAL[letter])
     .normalize("NFKD")
     .replace(/[̀-ͯ]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
-  return words ? `${words}-${id}` : String(id);
 }
 
 /** The offer id at the end of a slug, or `null` when there is none. */

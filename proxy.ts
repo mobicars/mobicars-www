@@ -4,9 +4,18 @@ import { langFromPath, preferredLang } from "@/i18n/config";
 import { resolveAccountPath, resolveFleetPath, resolveReservationPath } from "@/i18n/routes";
 import { loginPath, safeReturnPath, SESSION_COOKIE } from "@/lib/auth/paths";
 import { decryptSession } from "@/lib/auth/token";
+import { legacyRedirect } from "@/lib/seo/legacy-redirects";
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Old site addresses (redesign/redirects-map.md) go first, in one 308 hop,
+  // before the language redirect would add a second one.
+  const legacy = legacyRedirect(pathname, request.nextUrl.search);
+  if (legacy) {
+    return NextResponse.redirect(new URL(legacy.destination, request.url), legacy.status);
+  }
+
   const found = langFromPath(pathname);
 
   if (found) {
@@ -91,5 +100,9 @@ export const config = {
     // Old car URLs kept the dots of the name (`/pl/flota/nissan-x-trail-7-os.-4431`),
     // which the first pattern skips as files. They redirect to the current slug.
     "/:lang/(flota|fleet|flotte|avtopark)/:slug*",
+    // Old monthly-rental and add-on pages also kept dots; `lib/seo/legacy-redirects.ts` sends them on.
+    "/:lang/(wynajem-na-miesiace|rent-for-months|dodatki-i-akcesoria|addons-and-accessories)/:slug*",
+    "/Standardowe-Warunki-Umowy.pdf",
+    "/standardowe-warunki-umowy.pdf",
   ],
 };

@@ -3,18 +3,41 @@
 import { BadgePercent, Fuel, Settings2, Square, SquareCheck, Users, type LucideIcon } from "lucide-react";
 
 import Image from "next/image";
-import type { ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 
-import { formatDateTime } from "@/components/account/format";
 import { formatDayCount, formatMoney } from "@/components/reservation/format";
+import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import { plural } from "@/i18n/plural";
-import type { OfferCard } from "@/lib/reservation/offers";
+import type { OfferCard, PlaceFees } from "@/lib/reservation/offers";
 import type { ReservationTerm } from "@/lib/reservation/search";
 
 /** Pieces shared by the car tile (monthly grid) and the segment row (daily list). */
+
+/**
+ * The search's place fees (delivery, collection, one-way), the same for every
+ * car of a daily list. `OfferList` provides them; daily card prices include
+ * them and say how much, so the total does not jump on the next step.
+ */
+export const PlaceFeesContext = createContext<PlaceFees | null>(null);
+
+/** A daily total with the place fees added, rounded to the grosz like the quote. */
+function withFees(amount: number, fees: PlaceFees | null): number {
+  return fees ? Math.round((amount + fees.total) * 100) / 100 : amount;
+}
+
+/** "w tym podstawienie 158 zł" under a daily price that includes the place fees. */
+function FeesNote({ fees }: { fees: PlaceFees | null }) {
+  const lang = useLang();
+  const { cars } = useMessages();
+  return fees ? (
+    <p className="text-xxs text-muted-dark">
+      {fill(fees.atAddress ? cars.placeFeesAddress : cars.placeFees, { amount: formatMoney(lang, fees.total) })}
+    </p>
+  ) : null;
+}
 
 /** Seats, gearbox and fuel in one row: icons carry the meaning, so seats is just the number. */
 export function SpecList({ offer, className = "" }: { offer: OfferCard; className?: string }) {
@@ -60,7 +83,7 @@ export function ChooseButton({
 /** The look of `ChooseButton`, for a control that is not a button (the zone radios). */
 export function chooseClass(selected: boolean): string {
   return `flex h-11 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-bold text-white transition-colors duration-200 ease-out motion-reduce:transition-none ${
-    selected ? "bg-green-medium hover:bg-green-dark" : "bg-blue-medium hover:bg-blue-dark"
+    selected ? "bg-go-strong hover:bg-green-dark" : "bg-blue-medium hover:bg-blue-dark"
   }`;
 }
 
@@ -100,6 +123,7 @@ const VAT = 1.23;
 export function Price({ offer, term }: { offer: OfferCard; term: ReservationTerm }) {
   const lang = useLang();
   const { cars } = useMessages();
+  const fees = useContext(PlaceFeesContext);
   // Only a real deposit is worth a line; "Bez kaucji" was noise.
   const deposit = offer.deposit ? (
     <p className="text-xxs text-muted-dark">{fill(cars.deposit, { amount: formatMoney(lang, offer.deposit) })}</p>
@@ -127,14 +151,15 @@ export function Price({ offer, term }: { offer: OfferCard; term: ReservationTerm
       {offer.regularTotalPrice !== null ? (
         <p className="text-xs text-muted-dark">
           <span className="sr-only">{cars.regularPrice} </span>
-          <s>{formatMoney(lang, offer.regularTotalPrice)}</s>
+          <s>{formatMoney(lang, withFees(offer.regularTotalPrice, fees))}</s>
         </p>
       ) : null}
       <p className={`text-xl font-bold whitespace-nowrap ${offer.promotion ? "text-green-medium" : "text-blue-dark"}`}>
         {offer.promotion ? <span className="sr-only">{cars.promoPrice} </span> : null}
-        {formatMoney(lang, offer.totalPrice)}
+        {formatMoney(lang, withFees(offer.totalPrice, fees))}
         <DaysSuffix days={offer.days} />
       </p>
+      <FeesNote fees={fees} />
       {deposit}
     </div>
   );
@@ -150,7 +175,7 @@ function DaysSuffix({ days }: { days: number | null }) {
  * The promotion on its own row right above the price, after a divider, in
  * every car view (above, so price and button line up across cards): a green icon, the name and when it ends, no background. The
  * old site said "Cena obowiązuje przy odbiorze auta do 2026-12-17 20:00:00";
- * this reads "Jesień z Mobicars do 15 gru 2026, 23:55".
+ * this reads "−10% · Jesień z Mobicars", then "przy odbiorze do 15 grudnia".
  */
 export function PromotionLine({
   offer,
@@ -167,7 +192,11 @@ export function PromotionLine({
   if (!offer.promotion) {
     return null;
   }
-  const endsAt = formatDateTime(lang, offer.promotion.endsAt);
+  const endsAt = promotionEnd(lang, offer.promotion.endsAt);
+  const percent = discountPercent(offer);
+  // RentCarSoft names promotions in Polish only, whatever `lang` asks for
+  // ("Jesień z Mobicars" on /en), so other languages show the generic word.
+  const name = lang === "pl" ? (offer.promotion.name ?? cars.promotion) : cars.promotion;
   return (
     <p
       className={`flex items-start gap-1.5 text-xs leading-snug text-blue-dark ${
@@ -176,17 +205,48 @@ export function PromotionLine({
     >
       <BadgePercent className="mt-px size-4 shrink-0 text-green-medium" aria-hidden />
       <span className="min-w-0">
-        <span className="block font-bold">{offer.promotion.name ?? cars.promotion}</span>
-        {/* Its own line and never split, so "do 18 gru 2026, 20:00" is read in one piece. */}
+        <span className="block font-bold">
+          {percent ? `${fill(cars.promotionDiscount, { percent })} · ${name}` : name}
+        </span>
+        {/* Its own line and never split, so "przy odbiorze do 6 listopada" is read in one piece. */}
         {endsAt ? (
-          <span className="block whitespace-nowrap text-muted-dark">
-            <span className="sr-only">{cars.promotionValid} </span>
-            {fill(cars.promotionUntil, { date: endsAt })}
-          </span>
+          <span className="block whitespace-nowrap text-muted-dark">{fill(cars.promotionUntil, { date: endsAt })}</span>
         ) : null}
       </span>
     </p>
   );
+}
+
+/**
+ * The promotion's last pickup day without the hour ("6 listopada"), as the
+ * client asked: the old "do 2026-11-06 23:55:00" read like a deadline to book.
+ * The year shows only when it is not the current one.
+ */
+function promotionEnd(lang: Lang, value: string | null): string | null {
+  const match = value?.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!match) {
+    return null;
+  }
+  const [, year, month, day] = match.map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const withYear = year !== new Date().getFullYear();
+  return new Intl.DateTimeFormat(intlLocales[lang], {
+    day: "numeric",
+    month: "long",
+    ...(withYear ? { year: "numeric" } : {}),
+    timeZone: "UTC",
+  }).format(date);
+}
+
+/** Whole percent off the struck-through total, or null when there is nothing to compare. */
+function discountPercent(offer: OfferCard): number | null {
+  const regular = offer.regularTotalPrice;
+  const price = offer.totalPrice;
+  if (!regular || price === null || price >= regular) {
+    return null;
+  }
+  const percent = Math.round(((regular - price) / regular) * 100);
+  return percent > 0 ? percent : null;
 }
 
 /** The price a card leads with: the whole rental by the day, or one month. */
@@ -226,7 +286,10 @@ export function CompactOfferCard({
 }) {
   const lang = useLang();
   const { cars } = useMessages();
-  const price = priceOf(offer, term);
+  const listFees = useContext(PlaceFeesContext);
+  const fees = term === "short" ? listFees : null;
+  const rent = priceOf(offer, term);
+  const price = rent === null ? null : withFees(rent, fees);
   return (
     <article
       className={`flex flex-col gap-3 rounded-2xl border-2 bg-white p-3 transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
@@ -263,7 +326,7 @@ export function CompactOfferCard({
               {term === "short" && offer.regularTotalPrice !== null ? (
                 <s className="text-xxs text-muted-dark">
                   <span className="sr-only">{cars.regularPrice} </span>
-                  {formatMoney(lang, offer.regularTotalPrice)}
+                  {formatMoney(lang, withFees(offer.regularTotalPrice, fees))}
                 </s>
               ) : null}
               <span className={`text-lg font-bold whitespace-nowrap ${term === "short" && offer.promotion ? "text-green-medium" : "text-blue-dark"}`}>
@@ -271,6 +334,7 @@ export function CompactOfferCard({
                 {term === "long" ? <span className="text-xs font-semibold"> {cars.perMonth}</span> : <DaysSuffix days={offer.days} />}
               </span>
             </p>
+            <FeesNote fees={fees} />
             {offer.deposit ? <p className="text-xxs text-muted-dark">{fill(cars.deposit, { amount: formatMoney(lang, offer.deposit) })}</p> : null}
           </div>
         )}

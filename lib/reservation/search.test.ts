@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { parseZonedDateTime } from "@internationalized/date";
 
+import { withPagePickup, type PickupPlace } from "./places";
 import {
   draftFromQuery,
   emptyDraft,
@@ -115,5 +116,51 @@ describe("reservation search", () => {
   it("drops malformed query values instead of throwing", () => {
     const parsed = draftFromQuery({ pickup: "abc", from: "2026-13-45T99:00", months: "-3", km: ["2000", "3000"] }, "long");
     assert.deepEqual(parsed, { ...emptyDraft("long"), km: 2000 });
+  });
+});
+
+describe("page pickup point (city and local pages)", () => {
+  const place = (id: number, city: string | null): PickupPlace => ({
+    id,
+    name: `P${id}`,
+    city,
+    cityName: city,
+    addressNote: null,
+    fee: null,
+    customAddresses: false,
+    airport: false,
+    office: false,
+    trainStation: false,
+  });
+  const places = [place(480, "Warszawa"), place(479, "Warszawa"), place(489, "Kraków")];
+  const dates = { start: "2026-11-20T10:00", end: "2026-11-23T10:00" };
+
+  it("starts an empty search at the page's point", () => {
+    const draft = withPagePickup(emptyDraft("short"), 480, places);
+    assert.deepEqual(draft.pickup, { id: 480, address: null });
+  });
+
+  it("keeps a saved search in the same town", () => {
+    const saved = { ...emptyDraft("short"), ...dates, pickup: { id: 479, address: null } };
+    assert.equal(withPagePickup(saved, 480, places), saved);
+  });
+
+  it("replaces a saved search in another town, keeping its dates", () => {
+    const saved = { ...emptyDraft("short"), ...dates, pickup: { id: 489, address: null }, differentReturn: true, dropoff: { id: 479, address: null } };
+    const draft = withPagePickup(saved, 480, places);
+    assert.deepEqual([draft.pickup, draft.differentReturn, draft.dropoff, draft.start, draft.end], [
+      { id: 480, address: null },
+      false,
+      null,
+      dates.start,
+      dates.end,
+    ]);
+  });
+
+  it("changes nothing without a point, or for one RentCarSoft does not list", () => {
+    const saved = { ...emptyDraft("short"), pickup: { id: 489, address: null } };
+    assert.equal(withPagePickup(saved, null, places), saved);
+    assert.equal(withPagePickup(saved, 999, places), saved);
+    assert.equal(withPagePickup(saved, 480, []), saved);
   });
 });

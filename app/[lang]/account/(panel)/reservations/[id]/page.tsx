@@ -1,6 +1,7 @@
 import {
   ArrowLeft,
   Car,
+  Clock,
   Gauge,
   KeyRound,
   Mail,
@@ -8,6 +9,7 @@ import {
   MessageSquare,
   Package,
   Phone,
+  PhoneCall,
   UserRound,
   Wallet,
 } from "lucide-react";
@@ -23,10 +25,12 @@ import {
   formatNumber,
 } from "@/components/account/format";
 import { StatusBadge } from "@/components/account/reservation-card";
+import { getMessages } from "@/i18n/messages";
 import { accountCopy } from "@/i18n/panel-copy";
 import { isLang, type Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import { getMyReservation } from "@/lib/auth/dal";
+import { getChrome } from "@/lib/strapi";
 import type { ClientReservation } from "@/lib/rentcarsoft";
 
 type Props = PageProps<"/[lang]/account/reservations/[id]">;
@@ -155,6 +159,7 @@ async function ReservationDetails({ params }: { params: Props["params"] }) {
 
         <div className="flex flex-col gap-6">
           <PaymentPanel lang={lang} reservation={reservation} />
+          <ChangePanel lang={lang} />
           <ManagerPanel lang={lang} reservation={reservation} />
         </div>
       </div>
@@ -287,6 +292,44 @@ function ManagerPanel({ lang, reservation }: { lang: Lang; reservation: ClientRe
             {manager.email}
           </a>
         ) : null}
+      </div>
+    </Panel>
+  );
+}
+
+/**
+ * RentCarSoft has no endpoint to change or cancel a reservation, signed in or
+ * not (redesign/rcs-analysis.md §5), so the panel offers contact instead of
+ * buttons. Phone, e-mail and hours come from the CMS, like the footer.
+ */
+async function ChangePanel({ lang }: { lang: Lang }) {
+  const t = getMessages(lang).account.reservationHelp;
+  const { contact } = await getChrome(lang);
+
+  return (
+    <Panel title={t.title} icon={PhoneCall}>
+      <div className="flex flex-col gap-3 text-sm">
+        <p>{t.text}</p>
+        {contact ? (
+          <div className="flex flex-col gap-2">
+            <a href={contact.phoneHref} className="flex items-center gap-2 font-semibold text-blue-medium hover:underline">
+              <Phone className="size-4" aria-hidden />
+              {contact.phone}
+            </a>
+            <a href={`mailto:${contact.email}`} className="flex items-center gap-2 break-all text-blue-medium hover:underline">
+              <Mail className="size-4" aria-hidden />
+              {contact.email}
+            </a>
+            {contact.openingHours ? (
+              <p className="flex items-start gap-2 text-muted-dark">
+                <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+                {contact.openingHours}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+        <p className="text-muted-dark">{t.cancel}</p>
+        <p className="text-muted-dark">{t.extend}</p>
       </div>
     </Panel>
   );

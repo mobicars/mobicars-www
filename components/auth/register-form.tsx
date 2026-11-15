@@ -9,6 +9,7 @@ import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import { register, type RegisterField, type RegisterState } from "@/lib/auth/account-actions";
 
+import { CompanyFields } from "./company-fields";
 import { FormAlert, PasswordField, SubmitButton, TextField } from "./fields";
 import { PhoneField } from "./phone-field";
 
@@ -69,10 +70,18 @@ export function RegisterForm({ lang }: { lang: Lang }) {
         <TextField label={t.lastName} name="lastName" autoComplete="family-name" required maxLength={200} defaultValue={value("lastName")} invalid={bad("lastName")} />
       </div>
       {isCompany ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <TextField label={t.companyName} name="companyName" autoComplete="organization" required maxLength={200} defaultValue={value("companyName")} invalid={bad("companyName")} />
-          <TextField label={t.vatNumber} name="vatNumber" inputMode="numeric" required maxLength={32} defaultValue={value("vatNumber")} invalid={bad("vatNumber")} />
-        </div>
+        <CompanyFields
+          labels={{ companyName: t.companyName, vatNumber: t.vatNumber }}
+          defaults={{
+            companyName: value("companyName"),
+            vatNumber: value("vatNumber"),
+            companyAddress: value("companyAddress"),
+            companyPostalCode: value("companyPostalCode"),
+            companyCity: value("companyCity"),
+          }}
+          invalid={{ companyName: bad("companyName"), vatNumber: bad("vatNumber") }}
+          gridClass="grid gap-4 sm:grid-cols-2"
+        />
       ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
         <TextField label={t.email} name="email" type="email" autoComplete="email" required maxLength={254} defaultValue={value("email")} invalid={bad("email")} />

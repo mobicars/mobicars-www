@@ -1,0 +1,8 @@
+# The file of one legal document (`regulation`), for `/pl/dokumenty/{slug}`. See `modules/documents.ts`.
+query DocumentFile($slug: String!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  regulations(filters: { slug: { eq: $slug } }, locale: $locale, status: $status, pagination: { limit: 1 }) {
+    file {
+      url
+    }
+  }
+}

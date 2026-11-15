@@ -20,7 +20,11 @@ export type Messages = typeof pl;
 
 const all: Record<Lang, Messages> = { pl, en, de, uk };
 
-/** Texts of one language. Server code calls it directly; client code uses `useMessages`. */
+/**
+ * Texts of one language. Server code calls it directly; client code uses
+ * `useMessages`, which holds only the namespaces its route sends
+ * (`CLIENT_MESSAGE_SCOPES` in `client-messages.ts`).
+ */
 export function getMessages(lang: Lang): Messages {
   return all[lang];
 }

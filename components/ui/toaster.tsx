@@ -2,7 +2,7 @@
 
 import { Toaster as Sonner } from "sonner";
 
-/** Toast outlet for the whole site. Call `toast()` from `sonner` anywhere on the client. */
+/** Toast outlet of the booking flow (`app/[lang]/reservation/layout.tsx`). Call `toast()` from `sonner` in its client code. */
 export function Toaster() {
   return (
     <Sonner

@@ -30,13 +30,43 @@ The URL of a page is its `slug` under its `parentPage` chain. One small list per
 - All language versions share the `documentId` (Strapi 5), which is how hreflang finds the page in other languages. The CMS has `pl` and `en`; `de` and `uk` have no pages yet.
 - App folders (`fleet`, `reservation`, `account`) win over the catch-all `app/[lang]/[...slug]`.
 
+## Languages
+
+A page, post, city or local page exists in a language only when the CMS has its version in that language; otherwise the URL is a 404. No language's text stands in for another's (decision of the client, 2026-11-13).
+
+## City and local pages
+
+`city` (city and airport pages) and `local-page` (local pickup pages) keep the old site's URLs, so links and search results carry over: `/pl/wypozyczalnia-samochodow-warszawa`, `/en/car-rental-warsaw` for a city, and `/pl/lokalna-wypozyczalnia-samochodow/warszawa-bemowo`, `/en/local-car-rental/warsaw-bemowo` for a local page (`LOCAL_ROOT`; `lokale-autovermietung` and `lokalna-orenda-avto` for the languages the old site did not have). `modules/places.ts`:
+
+- `listPlaceRoutes(kind, lang)`: every entry of one type in that language. A path a CMS page uses stays the CMS page's.
+- `findPlaceRoute(lang, segments)`: asked by `app/[lang]/[...slug]` only after no CMS page matched.
+- `getPlacePage(kind, lang, documentId)`: a `Page` from the type's own `blocks` zone (the same zone as a page's, parsed by `parseBlocks`). The legacy `components` zone belongs to mobicars-pl and is never read.
+
+They render and get their metadata like CMS pages (`CmsPage`, `cmsPageMetadata` with the place type's routes for hreflang), are listed in the sitemap, render on their first visit and are cached under `cms:city` / `cms:local-page`.
+
 ## Blocks
 
 `Page.blocks` is a list of domain records (`Block`), not GraphQL shapes. Each has a component in `components/blocks`.
 
 | Strapi | `type` | Notes |
 | --- | --- | --- |
-| `blocks.hero` | `hero` | As the first block: the page's `<h1>`, image loaded eagerly with high priority |
+| `blocks.hero` | `hero` | As the first block: the page's `<h1>`, image loaded eagerly with high priority; `layout` cover/split, up to 4 `highlights` |
+| `blocks.content` | `content` | Heading (`elements.section-header`), rich text, up to 3 buttons, `align`; left out when all empty |
+| `blocks.media-text` | `mediaText` | As content, with an image at `start` or `end`; left out without an image |
+| `blocks.reviews` | `reviews` | Newest published `rating` entries of one source (or all), up to `limit`; `summary` (average, count) over all of that source; left out with none |
+| `blocks.scenarios` | `scenarios` | Use cases as tabs (label, title, audience, text, benefits, image, link); left out without items |
+| `blocks.comparison` | `comparison` | Columns and rows; each row gets exactly one value per column (missing = empty `text` cell) |
+| `blocks.cars` | `cars` | RCS classes: `source` all/classes/category, `segmentIds` (JSON of numbers, later a custom field), `limit`, `layout` grid/row; the component reads the fleet |
+| `blocks.logos` | `logos` | Client or partner logos; logos without an image are dropped |
+| `blocks.lead-form` | `leadForm` | Copy, steps and consent of the enquiry form; phone and e-mail come from `Chrome.contact` |
+| `blocks.cta-band` | `ctaBand` | Closing call to action; left out when the primary link has nowhere to go |
+| `blocks.blog-posts` | `blogPosts` | `latest` (optionally one category) or `picked`; left out when no post is published |
+| `blocks.features` | `features` | Left out without items |
+| `blocks.faq` | `faq` | `answer` is Strapi rich text reduced to `RichBlocks` (`internal/rich-blocks.ts`) plus `answerText` for FAQPage JSON-LD; questions without an answer are dropped, then a block with none |
+
+Content, media-text, FAQ and reviews share `elements.section-header` (eyebrow, title, lead, flattened into the record; the site picks the heading level) and `elements.section` (`SectionStyle`: tone, spacing, width, anchor; CMS defaults when empty), matching `components/ui/section.tsx`.
+
+Rich text (`RichBlocks`) keeps paragraphs, headings, quotes, lists (nested too) and text with bold, italic, underline, strikethrough and code. Other node types (images, code blocks) are dropped, as are paragraphs without text; a link whose URL fails the `customUrl` check below keeps its text.
 
 A page that does not open with a hero renders its title as a visually hidden `<h1>`.
 

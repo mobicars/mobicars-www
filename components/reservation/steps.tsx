@@ -38,17 +38,21 @@ export function ReservationSteps({ current }: { current: number }) {
   const list = useRef<HTMLOListElement>(null);
 
   // Step changes navigate with `scroll: false`; the new step starts here, not at
-  // the top of the page under the search widget.
+  // the top of the page under the search widget. Focus moves to the new step's
+  // heading (`data-step-heading`, `tabIndex={-1}`), or to this list on the car
+  // step, so keyboard and screen reader users do not fall back to <body>.
   useEffect(() => {
     if (shownStep !== null && shownStep !== current) {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       list.current?.scrollIntoView({ block: "start", behavior: reduce ? "auto" : "smooth" });
+      const heading = document.querySelector<HTMLElement>("[data-step-heading]");
+      (heading ?? list.current)?.focus({ preventScroll: true });
     }
     shownStep = current;
   }, [current]);
 
   return (
-    <ol ref={list} aria-label={steps.label} className="mb-8 flex w-full scroll-mt-4 items-center">
+    <ol ref={list} tabIndex={-1} aria-label={steps.label} className="mb-8 flex w-full scroll-mt-4 items-center outline-none">
       {STEPS.map(({ id, icon: Icon, step }, index) => {
         const label = steps[id];
         const done = index < current;
@@ -58,10 +62,10 @@ export function ReservationSteps({ current }: { current: number }) {
             <span
               className={`flex size-9 shrink-0 items-center justify-center rounded-full border md:size-10 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                 done
-                  ? "border-green-medium bg-green-medium text-white"
+                  ? "border-go-strong bg-go-strong text-white"
                   : active
                     ? "border-blue-medium bg-blue-medium text-white"
-                    : "border-blue-medium/30 text-blue-medium/50"
+                    : "border-muted-dark/60 text-muted-dark"
               }`}
             >
               {done ? (
@@ -72,7 +76,7 @@ export function ReservationSteps({ current }: { current: number }) {
             </span>
             <span
               // Below `md` the other labels stay for screen readers only.
-              className={`${active ? "text-blue-medium" : "sr-only text-blue-medium/50 md:not-sr-only"} ${
+              className={`${active ? "text-blue-medium" : "sr-only text-muted-dark md:not-sr-only"} ${
                 done ? "md:text-blue-dark/70" : ""
               }`}
             >

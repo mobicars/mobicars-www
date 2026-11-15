@@ -1,4 +1,4 @@
-import type { ReservationQuote } from "@/lib/rentcarsoft";
+import type { QuoteLine, ReservationQuote } from "@/lib/rentcarsoft";
 
 /**
  * The booking summary's prices. They always come from RentCarSoft's
@@ -18,6 +18,11 @@ export type QuoteLineView = {
   name?: string | null;
   /** `rent`: rental days, for "Wynajem (2 doby)". */
   days?: number | null;
+  /**
+   * `pickup` / `return`: the customer's own address ("Podstawienie pod adres")
+   * rather than a point such as an airport or office ("Opłata za wydanie").
+   */
+  atAddress?: boolean;
   /** 0 shows "w cenie". */
   amount: number;
   /** Price before a promotion, struck through. */
@@ -88,13 +93,22 @@ export function quoteQuery(
  * `iloscMiesiecy` (live API, 12 November 2026: missing once a one-time addon
  * was added).
  */
-export function toQuoteView(quote: ReservationQuote, months: number | null = null): QuoteView {
+/**
+ * The name of a protection or extra line. Calculate sends Polish names
+ * whatever `lang` asks for, plus `nameEn`; every other language gets the
+ * English one rather than Polish.
+ */
+function itemName(line: QuoteLine, lang: string): string | null {
+  return lang === "pl" ? line.name : (line.nameEn ?? line.name);
+}
+
+export function toQuoteView(quote: ReservationQuote, months: number | null = null, lang = "pl"): QuoteView {
   if (quote.total === null) {
     throw new Error("Quote without a total.");
   }
   const monthCount = months ?? (quote.term === "long" ? quote.months : null);
   if (monthCount) {
-    return toMonthlyView(quote, quote.total, monthCount);
+    return toMonthlyView(quote, quote.total, monthCount, lang);
   }
   const rent = quote.rent ?? quote.priceDiscounted ?? quote.price ?? 0;
   const regular = quote.priceWithoutDiscount;
@@ -117,7 +131,7 @@ export function toQuoteView(quote: ReservationQuote, months: number | null = nul
     }
   }
   for (const line of [...quote.addons, ...quote.accessories]) {
-    lines.push({ kind: "item", name: line.name, amount: line.price ?? 0, regular: null });
+    lines.push({ kind: "item", name: itemName(line, lang), amount: line.price ?? 0, regular: null });
   }
   return { lines, total: quote.total, deposit: quote.deposit };
 }
@@ -127,7 +141,7 @@ export function toQuoteView(quote: ReservationQuote, months: number | null = nul
  * and accessory lines carry the whole-period `price` and `isOneTime`;
  * `total` 8950 = `razem_miesiecznie…` 2950 × 3 + `razem_jednorazowo` 100.
  */
-function toMonthlyView(quote: ReservationQuote, total: number, months: number): QuoteView {
+function toMonthlyView(quote: ReservationQuote, total: number, months: number, lang: string): QuoteView {
   const monthly: QuoteLineView[] = [{ kind: "monthlyRent", amount: quote.monthlyRent ?? 0, regular: null }];
   const oneTime: QuoteLineView[] = [];
   const fees: [number | null, QuoteLineKind][] = [
@@ -143,9 +157,9 @@ function toMonthlyView(quote: ReservationQuote, total: number, months: number): 
   for (const line of [...quote.addons, ...quote.accessories]) {
     const price = line.price ?? 0;
     if (line.isOneTime) {
-      oneTime.push({ kind: "item", name: line.name, amount: price, regular: null });
+      oneTime.push({ kind: "item", name: itemName(line, lang), amount: price, regular: null });
     } else {
-      monthly.push({ kind: "item", name: line.name, amount: Math.round((price / months) * 100) / 100, regular: null });
+      monthly.push({ kind: "item", name: itemName(line, lang), amount: Math.round((price / months) * 100) / 100, regular: null });
     }
   }
   return {

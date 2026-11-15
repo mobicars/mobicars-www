@@ -1,0 +1,15 @@
+# Links to every city, airport and local page of one language, for the footer's
+# link groups and the locations menu (`modules/place-links.ts`).
+query PlaceLinks($locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  cities(locale: $locale, status: $status, pagination: { limit: 200 }) {
+    slug
+    title
+    kind
+    shortName
+  }
+  localPages(locale: $locale, status: $status, pagination: { limit: 200 }) {
+    slug
+    title: Title
+    shortName
+  }
+}

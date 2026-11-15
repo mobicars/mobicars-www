@@ -19,9 +19,10 @@ import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
+import { termOfSearchQuery, track, useBookingStep } from "@/lib/reservation/analytics";
 import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
-import type { ProtectionOption, ProtectionTier } from "@/lib/reservation/protection";
+import { rowValue, type ProtectionOption, type ProtectionTier } from "@/lib/reservation/protection";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
@@ -57,6 +58,7 @@ export function ProtectionStep({
 }) {
   const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
+  useBookingStep("protection", termOfSearchQuery(serverSearchQuery));
   const t = useMessages().protection;
   const [selectedId, setSelectedId] = useState<number | null>(initialProtection);
   const quote = useQuote(
@@ -78,6 +80,10 @@ export function ProtectionStep({
 
   /** Choosing a package moves on to the extras, like "Wybierz" on the car list. */
   function apply(id: number) {
+    track("select_protection", {
+      protection_id: id,
+      protection_name: options.find((option) => option.id === id)?.name ?? null,
+    });
     setSelectedId(id);
     router.push(currentHrefWith({ [QUERY_KEYS.step]: "extras", [QUERY_KEYS.protection]: String(id) }), { scroll: false });
   }
@@ -114,7 +120,7 @@ export function ProtectionStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-labelledby="protection-title" className="min-w-0">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-          <h2 id="protection-title" className="text-2xl font-semibold text-blue-dark">
+          <h2 id="protection-title" tabIndex={-1} data-step-heading className="text-2xl font-semibold text-blue-dark outline-none">
             {t.title}
           </h2>
           <button
@@ -149,7 +155,7 @@ export function ProtectionStep({
                     ? options.findIndex((option) => option.id === selectedId)
                     : options.findIndex((option) => option.recommended),
                 )}
-                className="-mx-3 scroll-px-3 px-3 pt-5 pb-2"
+                frameClassName="-mx-3 scroll-px-3 px-3 pt-5 pb-2"
                 itemClassName="w-[82%]"
                 count={options.length}
                 list={({ ref, className, itemClassName }) => (
@@ -246,6 +252,7 @@ function ProtectionTable({
   onChoose: (id: number) => void;
 }) {
   const t = useMessages().protection;
+  const lang = useLang();
   // Every cover any package lists, in the packages' order.
   const keys = [...new Set(options.flatMap((option) => option.rows.map((row) => row.key)))];
   const head = "flex h-52 flex-col items-center justify-end gap-1 px-3 pb-4 text-center";
@@ -292,7 +299,7 @@ function ProtectionTable({
                   // upwards when the label wraps in a narrow column. It takes the frame's colour.
                   <span
                     className={`absolute inset-x-6 bottom-[calc(100%-2px)] z-30 flex min-h-7 items-center justify-center rounded-t-xl px-2 py-1 text-center text-xxs leading-tight font-bold text-white transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                      isSelected ? "bg-green-medium" : "bg-blue-medium"
+                      isSelected ? "bg-go-strong" : "bg-blue-medium"
                     }`}
                   >
                     {t.recommended}
@@ -323,10 +330,10 @@ function ProtectionTable({
                       ) : row.covered ? (
                         <>
                           <Check className="size-5 text-green-medium" aria-hidden />
-                          <span className="sr-only">{row.value}</span>
+                          <span className="sr-only">{rowValue(row, lang, t.included)}</span>
                         </>
                       ) : (
-                        <span className="text-blue-dark">{row.value}</span>
+                        <span className="text-blue-dark">{rowValue(row, lang, t.included)}</span>
                       )}
                     </div>
                   );
@@ -403,6 +410,7 @@ function PackagePrice({ option }: { option: ProtectionOption }) {
 
 function ProtectionCard({ option, className }: { option: ProtectionOption; className: string }) {
   const t = useMessages().protection;
+  const lang = useLang();
   return (
     <GridListItem
       id={option.id}
@@ -418,7 +426,7 @@ function ProtectionCard({ option, className }: { option: ProtectionOption; class
           {option.recommended ? (
             <span
               className={`absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full px-3 py-1 text-xxs font-bold whitespace-nowrap text-white ${
-                isSelected ? "bg-green-medium" : "bg-blue-medium"
+                isSelected ? "bg-go-strong" : "bg-blue-medium"
               }`}
             >
               {t.recommended}
@@ -440,7 +448,7 @@ function ProtectionCard({ option, className }: { option: ProtectionOption; class
                 <dt className="text-xs text-muted-dark">{t.rows[row.key]}</dt>
                 <dd className={`flex items-center gap-1 text-right font-semibold ${row.covered ? "text-green-dark" : "text-blue-dark"}`}>
                   {row.covered ? <Check className="size-4 shrink-0" aria-hidden /> : null}
-                  {row.value}
+                  {rowValue(row, lang, t.included)}
                 </dd>
               </div>
             ))}

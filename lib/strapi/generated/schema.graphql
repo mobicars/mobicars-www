@@ -31,10 +31,13 @@ type AnnouncementRelationResponseCollection {
 }
 
 type Blog {
+  blocks: [BlogBlocksDynamicZone]
+  category: BlogCategory
   components: [BlogComponentsDynamicZone]
   coverImage: UploadFile!
   createdAt: DateTime
   documentId: ID!
+  excerpt: String
   locale: String
   localizations(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Blog]!
   localizations_connection(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogRelationResponseCollection
@@ -43,6 +46,58 @@ type Blog {
   slug: String!
   title: String!
   updatedAt: DateTime
+}
+
+union BlogBlocksDynamicZone = ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksScenarios | ComponentBlocksTrustBar | Error
+
+scalar BlogBlocksDynamicZoneInput
+
+type BlogCategory {
+  blogs(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Blog]!
+  blogs_connection(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogRelationResponseCollection
+  color: ENUM_BLOGCATEGORY_COLOR
+  createdAt: DateTime
+  documentId: ID!
+  locale: String
+  localizations(filters: BlogCategoryFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [BlogCategory]!
+  localizations_connection(filters: BlogCategoryFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogCategoryRelationResponseCollection
+  name: String!
+  publishedAt: DateTime
+  slug: String!
+  updatedAt: DateTime
+}
+
+type BlogCategoryEntityResponseCollection {
+  nodes: [BlogCategory!]!
+  pageInfo: Pagination!
+}
+
+input BlogCategoryFiltersInput {
+  and: [BlogCategoryFiltersInput]
+  blogs: BlogFiltersInput
+  color: StringFilterInput
+  createdAt: DateTimeFilterInput
+  documentId: IDFilterInput
+  locale: StringFilterInput
+  localizations: BlogCategoryFiltersInput
+  name: StringFilterInput
+  not: BlogCategoryFiltersInput
+  or: [BlogCategoryFiltersInput]
+  publishedAt: DateTimeFilterInput
+  slug: StringFilterInput
+  updatedAt: DateTimeFilterInput
+}
+
+input BlogCategoryInput {
+  blogs: [ID]
+  color: ENUM_BLOGCATEGORY_COLOR
+  name: String
+  publishedAt: DateTime
+  slug: String
+}
+
+type BlogCategoryRelationResponseCollection {
+  nodes: [BlogCategory!]!
 }
 
 union BlogComponentsDynamicZone = ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | Error
@@ -56,8 +111,10 @@ type BlogEntityResponseCollection {
 
 input BlogFiltersInput {
   and: [BlogFiltersInput]
+  category: BlogCategoryFiltersInput
   createdAt: DateTimeFilterInput
   documentId: IDFilterInput
+  excerpt: StringFilterInput
   locale: StringFilterInput
   localizations: BlogFiltersInput
   not: BlogFiltersInput
@@ -70,8 +127,11 @@ input BlogFiltersInput {
 }
 
 input BlogInput {
+  blocks: [BlogBlocksDynamicZoneInput!]
+  category: ID
   components: [BlogComponentsDynamicZoneInput!]
   coverImage: ID
+  excerpt: String
   publishedAt: DateTime
   seo: ComponentSharedSeoInput
   slug: String
@@ -109,18 +169,26 @@ input BooleanFilterInput {
 
 type City {
   apiReference: String
+  blocks: [CityBlocksDynamicZone]
   components: [CityComponentsDynamicZone]
   createdAt: DateTime
   documentId: ID!
+  kind: ENUM_CITY_KIND
   locale: String
   localizations(filters: CityFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [City]!
   localizations_connection(filters: CityFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): CityRelationResponseCollection
+  pickupPoint: Int
   publishedAt: DateTime
   seo: ComponentSharedSeo
+  shortName: String
   slug: String!
   title: String!
   updatedAt: DateTime
 }
+
+union CityBlocksDynamicZone = ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksScenarios | ComponentBlocksTrustBar | Error
+
+scalar CityBlocksDynamicZoneInput
 
 union CityComponentsDynamicZone = ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedHeroPage | ComponentSharedMap | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | Error
 
@@ -136,12 +204,15 @@ input CityFiltersInput {
   apiReference: StringFilterInput
   createdAt: DateTimeFilterInput
   documentId: IDFilterInput
+  kind: StringFilterInput
   locale: StringFilterInput
   localizations: CityFiltersInput
   not: CityFiltersInput
   or: [CityFiltersInput]
+  pickupPoint: IntFilterInput
   publishedAt: DateTimeFilterInput
   seo: ComponentSharedSeoFiltersInput
+  shortName: StringFilterInput
   slug: StringFilterInput
   title: StringFilterInput
   updatedAt: DateTimeFilterInput
@@ -149,9 +220,13 @@ input CityFiltersInput {
 
 input CityInput {
   apiReference: String
+  blocks: [CityBlocksDynamicZoneInput!]
   components: [CityComponentsDynamicZoneInput!]
+  kind: ENUM_CITY_KIND
+  pickupPoint: Int
   publishedAt: DateTime
   seo: ComponentSharedSeoInput
+  shortName: String
   slug: String
   title: String
 }
@@ -160,26 +235,231 @@ type CityRelationResponseCollection {
   nodes: [City!]!
 }
 
-type ComponentBlocksHero {
-  backgroundImage: UploadFile!
-  backgroundImageMobile: UploadFile
-  backgroundVideo: UploadFile
+type ComponentBlocksBlogPosts {
   badge: String
-  ctas(filters: ComponentElementsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsCta]
-  height: ENUM_COMPONENTBLOCKSHERO_HEIGHT!
+  category: BlogCategory
+  cta: ComponentElementsCta
   id: ID!
-  overlay: ENUM_COMPONENTBLOCKSHERO_OVERLAY!
-  reservationDefaultTerm: ENUM_COMPONENTBLOCKSHERO_RESERVATIONDEFAULTTERM!
-  reservationLayout: ENUM_COMPONENTBLOCKSHERO_RESERVATIONLAYOUT!
+  limit: Int
+  posts(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Blog]!
+  posts_connection(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogRelationResponseCollection
+  source: ENUM_COMPONENTBLOCKSBLOGPOSTS_SOURCE!
   subtitle: String
   title: String!
 }
 
-type ComponentBlocksRichText {
-  content: String!
+type ComponentBlocksCars {
+  category: ENUM_COMPONENTBLOCKSCARS_CATEGORY
+  cta: ComponentElementsLink
+  defaultCategory: ENUM_COMPONENTBLOCKSCARS_DEFAULTCATEGORY
+  header: ComponentElementsSectionHeader
   id: ID!
-  settings: ComponentElementsSettings
+  layout: ENUM_COMPONENTBLOCKSCARS_LAYOUT!
+  limit: Int
+  onlyPromotions: Boolean
+  section: ComponentElementsSection
+  segmentIds: JSON
+  source: ENUM_COMPONENTBLOCKSCARS_SOURCE!
+}
+
+type ComponentBlocksComparison {
+  columns(filters: ComponentElementsComparisonColumnFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsComparisonColumn]!
+  footnote: String
+  header: ComponentElementsSectionHeader
+  id: ID!
+  rows(filters: ComponentElementsComparisonRowFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsComparisonRow]!
+  section: ComponentElementsSection
+}
+
+type ComponentBlocksContact {
+  departments(filters: ComponentElementsDepartmentFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsDepartment]
+  formTopics(filters: ComponentElementsListItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsListItem]
+  header: ComponentElementsSectionHeader
+  id: ID!
+  image: UploadFile
+  section: ComponentElementsSection
+  showCompany: Boolean
+}
+
+type ComponentBlocksContent {
+  align: ENUM_COMPONENTBLOCKSCONTENT_ALIGN
+  body: String
+  collapsedLabel: String
+  collapsible: Boolean
+  ctas(filters: ComponentElementsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsCta]
+  header: ComponentElementsSectionHeader
+  id: ID!
+  previewParagraphs: Int
+  section: ComponentElementsSection
+}
+
+type ComponentBlocksCtaBand {
+  eyebrow: String
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  media: UploadFile
+  primary: ComponentElementsLink!
+  secondary: ComponentElementsLink
+  showStoreBadges: Boolean
+  text: String
+  title: String!
+  tone: ENUM_COMPONENTBLOCKSCTABAND_TONE!
+  variant: ENUM_COMPONENTBLOCKSCTABAND_VARIANT
+}
+
+type ComponentBlocksFaq {
+  cta: ComponentElementsLink
+  groupByCategory: Boolean
+  header: ComponentElementsSectionHeader
+  id: ID!
+  items(filters: ComponentElementsFaqItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsFaqItem]!
+  section: ComponentElementsSection
+  structuredData: Boolean
+}
+
+type ComponentBlocksFeatures {
+  id: ID!
+  items(filters: ComponentElementsFeatureFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsFeature]!
   title: String
+  variant: ENUM_COMPONENTBLOCKSFEATURES_VARIANT!
+}
+
+type ComponentBlocksHero {
+  backgroundImage: UploadFile
+  backgroundImageMobile: UploadFile
+  backgroundVideo: UploadFile
+  badge: String
+  breadcrumbLabel: String
+  ctas(filters: ComponentElementsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsCta]
+  focalPoint: ENUM_COMPONENTBLOCKSHERO_FOCALPOINT
+  height: ENUM_COMPONENTBLOCKSHERO_HEIGHT!
+  highlights(filters: ComponentElementsHighlightFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsHighlight]
+  id: ID!
+  layout: ENUM_COMPONENTBLOCKSHERO_LAYOUT
+  overlay: ENUM_COMPONENTBLOCKSHERO_OVERLAY!
+  reservationDefaultTerm: ENUM_COMPONENTBLOCKSHERO_RESERVATIONDEFAULTTERM!
+  reservationLayout: ENUM_COMPONENTBLOCKSHERO_RESERVATIONLAYOUT!
+  searchSide: ENUM_COMPONENTBLOCKSHERO_SEARCHSIDE
+  subtitle: String
+  title: String!
+  trust: ComponentBlocksTrustBar
+}
+
+type ComponentBlocksLeadForm {
+  consent: String!
+  contactText: String
+  contactTitle: String
+  header: ComponentElementsSectionHeader
+  id: ID!
+  section: ComponentElementsSection
+  steps(filters: ComponentElementsListItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsListItem]
+  successText: String
+  successTitle: String!
+  variant: ENUM_COMPONENTBLOCKSLEADFORM_VARIANT!
+}
+
+type ComponentBlocksLocations {
+  city: String
+  filter: ENUM_COMPONENTBLOCKSLOCATIONS_FILTER!
+  header: ComponentElementsSectionHeader
+  id: ID!
+  layout: ENUM_COMPONENTBLOCKSLOCATIONS_LAYOUT
+  section: ComponentElementsSection
+  showMap: Boolean
+}
+
+type ComponentBlocksLogos {
+  header: ComponentElementsSectionHeader
+  id: ID!
+  items(filters: ComponentElementsLogoFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsLogo]!
+  section: ComponentElementsSection
+}
+
+type ComponentBlocksMediaText {
+  body: String
+  ctas(filters: ComponentElementsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsCta]
+  header: ComponentElementsSectionHeader
+  id: ID!
+  image: UploadFile!
+  imagePosition: ENUM_COMPONENTBLOCKSMEDIATEXT_IMAGEPOSITION
+  imageStyle: ENUM_COMPONENTBLOCKSMEDIATEXT_IMAGESTYLE
+  section: ComponentElementsSection
+}
+
+type ComponentBlocksPromoCards {
+  header: ComponentElementsSectionHeader
+  id: ID!
+  items(filters: ComponentElementsPromoFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsPromo]!
+  section: ComponentElementsSection
+}
+
+type ComponentBlocksReviews {
+  header: ComponentElementsSectionHeader
+  id: ID!
+  layout: ENUM_COMPONENTBLOCKSREVIEWS_LAYOUT
+  limit: Int
+  section: ComponentElementsSection
+  showSummary: Boolean
+  source: ENUM_COMPONENTBLOCKSREVIEWS_SOURCE
+}
+
+type ComponentBlocksScenarios {
+  header: ComponentElementsSectionHeader
+  id: ID!
+  items(filters: ComponentElementsScenarioFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsScenario]!
+  layout: ENUM_COMPONENTBLOCKSSCENARIOS_LAYOUT
+  section: ComponentElementsSection
+}
+
+type ComponentBlocksTrustBar {
+  claims(filters: ComponentElementsHighlightFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsHighlight]
+  id: ID!
+  showRating: Boolean
+  stats(filters: ComponentElementsStatRefFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsStatRef]
+  variant: ENUM_COMPONENTBLOCKSTRUSTBAR_VARIANT!
+}
+
+type ComponentElementsComparisonColumn {
+  highlighted: Boolean
+  id: ID!
+  label: String!
+}
+
+input ComponentElementsComparisonColumnFiltersInput {
+  and: [ComponentElementsComparisonColumnFiltersInput]
+  highlighted: BooleanFilterInput
+  label: StringFilterInput
+  not: ComponentElementsComparisonColumnFiltersInput
+  or: [ComponentElementsComparisonColumnFiltersInput]
+}
+
+type ComponentElementsComparisonRow {
+  criterion: String!
+  id: ID!
+  values(filters: ComponentElementsComparisonValueFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsComparisonValue]
+}
+
+input ComponentElementsComparisonRowFiltersInput {
+  and: [ComponentElementsComparisonRowFiltersInput]
+  criterion: StringFilterInput
+  not: ComponentElementsComparisonRowFiltersInput
+  or: [ComponentElementsComparisonRowFiltersInput]
+  values: ComponentElementsComparisonValueFiltersInput
+}
+
+type ComponentElementsComparisonValue {
+  id: ID!
+  kind: ENUM_COMPONENTELEMENTSCOMPARISONVALUE_KIND!
+  text: String
+}
+
+input ComponentElementsComparisonValueFiltersInput {
+  and: [ComponentElementsComparisonValueFiltersInput]
+  kind: StringFilterInput
+  not: ComponentElementsComparisonValueFiltersInput
+  or: [ComponentElementsComparisonValueFiltersInput]
+  text: StringFilterInput
 }
 
 type ComponentElementsCta {
@@ -196,6 +476,96 @@ input ComponentElementsCtaFiltersInput {
   not: ComponentElementsCtaFiltersInput
   or: [ComponentElementsCtaFiltersInput]
   variant: StringFilterInput
+}
+
+type ComponentElementsDepartment {
+  email: String
+  hours: String
+  id: ID!
+  link: ComponentElementsLink
+  name: String!
+  phone: String
+  schedule(filters: ComponentElementsOpeningHoursFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsOpeningHours]
+  showInFooter: Boolean
+  text: String
+}
+
+input ComponentElementsDepartmentFiltersInput {
+  and: [ComponentElementsDepartmentFiltersInput]
+  email: StringFilterInput
+  hours: StringFilterInput
+  link: ComponentElementsLinkFiltersInput
+  name: StringFilterInput
+  not: ComponentElementsDepartmentFiltersInput
+  or: [ComponentElementsDepartmentFiltersInput]
+  phone: StringFilterInput
+  schedule: ComponentElementsOpeningHoursFiltersInput
+  showInFooter: BooleanFilterInput
+  text: StringFilterInput
+}
+
+input ComponentElementsDepartmentInput {
+  email: String
+  hours: String
+  id: ID
+  link: ComponentElementsLinkInput
+  name: String
+  phone: String
+  schedule: [ComponentElementsOpeningHoursInput]
+  showInFooter: Boolean
+  text: String
+}
+
+type ComponentElementsFaqItem {
+  answer: String!
+  category: FaqCategory
+  id: ID!
+  question: String!
+}
+
+input ComponentElementsFaqItemFiltersInput {
+  and: [ComponentElementsFaqItemFiltersInput]
+  answer: StringFilterInput
+  category: FaqCategoryFiltersInput
+  not: ComponentElementsFaqItemFiltersInput
+  or: [ComponentElementsFaqItemFiltersInput]
+  question: StringFilterInput
+}
+
+type ComponentElementsFeature {
+  icon: String
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  link: ComponentElementsLink
+  text: String
+  title: String!
+  tone: ENUM_COMPONENTELEMENTSFEATURE_TONE
+}
+
+input ComponentElementsFeatureFiltersInput {
+  and: [ComponentElementsFeatureFiltersInput]
+  icon: StringFilterInput
+  link: ComponentElementsLinkFiltersInput
+  not: ComponentElementsFeatureFiltersInput
+  or: [ComponentElementsFeatureFiltersInput]
+  text: StringFilterInput
+  title: StringFilterInput
+  tone: StringFilterInput
+}
+
+type ComponentElementsHighlight {
+  icon: String
+  id: ID!
+  text: String!
+}
+
+input ComponentElementsHighlightFiltersInput {
+  and: [ComponentElementsHighlightFiltersInput]
+  icon: StringFilterInput
+  not: ComponentElementsHighlightFiltersInput
+  or: [ComponentElementsHighlightFiltersInput]
+  text: StringFilterInput
 }
 
 type ComponentElementsLink {
@@ -236,6 +606,128 @@ input ComponentElementsLinkInput {
   sale: ID
 }
 
+type ComponentElementsListItem {
+  id: ID!
+  text: String!
+}
+
+input ComponentElementsListItemFiltersInput {
+  and: [ComponentElementsListItemFiltersInput]
+  not: ComponentElementsListItemFiltersInput
+  or: [ComponentElementsListItemFiltersInput]
+  text: StringFilterInput
+}
+
+type ComponentElementsLogo {
+  id: ID!
+  image: UploadFile!
+  name: String!
+}
+
+input ComponentElementsLogoFiltersInput {
+  and: [ComponentElementsLogoFiltersInput]
+  name: StringFilterInput
+  not: ComponentElementsLogoFiltersInput
+  or: [ComponentElementsLogoFiltersInput]
+}
+
+type ComponentElementsOpeningHours {
+  closed: Boolean
+  days: JSON!
+  from: Time
+  id: ID!
+  to: Time
+}
+
+input ComponentElementsOpeningHoursFiltersInput {
+  and: [ComponentElementsOpeningHoursFiltersInput]
+  closed: BooleanFilterInput
+  days: JSONFilterInput
+  from: TimeFilterInput
+  not: ComponentElementsOpeningHoursFiltersInput
+  or: [ComponentElementsOpeningHoursFiltersInput]
+  to: TimeFilterInput
+}
+
+input ComponentElementsOpeningHoursInput {
+  closed: Boolean
+  days: JSON
+  from: Time
+  id: ID
+  to: Time
+}
+
+type ComponentElementsPromo {
+  code: String
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  link: ComponentElementsLink
+  termsLink: ComponentElementsLink
+  text: String
+  title: String!
+  tone: ENUM_COMPONENTELEMENTSPROMO_TONE
+  validFrom: Date
+  validUntil: Date
+}
+
+input ComponentElementsPromoFiltersInput {
+  and: [ComponentElementsPromoFiltersInput]
+  code: StringFilterInput
+  link: ComponentElementsLinkFiltersInput
+  not: ComponentElementsPromoFiltersInput
+  or: [ComponentElementsPromoFiltersInput]
+  termsLink: ComponentElementsLinkFiltersInput
+  text: StringFilterInput
+  title: StringFilterInput
+  tone: StringFilterInput
+  validFrom: DateFilterInput
+  validUntil: DateFilterInput
+}
+
+type ComponentElementsScenario {
+  audience: String
+  benefits(filters: ComponentElementsListItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsListItem]
+  cta: ComponentElementsLink
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  label: String!
+  text: String
+  title: String!
+}
+
+input ComponentElementsScenarioFiltersInput {
+  and: [ComponentElementsScenarioFiltersInput]
+  audience: StringFilterInput
+  benefits: ComponentElementsListItemFiltersInput
+  cta: ComponentElementsLinkFiltersInput
+  label: StringFilterInput
+  not: ComponentElementsScenarioFiltersInput
+  or: [ComponentElementsScenarioFiltersInput]
+  text: StringFilterInput
+  title: StringFilterInput
+}
+
+type ComponentElementsSection {
+  anchor: String
+  background: ENUM_COMPONENTELEMENTSSECTION_BACKGROUND
+  backgroundImage: UploadFile
+  backgroundImageMobile: UploadFile
+  id: ID!
+  ornament: ENUM_COMPONENTELEMENTSSECTION_ORNAMENT
+  spacing: ENUM_COMPONENTELEMENTSSECTION_SPACING
+  tone: ENUM_COMPONENTELEMENTSSECTION_TONE
+  width: ENUM_COMPONENTELEMENTSSECTION_WIDTH
+}
+
+type ComponentElementsSectionHeader {
+  eyebrow: String
+  id: ID!
+  lead: String
+  title: String
+}
+
 type ComponentElementsSeo {
   id: ID!
   keywords: String
@@ -263,6 +755,18 @@ type ComponentElementsSettings {
   spacingBottom: ENUM_COMPONENTELEMENTSSETTINGS_SPACINGBOTTOM
   spacingTop: ENUM_COMPONENTELEMENTSSETTINGS_SPACINGTOP
   theme: ENUM_COMPONENTELEMENTSSETTINGS_THEME
+}
+
+type ComponentElementsStatRef {
+  id: ID!
+  kind: ENUM_COMPONENTELEMENTSSTATREF_KIND!
+}
+
+input ComponentElementsStatRefFiltersInput {
+  and: [ComponentElementsStatRefFiltersInput]
+  kind: StringFilterInput
+  not: ComponentElementsStatRefFiltersInput
+  or: [ComponentElementsStatRefFiltersInput]
 }
 
 type ComponentMenuGroup {
@@ -309,6 +813,311 @@ input ComponentMenuItemInput {
   link: ComponentElementsLinkInput
   links: [ComponentElementsLinkInput]
   submenu: ENUM_COMPONENTMENUITEM_SUBMENU
+}
+
+type ComponentPartsBackground {
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  pattern: Boolean
+  tone: ENUM_COMPONENTPARTSBACKGROUND_TONE!
+}
+
+type ComponentPartsCard {
+  icon: String
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  link: ComponentPartsLink
+  pattern: Boolean
+  text: String
+  title: String!
+  tone: ENUM_COMPONENTPARTSCARD_TONE!
+}
+
+input ComponentPartsCardFiltersInput {
+  and: [ComponentPartsCardFiltersInput]
+  icon: StringFilterInput
+  link: ComponentPartsLinkFiltersInput
+  not: ComponentPartsCardFiltersInput
+  or: [ComponentPartsCardFiltersInput]
+  pattern: BooleanFilterInput
+  text: StringFilterInput
+  title: StringFilterInput
+  tone: StringFilterInput
+}
+
+type ComponentPartsCta {
+  icon: String
+  id: ID!
+  link: ComponentPartsLink!
+  variant: ENUM_COMPONENTPARTSCTA_VARIANT!
+}
+
+input ComponentPartsCtaFiltersInput {
+  and: [ComponentPartsCtaFiltersInput]
+  icon: StringFilterInput
+  link: ComponentPartsLinkFiltersInput
+  not: ComponentPartsCtaFiltersInput
+  or: [ComponentPartsCtaFiltersInput]
+  variant: StringFilterInput
+}
+
+type ComponentPartsFaqGroup {
+  icon: String
+  id: ID!
+  items(filters: ComponentPartsFaqItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsFaqItem]!
+  title: String
+}
+
+input ComponentPartsFaqGroupFiltersInput {
+  and: [ComponentPartsFaqGroupFiltersInput]
+  icon: StringFilterInput
+  items: ComponentPartsFaqItemFiltersInput
+  not: ComponentPartsFaqGroupFiltersInput
+  or: [ComponentPartsFaqGroupFiltersInput]
+  title: StringFilterInput
+}
+
+type ComponentPartsFaqItem {
+  answer: String!
+  id: ID!
+  question: String!
+}
+
+input ComponentPartsFaqItemFiltersInput {
+  and: [ComponentPartsFaqItemFiltersInput]
+  answer: StringFilterInput
+  not: ComponentPartsFaqItemFiltersInput
+  or: [ComponentPartsFaqItemFiltersInput]
+  question: StringFilterInput
+}
+
+type ComponentPartsFeatureItem {
+  icon: String
+  id: ID!
+  text: String
+  title: String!
+}
+
+input ComponentPartsFeatureItemFiltersInput {
+  and: [ComponentPartsFeatureItemFiltersInput]
+  icon: StringFilterInput
+  not: ComponentPartsFeatureItemFiltersInput
+  or: [ComponentPartsFeatureItemFiltersInput]
+  text: StringFilterInput
+  title: StringFilterInput
+}
+
+type ComponentPartsLink {
+  blog: Blog
+  customUrl: String
+  id: ID!
+  label: String
+  linkType: ENUM_COMPONENTPARTSLINK_LINKTYPE!
+  localPage: LocalPage
+  newTab: Boolean
+  page: Page
+  sale: Sale
+}
+
+input ComponentPartsLinkFiltersInput {
+  and: [ComponentPartsLinkFiltersInput]
+  blog: BlogFiltersInput
+  customUrl: StringFilterInput
+  label: StringFilterInput
+  linkType: StringFilterInput
+  localPage: LocalPageFiltersInput
+  newTab: BooleanFilterInput
+  not: ComponentPartsLinkFiltersInput
+  or: [ComponentPartsLinkFiltersInput]
+  page: PageFiltersInput
+  sale: SaleFiltersInput
+}
+
+type ComponentSectionsBlog {
+  background: ComponentPartsBackground
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  headerAlign: ENUM_COMPONENTSECTIONSBLOG_HEADERALIGN!
+  id: ID!
+  layout: ENUM_COMPONENTSECTIONSBLOG_LAYOUT!
+  posts(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Blog]!
+  posts_connection(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogRelationResponseCollection
+  source: ENUM_COMPONENTSECTIONSBLOG_SOURCE!
+  spacing: ENUM_COMPONENTSECTIONSBLOG_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSBLOG_WIDTH!
+}
+
+type ComponentSectionsCards {
+  background: ComponentPartsBackground
+  badge: String
+  cards(filters: ComponentPartsCardFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCard]!
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  display: ENUM_COMPONENTSECTIONSCARDS_DISPLAY!
+  headerAlign: ENUM_COMPONENTSECTIONSCARDS_HEADERALIGN!
+  id: ID!
+  spacing: ENUM_COMPONENTSECTIONSCARDS_SPACING!
+  text: String
+  title: String
+  visibleCards: Int
+  width: ENUM_COMPONENTSECTIONSCARDS_WIDTH!
+}
+
+type ComponentSectionsCars {
+  background: ComponentPartsBackground
+  badge: String
+  carIds: JSON
+  category: ENUM_COMPONENTSECTIONSCARS_CATEGORY
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  headerAlign: ENUM_COMPONENTSECTIONSCARS_HEADERALIGN!
+  id: ID!
+  layout: ENUM_COMPONENTSECTIONSCARS_LAYOUT!
+  limit: Int
+  moreCard: ComponentPartsCard
+  segmentIds: JSON
+  source: ENUM_COMPONENTSECTIONSCARS_SOURCE!
+  spacing: ENUM_COMPONENTSECTIONSCARS_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSCARS_WIDTH!
+}
+
+type ComponentSectionsFaq {
+  background: ComponentPartsBackground
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  groups(filters: ComponentPartsFaqGroupFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsFaqGroup]!
+  headerAlign: ENUM_COMPONENTSECTIONSFAQ_HEADERALIGN!
+  id: ID!
+  search: Boolean
+  spacing: ENUM_COMPONENTSECTIONSFAQ_SPACING!
+  structuredData: Boolean
+  text: String
+  textWidth: ENUM_COMPONENTSECTIONSFAQ_TEXTWIDTH!
+  title: String
+  width: ENUM_COMPONENTSECTIONSFAQ_WIDTH!
+}
+
+type ComponentSectionsFeatures {
+  background: ComponentPartsBackground
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  display: ENUM_COMPONENTSECTIONSFEATURES_DISPLAY!
+  headerAlign: ENUM_COMPONENTSECTIONSFEATURES_HEADERALIGN!
+  id: ID!
+  items(filters: ComponentPartsFeatureItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsFeatureItem]!
+  spacing: ENUM_COMPONENTSECTIONSFEATURES_SPACING!
+  text: String
+  title: String
+  variant: ENUM_COMPONENTSECTIONSFEATURES_VARIANT!
+  width: ENUM_COMPONENTSECTIONSFEATURES_WIDTH!
+}
+
+type ComponentSectionsForm {
+  background: ComponentPartsBackground
+  badge: String
+  formKind: ENUM_COMPONENTSECTIONSFORM_FORMKIND!
+  formWidth: ENUM_COMPONENTSECTIONSFORM_FORMWIDTH!
+  headerAlign: ENUM_COMPONENTSECTIONSFORM_HEADERALIGN!
+  id: ID!
+  spacing: ENUM_COMPONENTSECTIONSFORM_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSFORM_WIDTH!
+}
+
+type ComponentSectionsHero {
+  align: ENUM_COMPONENTSECTIONSHERO_ALIGN
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  id: ID!
+  image: UploadFile
+  imageMobile: UploadFile
+  overlay: ENUM_COMPONENTSECTIONSHERO_OVERLAY!
+  search: ENUM_COMPONENTSECTIONSHERO_SEARCH!
+  searchSide: ENUM_COMPONENTSECTIONSHERO_SEARCHSIDE
+  searchTerm: ENUM_COMPONENTSECTIONSHERO_SEARCHTERM
+  spacing: ENUM_COMPONENTSECTIONSHERO_SPACING!
+  subtitle: String
+  title: String!
+  video: UploadFile
+  videoMobile: UploadFile
+  width: ENUM_COMPONENTSECTIONSHERO_WIDTH!
+}
+
+type ComponentSectionsMap {
+  background: ComponentPartsBackground
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  fullBleed: Boolean
+  headerAlign: ENUM_COMPONENTSECTIONSMAP_HEADERALIGN!
+  id: ID!
+  showLegend: Boolean
+  showList: Boolean
+  spacing: ENUM_COMPONENTSECTIONSMAP_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSMAP_WIDTH!
+}
+
+type ComponentSectionsSocial {
+  background: ComponentPartsBackground
+  badge: String
+  id: ID!
+  layout: ENUM_COMPONENTSECTIONSSOCIAL_LAYOUT!
+  showContact: Boolean
+  spacing: ENUM_COMPONENTSECTIONSSOCIAL_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSSOCIAL_WIDTH!
+}
+
+type ComponentSectionsSplit {
+  background: ComponentPartsBackground
+  badge: String
+  body: String
+  content: ENUM_COMPONENTSECTIONSSPLIT_CONTENT!
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  faqs(filters: ComponentPartsFaqItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsFaqItem]
+  features(filters: ComponentPartsFeatureItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsFeatureItem]
+  id: ID!
+  image: UploadFile
+  imageSecond: UploadFile
+  imageStyle: ENUM_COMPONENTSECTIONSSPLIT_IMAGESTYLE!
+  media: ENUM_COMPONENTSECTIONSSPLIT_MEDIA!
+  mediaSide: ENUM_COMPONENTSECTIONSSPLIT_MEDIASIDE!
+  showLegend: Boolean
+  spacing: ENUM_COMPONENTSECTIONSSPLIT_SPACING!
+  statLabel: String
+  statValue: String
+  structuredData: Boolean
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSSPLIT_WIDTH!
+}
+
+type ComponentSectionsText {
+  align: ENUM_COMPONENTSECTIONSTEXT_ALIGN!
+  background: ComponentPartsBackground
+  badge: String
+  body: String
+  collapsible: Boolean
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  id: ID!
+  previewParagraphs: Int
+  spacing: ENUM_COMPONENTSECTIONSTEXT_SPACING!
+  textWidth: ENUM_COMPONENTSECTIONSTEXT_TEXTWIDTH!
+  title: String
+  width: ENUM_COMPONENTSECTIONSTEXT_WIDTH!
+}
+
+type ComponentSectionsVariantLabel {
+  id: ID!
+  note: String
+  title: String!
 }
 
 type ComponentSharedBasicText {
@@ -527,6 +1336,7 @@ type ComponentSharedSeo {
   metaTitle: String!
   noFollow: Boolean
   noIndex: Boolean
+  shareImage: UploadFile
 }
 
 input ComponentSharedSeoFiltersInput {
@@ -547,6 +1357,7 @@ input ComponentSharedSeoInput {
   metaTitle: String
   noFollow: Boolean
   noIndex: Boolean
+  shareImage: ID
 }
 
 type ComponentSharedSocialMedia {
@@ -597,18 +1408,55 @@ type ComponentSharedTextWithImage {
 
 type ComponentSiteContact {
   address: String
+  availabilityNote: String
+  chatUrl: String
+  departments(filters: ComponentElementsDepartmentFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsDepartment]
   email: String!
+  hours(filters: ComponentElementsOpeningHoursFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsOpeningHours]
   id: ID!
+  krs: String
+  legalName: String
+  mapUrl: String
+  nip: String
   openingHours: String
   phone: String!
+  regon: String
+  whatsapp: String
 }
 
 input ComponentSiteContactInput {
   address: String
+  availabilityNote: String
+  chatUrl: String
+  departments: [ComponentElementsDepartmentInput]
   email: String
+  hours: [ComponentElementsOpeningHoursInput]
   id: ID
+  krs: String
+  legalName: String
+  mapUrl: String
+  nip: String
   openingHours: String
   phone: String
+  regon: String
+  whatsapp: String
+}
+
+type ComponentSitePaymentMethod {
+  id: ID!
+  method: ENUM_COMPONENTSITEPAYMENTMETHOD_METHOD!
+}
+
+input ComponentSitePaymentMethodFiltersInput {
+  and: [ComponentSitePaymentMethodFiltersInput]
+  method: StringFilterInput
+  not: ComponentSitePaymentMethodFiltersInput
+  or: [ComponentSitePaymentMethodFiltersInput]
+}
+
+input ComponentSitePaymentMethodInput {
+  id: ID
+  method: ENUM_COMPONENTSITEPAYMENTMETHOD_METHOD
 }
 
 type ComponentSiteSocialLink {
@@ -750,10 +1598,95 @@ enum ENUM_ANNOUNCEMENT_VARIANT {
   urgent
 }
 
+enum ENUM_BLOGCATEGORY_COLOR {
+  blue
+  green
+  navy
+  sand
+}
+
+enum ENUM_CITY_KIND {
+  airport
+  city
+}
+
+enum ENUM_COMPONENTBLOCKSBLOGPOSTS_SOURCE {
+  latest
+  picked
+}
+
+enum ENUM_COMPONENTBLOCKSCARS_CATEGORY {
+  automatic
+  delivery
+  electric
+  family
+}
+
+enum ENUM_COMPONENTBLOCKSCARS_DEFAULTCATEGORY {
+  all
+  compact
+  delivery
+  eco
+  large
+  seats7
+  small
+}
+
+enum ENUM_COMPONENTBLOCKSCARS_LAYOUT {
+  catalog
+  categories
+  grid
+  row
+  tabs
+}
+
+enum ENUM_COMPONENTBLOCKSCARS_SOURCE {
+  all
+  category
+  classes
+}
+
+enum ENUM_COMPONENTBLOCKSCONTENT_ALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTBLOCKSCTABAND_TONE {
+  dark
+  tint
+}
+
+enum ENUM_COMPONENTBLOCKSCTABAND_VARIANT {
+  band
+  photo
+}
+
+enum ENUM_COMPONENTBLOCKSFEATURES_VARIANT {
+  benefits
+  cards
+  circles
+  overlay
+  photo
+  plain
+  steps
+}
+
+enum ENUM_COMPONENTBLOCKSHERO_FOCALPOINT {
+  center
+  left
+  right
+}
+
 enum ENUM_COMPONENTBLOCKSHERO_HEIGHT {
   compact
   default
   fullscreen
+}
+
+enum ENUM_COMPONENTBLOCKSHERO_LAYOUT {
+  cover
+  page
+  split
 }
 
 enum ENUM_COMPONENTBLOCKSHERO_OVERLAY {
@@ -774,10 +1707,77 @@ enum ENUM_COMPONENTBLOCKSHERO_RESERVATIONLAYOUT {
   none
 }
 
+enum ENUM_COMPONENTBLOCKSHERO_SEARCHSIDE {
+  end
+  start
+}
+
+enum ENUM_COMPONENTBLOCKSLEADFORM_VARIANT {
+  business
+  contact
+}
+
+enum ENUM_COMPONENTBLOCKSLOCATIONS_FILTER {
+  airports
+  all
+  city
+}
+
+enum ENUM_COMPONENTBLOCKSLOCATIONS_LAYOUT {
+  compact
+  full
+  map
+}
+
+enum ENUM_COMPONENTBLOCKSMEDIATEXT_IMAGEPOSITION {
+  end
+  start
+}
+
+enum ENUM_COMPONENTBLOCKSMEDIATEXT_IMAGESTYLE {
+  cutout
+  rounded
+}
+
+enum ENUM_COMPONENTBLOCKSREVIEWS_LAYOUT {
+  cards
+  spotlight
+}
+
+enum ENUM_COMPONENTBLOCKSREVIEWS_SOURCE {
+  all
+  facebook
+  google
+}
+
+enum ENUM_COMPONENTBLOCKSSCENARIOS_LAYOUT {
+  panel
+  tabs
+}
+
+enum ENUM_COMPONENTBLOCKSTRUSTBAR_VARIANT {
+  inline
+  strip
+}
+
+enum ENUM_COMPONENTELEMENTSCOMPARISONVALUE_KIND {
+  no
+  partial
+  text
+  yes
+}
+
 enum ENUM_COMPONENTELEMENTSCTA_VARIANT {
   primary
   secondary
   success
+}
+
+enum ENUM_COMPONENTELEMENTSFEATURE_TONE {
+  brand
+  go
+  photo
+  studio
 }
 
 enum ENUM_COMPONENTELEMENTSLINK_LINKTYPE {
@@ -786,6 +1786,45 @@ enum ENUM_COMPONENTELEMENTSLINK_LINKTYPE {
   localPage
   page
   sale
+}
+
+enum ENUM_COMPONENTELEMENTSPROMO_TONE {
+  brand
+  go
+  photo
+}
+
+enum ENUM_COMPONENTELEMENTSSECTION_BACKGROUND {
+  brand
+  none
+  photo
+  wash
+}
+
+enum ENUM_COMPONENTELEMENTSSECTION_ORNAMENT {
+  contour
+  grid
+  none
+  road
+}
+
+enum ENUM_COMPONENTELEMENTSSECTION_SPACING {
+  compact
+  default
+  none
+}
+
+enum ENUM_COMPONENTELEMENTSSECTION_TONE {
+  canvas
+  dark
+  surface
+  tint
+}
+
+enum ENUM_COMPONENTELEMENTSSECTION_WIDTH {
+  full
+  page
+  reading
 }
 
 enum ENUM_COMPONENTELEMENTSSETTINGS_CONTAINERWIDTH {
@@ -816,12 +1855,340 @@ enum ENUM_COMPONENTELEMENTSSETTINGS_THEME {
   primary
 }
 
+enum ENUM_COMPONENTELEMENTSSTATREF_KIND {
+  airports
+  cities
+  points
+}
+
 enum ENUM_COMPONENTMENUITEM_SUBMENU {
   blog
   fleet
   links
   locations
   none
+}
+
+enum ENUM_COMPONENTPARTSBACKGROUND_TONE {
+  blue
+  fade
+  green
+  image
+  light
+  navy
+  white
+}
+
+enum ENUM_COMPONENTPARTSCARD_TONE {
+  blue
+  green
+  image
+  navy
+}
+
+enum ENUM_COMPONENTPARTSCTA_VARIANT {
+  primary
+  secondary
+  success
+}
+
+enum ENUM_COMPONENTPARTSLINK_LINKTYPE {
+  blog
+  customUrl
+  localPage
+  page
+  sale
+}
+
+enum ENUM_COMPONENTSECTIONSBLOG_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSBLOG_LAYOUT {
+  featured
+  grid
+}
+
+enum ENUM_COMPONENTSECTIONSBLOG_SOURCE {
+  latest
+  selected
+}
+
+enum ENUM_COMPONENTSECTIONSBLOG_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSBLOG_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSCARDS_DISPLAY {
+  carousel
+  grid
+}
+
+enum ENUM_COMPONENTSECTIONSCARDS_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSCARDS_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSCARDS_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSCARS_CATEGORY {
+  delivery
+  passenger
+  popular
+}
+
+enum ENUM_COMPONENTSECTIONSCARS_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSCARS_LAYOUT {
+  carousel
+  full
+  grid
+}
+
+enum ENUM_COMPONENTSECTIONSCARS_SOURCE {
+  all
+  cars
+  category
+  classes
+}
+
+enum ENUM_COMPONENTSECTIONSCARS_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSCARS_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSFAQ_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSFAQ_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSFAQ_TEXTWIDTH {
+  narrow
+  wide
+}
+
+enum ENUM_COMPONENTSECTIONSFAQ_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSFEATURES_DISPLAY {
+  carousel
+  grid
+}
+
+enum ENUM_COMPONENTSECTIONSFEATURES_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSFEATURES_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSFEATURES_VARIANT {
+  cards
+  inline
+  statements
+  steps
+}
+
+enum ENUM_COMPONENTSECTIONSFEATURES_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSFORM_FORMKIND {
+  contact
+}
+
+enum ENUM_COMPONENTSECTIONSFORM_FORMWIDTH {
+  narrow
+  wide
+}
+
+enum ENUM_COMPONENTSECTIONSFORM_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSFORM_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSFORM_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_ALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_OVERLAY {
+  light
+  none
+  strong
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_SEARCH {
+  horizontal
+  none
+  vertical
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_SEARCHSIDE {
+  left
+  right
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_SEARCHTERM {
+  long
+  short
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSHERO_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSMAP_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSMAP_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSMAP_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSSOCIAL_LAYOUT {
+  centered
+  split
+}
+
+enum ENUM_COMPONENTSECTIONSSOCIAL_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSSOCIAL_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSSPLIT_CONTENT {
+  faq
+  features
+  form
+  text
+}
+
+enum ENUM_COMPONENTSECTIONSSPLIT_IMAGESTYLE {
+  collage
+  single
+}
+
+enum ENUM_COMPONENTSECTIONSSPLIT_MEDIA {
+  image
+  map
+}
+
+enum ENUM_COMPONENTSECTIONSSPLIT_MEDIASIDE {
+  end
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSSPLIT_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSSPLIT_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSTEXT_ALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSTEXT_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSTEXT_TEXTWIDTH {
+  narrow
+  wide
+}
+
+enum ENUM_COMPONENTSECTIONSTEXT_WIDTH {
+  boxed
+  contained
+  full
 }
 
 enum ENUM_COMPONENTSHAREDCTA_COLOR {
@@ -860,6 +2227,16 @@ enum ENUM_COMPONENTSHAREDTEXT_ALIGNMENT {
   right
 }
 
+enum ENUM_COMPONENTSITEPAYMENTMETHOD_METHOD {
+  applePay
+  blik
+  card
+  googlePay
+  tpay
+  transfer
+  viva
+}
+
 enum ENUM_COMPONENTSITESOCIALLINK_PLATFORM {
   facebook
   instagram
@@ -869,9 +2246,90 @@ enum ENUM_COMPONENTSITESOCIALLINK_PLATFORM {
   youtube
 }
 
+enum ENUM_REVIEWSOURCE_LASTSTATUS {
+  disabled
+  error
+  expired
+  never
+  ok
+  stale
+}
+
+enum ENUM_REVIEWSOURCE_PLATFORM {
+  facebook
+  google
+  manual
+}
+
+enum ENUM_REVIEW_HIDDENREASON {
+  duplicate
+  legal
+  offensive
+  other
+  personalData
+  spam
+}
+
+enum ENUM_REVIEW_ORIGIN {
+  manual
+  synced
+}
+
+enum ENUM_REVIEW_RECOMMENDATION {
+  negative
+  positive
+}
+
 type Error {
   code: String!
   message: String
+}
+
+type FaqCategory {
+  createdAt: DateTime
+  documentId: ID!
+  icon: String
+  locale: String
+  localizations(filters: FaqCategoryFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [FaqCategory]!
+  localizations_connection(filters: FaqCategoryFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): FaqCategoryRelationResponseCollection
+  name: String!
+  order: Int
+  publishedAt: DateTime
+  slug: String!
+  updatedAt: DateTime
+}
+
+type FaqCategoryEntityResponseCollection {
+  nodes: [FaqCategory!]!
+  pageInfo: Pagination!
+}
+
+input FaqCategoryFiltersInput {
+  and: [FaqCategoryFiltersInput]
+  createdAt: DateTimeFilterInput
+  documentId: IDFilterInput
+  icon: StringFilterInput
+  locale: StringFilterInput
+  localizations: FaqCategoryFiltersInput
+  name: StringFilterInput
+  not: FaqCategoryFiltersInput
+  or: [FaqCategoryFiltersInput]
+  order: IntFilterInput
+  publishedAt: DateTimeFilterInput
+  slug: StringFilterInput
+  updatedAt: DateTimeFilterInput
+}
+
+input FaqCategoryInput {
+  icon: String
+  name: String
+  order: Int
+  publishedAt: DateTime
+  slug: String
+}
+
+type FaqCategoryRelationResponseCollection {
+  nodes: [FaqCategory!]!
 }
 
 input FileInfoInput {
@@ -937,7 +2395,7 @@ type FooterRelationResponseCollection {
   nodes: [Footer!]!
 }
 
-union GenericMorph = Announcement | Blog | City | ComponentBlocksHero | ComponentBlocksRichText | ComponentElementsCta | ComponentElementsLink | ComponentElementsSeo | ComponentElementsSettings | ComponentMenuGroup | ComponentMenuItem | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
+union GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | Review | ReviewSource | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
 
 type Global {
   createdAt: DateTime
@@ -1095,24 +2553,32 @@ input JSONFilterInput {
 }
 
 type Layout {
+  companyName: String
   createdAt: DateTime
   documentId: ID!
   footerGroups(filters: ComponentMenuGroupFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentMenuGroup]
   footerText: String
   header(filters: ComponentMenuItemFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentMenuItem]
+  headerCta: ComponentElementsLink
   legalLinks(filters: ComponentElementsLinkFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsLink]
+  legalText: String
   locale: String
   localizations: [Layout]!
   localizations_connection: LayoutRelationResponseCollection
+  paymentMethods(filters: ComponentSitePaymentMethodFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentSitePaymentMethod]
   publishedAt: DateTime
   updatedAt: DateTime
 }
 
 input LayoutInput {
+  companyName: String
   footerGroups: [ComponentMenuGroupInput]
   footerText: String
   header: [ComponentMenuItemInput]
+  headerCta: ComponentElementsLinkInput
   legalLinks: [ComponentElementsLinkInput]
+  legalText: String
+  paymentMethods: [ComponentSitePaymentMethodInput]
   publishedAt: DateTime
 }
 
@@ -1122,17 +2588,24 @@ type LayoutRelationResponseCollection {
 
 type LocalPage {
   Title: String!
+  blocks: [LocalPageBlocksDynamicZone]
   components: [LocalPageComponentsDynamicZone]
   createdAt: DateTime
   documentId: ID!
   locale: String
   localizations(filters: LocalPageFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [LocalPage]!
   localizations_connection(filters: LocalPageFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): LocalPageRelationResponseCollection
+  pickupPoint: Int
   publishedAt: DateTime
   seo: ComponentSharedSeo
+  shortName: String
   slug: String
   updatedAt: DateTime
 }
+
+union LocalPageBlocksDynamicZone = ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksScenarios | ComponentBlocksTrustBar | Error
+
+scalar LocalPageBlocksDynamicZoneInput
 
 union LocalPageComponentsDynamicZone = ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSocialMedia | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | Error
 
@@ -1152,17 +2625,22 @@ input LocalPageFiltersInput {
   localizations: LocalPageFiltersInput
   not: LocalPageFiltersInput
   or: [LocalPageFiltersInput]
+  pickupPoint: IntFilterInput
   publishedAt: DateTimeFilterInput
   seo: ComponentSharedSeoFiltersInput
+  shortName: StringFilterInput
   slug: StringFilterInput
   updatedAt: DateTimeFilterInput
 }
 
 input LocalPageInput {
   Title: String
+  blocks: [LocalPageBlocksDynamicZoneInput!]
   components: [LocalPageComponentsDynamicZoneInput!]
+  pickupPoint: Int
   publishedAt: DateTime
   seo: ComponentSharedSeoInput
+  shortName: String
   slug: String
 }
 
@@ -1180,6 +2658,13 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Blog
+  createBlogCategory(
+    data: BlogCategoryInput!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): BlogCategory
   createCity(
     data: CityInput!
 
@@ -1187,6 +2672,13 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): City
+  createFaqCategory(
+    data: FaqCategoryInput!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): FaqCategory
   createLocalPage(
     data: LocalPageInput!
 
@@ -1209,6 +2701,8 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Regulation
+  createReview(data: ReviewInput!, status: PublicationStatus = PUBLISHED): Review
+  createReviewSource(data: ReviewSourceInput!, status: PublicationStatus = PUBLISHED): ReviewSource
   createReviewWorkflowsWorkflow(data: ReviewWorkflowsWorkflowInput!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflow
   createReviewWorkflowsWorkflowStage(data: ReviewWorkflowsWorkflowStageInput!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStage
   createSale(
@@ -1241,6 +2735,12 @@ type Mutation {
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
+  deleteBlogCategory(
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+  ): DeleteMutationResponse
   deleteCity(
     documentId: ID!
 
@@ -1248,6 +2748,12 @@ type Mutation {
     locale: I18NLocaleCode
   ): DeleteMutationResponse
   deleteDictionary(
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+  ): DeleteMutationResponse
+  deleteFaqCategory(
+    documentId: ID!
+
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
@@ -1290,6 +2796,8 @@ type Mutation {
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
+  deleteReview(documentId: ID!): DeleteMutationResponse
+  deleteReviewSource(documentId: ID!): DeleteMutationResponse
   deleteReviewWorkflowsWorkflow(documentId: ID!): DeleteMutationResponse
   deleteReviewWorkflowsWorkflowStage(documentId: ID!): DeleteMutationResponse
   deleteSale(
@@ -1346,6 +2854,14 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Blog
+  updateBlogCategory(
+    data: BlogCategoryInput!
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): BlogCategory
   updateCity(
     data: CityInput!
     documentId: ID!
@@ -1361,6 +2877,14 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Dictionary
+  updateFaqCategory(
+    data: FaqCategoryInput!
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): FaqCategory
   updateFooter(
     data: FooterInput!
 
@@ -1421,6 +2945,8 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Regulation
+  updateReview(data: ReviewInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): Review
+  updateReviewSource(data: ReviewSourceInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): ReviewSource
   updateReviewWorkflowsWorkflow(data: ReviewWorkflowsWorkflowInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflow
   updateReviewWorkflowsWorkflowStage(data: ReviewWorkflowsWorkflowStageInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStage
   updateSale(
@@ -1492,13 +3018,14 @@ type Page {
   localizations_connection(filters: PageFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): PageRelationResponseCollection
   parentPage: Page
   publishedAt: DateTime
+  sections: [PageSectionsDynamicZone]
   seo: ComponentSharedSeo
   slug: String!
   title: String!
   updatedAt: DateTime
 }
 
-union PageBlocksDynamicZone = ComponentBlocksHero | Error
+union PageBlocksDynamicZone = ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksScenarios | ComponentBlocksTrustBar | Error
 
 scalar PageBlocksDynamicZoneInput
 
@@ -1539,6 +3066,7 @@ input PageInput {
   extraComponents: [PageExtraComponentsDynamicZoneInput!]
   parentPage: ID
   publishedAt: DateTime
+  sections: [PageSectionsDynamicZoneInput!]
   seo: ComponentSharedSeoInput
   slug: String
   title: String
@@ -1547,6 +3075,10 @@ input PageInput {
 type PageRelationResponseCollection {
   nodes: [Page!]!
 }
+
+union PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
+
+scalar PageSectionsDynamicZoneInput
 
 type Pagination {
   page: Int!
@@ -1596,6 +3128,37 @@ type Query {
     publicationFilter: PublicationFilter
     status: PublicationStatus = PUBLISHED
   ): Blog
+  blogCategories(
+    filters: BlogCategoryFiltersInput
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    pagination: PaginationArg = {}
+    publicationFilter: PublicationFilter
+    sort: [String] = []
+    status: PublicationStatus = PUBLISHED
+  ): [BlogCategory]!
+  blogCategories_connection(
+    filters: BlogCategoryFiltersInput
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    pagination: PaginationArg = {}
+    publicationFilter: PublicationFilter
+    sort: [String] = []
+    status: PublicationStatus = PUBLISHED
+  ): BlogCategoryEntityResponseCollection
+  blogCategory(
+    documentId: ID!
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    publicationFilter: PublicationFilter
+    status: PublicationStatus = PUBLISHED
+  ): BlogCategory
   blogs(
     filters: BlogFiltersInput
     hasPublishedVersion: Boolean
@@ -1657,6 +3220,37 @@ type Query {
     publicationFilter: PublicationFilter
     status: PublicationStatus = PUBLISHED
   ): Dictionary
+  faqCategories(
+    filters: FaqCategoryFiltersInput
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    pagination: PaginationArg = {}
+    publicationFilter: PublicationFilter
+    sort: [String] = []
+    status: PublicationStatus = PUBLISHED
+  ): [FaqCategory]!
+  faqCategories_connection(
+    filters: FaqCategoryFiltersInput
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    pagination: PaginationArg = {}
+    publicationFilter: PublicationFilter
+    sort: [String] = []
+    status: PublicationStatus = PUBLISHED
+  ): FaqCategoryEntityResponseCollection
+  faqCategory(
+    documentId: ID!
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    publicationFilter: PublicationFilter
+    status: PublicationStatus = PUBLISHED
+  ): FaqCategory
   footer(
     hasPublishedVersion: Boolean
 
@@ -1797,12 +3391,18 @@ type Query {
     sort: [String] = []
     status: PublicationStatus = PUBLISHED
   ): RegulationEntityResponseCollection
+  review(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): Review
+  reviewSource(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): ReviewSource
+  reviewSources(filters: ReviewSourceFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [ReviewSource]!
+  reviewSources_connection(filters: ReviewSourceFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewSourceEntityResponseCollection
   reviewWorkflowsWorkflow(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflow
   reviewWorkflowsWorkflowStage(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStage
   reviewWorkflowsWorkflowStages(filters: ReviewWorkflowsWorkflowStageFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [ReviewWorkflowsWorkflowStage]!
   reviewWorkflowsWorkflowStages_connection(filters: ReviewWorkflowsWorkflowStageFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStageEntityResponseCollection
   reviewWorkflowsWorkflows(filters: ReviewWorkflowsWorkflowFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [ReviewWorkflowsWorkflow]!
   reviewWorkflowsWorkflows_connection(filters: ReviewWorkflowsWorkflowFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowEntityResponseCollection
+  reviews(filters: ReviewFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [Review]!
+  reviews_connection(filters: ReviewFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewEntityResponseCollection
   sale(
     documentId: ID!
     hasPublishedVersion: Boolean
@@ -1968,6 +3568,173 @@ input RegulationInput {
 
 type RegulationRelationResponseCollection {
   nodes: [Regulation!]!
+}
+
+type Review {
+  authorIsAnonymous: Boolean
+  authorName: String
+  authorPhotoUrl: String
+  createdAt: DateTime
+  documentId: ID!
+  externalId: String!
+  featured: Boolean!
+  featuredOrder: Int
+  hidden: Boolean!
+  language: String
+  origin: ENUM_REVIEW_ORIGIN!
+  ownerReply: String
+  ownerReplyAt: DateTime
+  publishedAt: DateTime
+  rating: Int
+  recommendation: ENUM_REVIEW_RECOMMENDATION
+  removedAt: DateTime
+  reviewCreatedAt: DateTime!
+  reviewUpdatedAt: DateTime
+  source: ReviewSource
+  text: String
+  updatedAt: DateTime
+  url: String
+}
+
+type ReviewEntityResponseCollection {
+  nodes: [Review!]!
+  pageInfo: Pagination!
+}
+
+input ReviewFiltersInput {
+  and: [ReviewFiltersInput]
+  authorIsAnonymous: BooleanFilterInput
+  authorName: StringFilterInput
+  authorPhotoUrl: StringFilterInput
+  createdAt: DateTimeFilterInput
+  documentId: IDFilterInput
+  externalId: StringFilterInput
+  featured: BooleanFilterInput
+  featuredOrder: IntFilterInput
+  hidden: BooleanFilterInput
+  language: StringFilterInput
+  not: ReviewFiltersInput
+  or: [ReviewFiltersInput]
+  origin: StringFilterInput
+  ownerReply: StringFilterInput
+  ownerReplyAt: DateTimeFilterInput
+  publishedAt: DateTimeFilterInput
+  rating: IntFilterInput
+  recommendation: StringFilterInput
+  removedAt: DateTimeFilterInput
+  reviewCreatedAt: DateTimeFilterInput
+  reviewUpdatedAt: DateTimeFilterInput
+  source: ReviewSourceFiltersInput
+  text: StringFilterInput
+  updatedAt: DateTimeFilterInput
+  url: StringFilterInput
+}
+
+input ReviewInput {
+  authorIsAnonymous: Boolean
+  authorName: String
+  authorPhotoUrl: String
+  contentHash: String
+  externalId: String
+  featured: Boolean
+  featuredOrder: Int
+  hidden: Boolean
+  hiddenNote: String
+  hiddenReason: ENUM_REVIEW_HIDDENREASON
+  language: String
+  locale: String
+  origin: ENUM_REVIEW_ORIGIN
+  ownerReply: String
+  ownerReplyAt: DateTime
+  publishedAt: DateTime
+  rating: Int
+  recommendation: ENUM_REVIEW_RECOMMENDATION
+  removedAt: DateTime
+  reviewCreatedAt: DateTime
+  reviewUpdatedAt: DateTime
+  source: ID
+  syncedAt: DateTime
+  text: String
+  url: String
+}
+
+type ReviewRelationResponseCollection {
+  nodes: [Review!]!
+}
+
+type ReviewSource {
+  createdAt: DateTime
+  documentId: ID!
+  enabled: Boolean!
+  externalId: String
+  key: String!
+  label: String!
+  lastStatus: ENUM_REVIEWSOURCE_LASTSTATUS!
+  placeId: String
+  platform: ENUM_REVIEWSOURCE_PLATFORM!
+  profileUrl: String
+  publishedAt: DateTime
+  rating: Float
+  ratingCount: Int
+  reviews(filters: ReviewFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Review]!
+  reviews_connection(filters: ReviewFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): ReviewRelationResponseCollection
+  servicePoint: ServicePoint
+  syncedAt: DateTime
+  updatedAt: DateTime
+  writeReviewUrl: String
+}
+
+type ReviewSourceEntityResponseCollection {
+  nodes: [ReviewSource!]!
+  pageInfo: Pagination!
+}
+
+input ReviewSourceFiltersInput {
+  and: [ReviewSourceFiltersInput]
+  createdAt: DateTimeFilterInput
+  documentId: IDFilterInput
+  enabled: BooleanFilterInput
+  externalId: StringFilterInput
+  key: StringFilterInput
+  label: StringFilterInput
+  lastStatus: StringFilterInput
+  not: ReviewSourceFiltersInput
+  or: [ReviewSourceFiltersInput]
+  placeId: StringFilterInput
+  platform: StringFilterInput
+  profileUrl: StringFilterInput
+  publishedAt: DateTimeFilterInput
+  rating: FloatFilterInput
+  ratingCount: IntFilterInput
+  reviews: ReviewFiltersInput
+  servicePoint: ServicePointFiltersInput
+  syncedAt: DateTimeFilterInput
+  updatedAt: DateTimeFilterInput
+  writeReviewUrl: StringFilterInput
+}
+
+input ReviewSourceInput {
+  consecutiveFailures: Int
+  enabled: Boolean
+  externalId: String
+  key: String
+  label: String
+  lastAttemptAt: DateTime
+  lastError: String
+  lastStatus: ENUM_REVIEWSOURCE_LASTSTATUS
+  locale: String
+  nextSyncAt: DateTime
+  placeId: String
+  platform: ENUM_REVIEWSOURCE_PLATFORM
+  profileUrl: String
+  publishedAt: DateTime
+  rating: Float
+  ratingCount: Int
+  reviews: [ID]
+  servicePoint: ID
+  syncLockUntil: DateTime
+  syncedAt: DateTime
+  writeReviewUrl: String
 }
 
 type ReviewWorkflowsWorkflow {
@@ -2160,9 +3927,11 @@ type ServicePointRelationResponseCollection {
 }
 
 type Site {
+  appStoreUrl: String
   contact: ComponentSiteContact
   createdAt: DateTime
   documentId: ID!
+  googlePlayUrl: String
   locale: String
   localizations: [Site]!
   localizations_connection: SiteRelationResponseCollection
@@ -2173,7 +3942,9 @@ type Site {
 }
 
 input SiteInput {
+  appStoreUrl: String
   contact: ComponentSiteContactInput
+  googlePlayUrl: String
   publishedAt: DateTime
   seo: ComponentElementsSeoInput
   social: [ComponentSiteSocialLinkInput]
@@ -2220,6 +3991,34 @@ input StringFilterInput {
   null: Boolean
   or: [String]
   startsWith: String
+}
+
+"""A time string with format HH:mm:ss.SSS"""
+scalar Time
+
+input TimeFilterInput {
+  and: [Time]
+  between: [Time]
+  contains: Time
+  containsi: Time
+  endsWith: Time
+  eq: Time
+  eqi: Time
+  gt: Time
+  gte: Time
+  in: [Time]
+  lt: Time
+  lte: Time
+  ne: Time
+  nei: Time
+  not: TimeFilterInput
+  notContains: Time
+  notContainsi: Time
+  notIn: [Time]
+  notNull: Boolean
+  null: Boolean
+  or: [Time]
+  startsWith: Time
 }
 
 type UploadFile {

@@ -11,6 +11,9 @@ function input(overrides: Partial<CustomerInput>): CustomerInput {
     firstName: "Ada",
     lastName: "Nowak",
     companyName: "",
+    companyAddress: "",
+    companyPostalCode: "",
+    companyCity: "",
     vatNumber: "",
     contactPerson: "",
     email: "ada@example.com",
@@ -83,6 +86,13 @@ describe("client keys", () => {
       { id: 4, value: "+48 512345678" },
       { id: 47, value: "17" },
     ]);
+    const withAddress = input({ ...company, companyAddress: "Chemików 7", companyPostalCode: "09-411", companyCity: "Płock" });
+    assert.deepEqual(customerClientKeys(withAddress, false).slice(2, 5), [
+      { id: 11, value: "Chemików 7" },
+      { id: 14, value: "09-411" },
+      { id: 13, value: "Płock" },
+    ]);
+    assert.deepEqual(customerClientKeys({ ...withAddress, type: "company" }, true).map((key) => key.id), [46, 4, 47]);
     assert.deepEqual(customerClientKeys(input({ invoice: true, vatNumber: "0000000000", consents: { ...consents, transfer: true } }), true), [
       { id: 7, value: "0000000000" },
       { id: 4, value: "+48 512345678" },

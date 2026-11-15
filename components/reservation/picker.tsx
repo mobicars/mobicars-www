@@ -4,7 +4,6 @@ import { useId, useRef, useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, SelectionIndicator, Tab, TabList, TabPanel, Tabs } from "react-aria-components";
 import { LoaderCircle } from "lucide-react";
-import { toast } from "sonner";
 import type { ZonedDateTime } from "@internationalized/date";
 
 import type { TermBarProps } from "@/components/reservation/bar-field";
@@ -13,18 +12,21 @@ import { LongTermBar } from "@/components/reservation/long-term-bar";
 import {
   defaultShortTermSchedule,
   earliestPickup,
+  formatSchedulePoint,
   pointFromValue,
   valueFromPoint,
 } from "@/components/reservation/schedule";
 import { ShortTermBar } from "@/components/reservation/short-term-bar";
+import { StickySearch } from "@/components/reservation/sticky-search";
 import { issueMessage } from "@/components/reservation/messages";
 import { useClientOnlyValue } from "@/components/reservation/use-client-only-value";
 import type { Lang } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
 import type { Messages } from "@/i18n/messages";
 import { useMessages } from "@/i18n/messages-context";
 import { reservationHref } from "@/i18n/routes";
 import { reservationConfig } from "@/lib/reservation/config";
-import type { PickupPlace } from "@/lib/reservation/places";
+import { withPagePickup, type PickupPlace } from "@/lib/reservation/places";
 import {
   QUERY_KEYS,
   bookingInProgressStart,
@@ -64,6 +66,10 @@ type ReservationPickerProps = {
    * e.g. from a car's page. Ignored with `live`, where the URL's own choice is kept.
    */
   offerId?: number;
+  /** Hero search: on phones, a pinned bar with the place, dates and "Pokaż auta" once the form scrolls away. */
+  sticky?: boolean;
+  /** RentCarSoft point a city or local page starts from (`withPagePickup`). */
+  defaultPickupId?: number | null;
 };
 
 /** Booking choices a live change carries over; a confirmed new search keeps only `KEPT_ON_RESTART`. */
@@ -81,7 +87,7 @@ const KEPT_ON_CHANGE = [
 const KEPT_ON_RESTART = [QUERY_KEYS.view, QUERY_KEYS.promo];
 
 const tabClassName =
-  "relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full px-3 text-xs font-bold tracking-wide text-blue-dark/65 outline-none hover:bg-muted-light data-selected:text-white data-selected:hover:bg-transparent data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-inset @5xl:flex-none @5xl:px-6";
+  "relative flex h-11 min-w-0 flex-1 cursor-pointer items-center justify-center rounded-full px-3 text-xs font-bold tracking-wide text-blue-dark/65 outline-none hover:bg-muted-light data-selected:text-white data-selected:hover:bg-transparent data-focus-visible:ring-2 data-focus-visible:ring-blue-dark data-focus-visible:ring-offset-2 data-focus-visible:ring-offset-white @5xl:flex-none @5xl:px-6";
 
 /** The selected tab's background. No transition: the switch is instant, on or off. */
 const indicatorClassName = "pointer-events-none absolute top-0 left-0 z-0 h-full w-full rounded-full bg-blue-medium";
@@ -101,6 +107,8 @@ export function ReservationPicker({
   initial = null,
   live = false,
   offerId,
+  sticky = false,
+  defaultPickupId = null,
 }: ReservationPickerProps) {
   const firstTerm = lockedTerm ?? defaultTerm;
   const router = useRouter();
@@ -110,17 +118,23 @@ export function ReservationPicker({
   const [restartOpen, setRestartOpen] = useState(false);
   const [edits, setEdits] = useState<Partial<SearchDraft>>({});
   const [invalid, setInvalid] = useState<ReadonlySet<SearchField>>(() => new Set());
+  // The last "Szukaj"'s problems; one disappears once its field is changed (`invalid`).
+  const [issues, setIssues] = useState<SearchIssue[]>([]);
+  const errorId = useId();
+  const formId = useId();
+  const formRef = useRef<HTMLFormElement>(null);
   const fields = useRef<Partial<Record<SearchField, HTMLButtonElement | null>>>({});
   const prepared = useClientOnlyValue(() =>
     prepareDraft(
-      initial ?? loadSearchDraft() ?? emptyDraft(firstTerm),
+      withPagePickup(initial ?? loadSearchDraft() ?? emptyDraft(firstTerm), defaultPickupId, places),
       places,
       // On the reservation page the URL's booking is in progress: keep its dates.
       live ? bookingInProgressStart() : earliestPickup(),
     ),
   );
   const draft: SearchDraft = {
-    ...(prepared ?? initial ?? emptyDraft(firstTerm)),
+    // The server's HTML already shows the page's point, so nothing jumps once the saved search is read.
+    ...(prepared ?? initial ?? withPagePickup(emptyDraft(firstTerm), defaultPickupId, places)),
     ...edits,
     ...(lockedTerm ? { term: lockedTerm } : {}),
   };
@@ -153,12 +167,12 @@ export function ReservationPicker({
     const result = validateSearch(draft, { places, earliestStart: earliestPickup() });
     if (!result.ok) {
       setInvalid(new Set(result.issues.map((issue) => issue.field)));
-      showIssues(messages, result.issues);
+      setIssues(result.issues);
       fields.current[result.issues[0].field]?.focus();
       return;
     }
     setInvalid(new Set());
-    toast.dismiss(TOAST_ID);
+    setIssues([]);
     if (live) {
       setRestartOpen(true);
       return;
@@ -210,7 +224,7 @@ export function ReservationPicker({
   const shell = layout === "horizontal" ? "w-full" : "mx-auto w-full max-w-[28rem]";
 
   return (
-    <form noValidate onSubmit={submit} className={`@container min-w-0 ${shell}`}>
+    <form ref={formRef} id={formId} noValidate onSubmit={submit} className={`@container min-w-0 ${shell}`}>
       {lockedTerm ? (
         lockedTerm === "short" ? (
           <ShortTermBar {...barProps} />
@@ -247,6 +261,7 @@ export function ReservationPicker({
           </TabPanel>
         </Tabs>
       )}
+      <SearchErrors id={errorId} messages={messages} issues={issues.filter((issue) => invalid.has(issue.field))} />
       {live ? (
         <p aria-live="polite" className="mt-2 flex h-5 items-center gap-1.5 text-xs text-white/85">
           {updating ? (
@@ -258,6 +273,18 @@ export function ReservationPicker({
         </p>
       ) : null}
       {live ? <RestartDialog open={restartOpen} onOpenChange={setRestartOpen} onConfirm={restart} /> : null}
+      {sticky && !live ? (
+        <StickySearch
+          form={formRef}
+          formId={formId}
+          place={stickyPlace(draft, places, texts.placeTitle.pickupAndReturn)}
+          dates={stickyDates(lang, draft, texts.fromDate) ?? texts.chooseDate}
+          onEdit={() => {
+            formRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+            fields.current.pickup?.focus({ preventScroll: true });
+          }}
+        />
+      ) : null}
     </form>
   );
 }
@@ -295,24 +322,53 @@ function RestartDialog({
   );
 }
 
-const TOAST_ID = "reservation-search";
-
-function showIssues(messages: Messages, issues: SearchIssue[]) {
-  const lines = issues.map((issue) => issueMessage(messages, issue));
-  if (lines.length === 1) {
-    toast.error(lines[0], { id: TOAST_ID });
-    return;
+/**
+ * What stops the search, under the form instead of a toast: read out at once
+ * (`role="alert"`), next to the fields marked red, and gone field by field as
+ * they are fixed. Focus goes to the first wrong field (`submit`).
+ */
+function SearchErrors({ id, messages, issues }: { id: string; messages: Messages; issues: SearchIssue[] }) {
+  if (issues.length === 0) {
+    return null;
   }
-  toast.error(messages.search.completeSearch, {
-    id: TOAST_ID,
-    description: (
-      <ul className="list-disc pl-4">
-        {lines.map((message) => (
-          <li key={message}>{message}</li>
-        ))}
-      </ul>
-    ),
-  });
+  const lines = [...new Set(issues.map((issue) => issueMessage(messages, issue)))];
+  return (
+    <div id={id} role="alert" className="mt-3 rounded-control bg-red-50 px-4 py-3 text-sm text-red-700 shadow-card">
+      {lines.length === 1 ? (
+        <p>{lines[0]}</p>
+      ) : (
+        <>
+          <p className="font-semibold">{messages.search.completeSearch}</p>
+          <ul className="mt-1 list-disc pl-5">
+            {lines.map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** The pinned bar's place: the chosen point (or own address), else the field's name. */
+function stickyPlace(draft: SearchDraft, places: PickupPlace[], empty: string): string {
+  if (!draft.pickup) {
+    return empty;
+  }
+  return draft.pickup.address ?? places.find((place) => place.id === draft.pickup?.id)?.name ?? empty;
+}
+
+/** The pinned bar's dates: "14 lis, 10:00 – 17 lis, 10:00", or "od 14 lis, 10:00" by the month. */
+function stickyDates(lang: Lang, draft: SearchDraft, fromDate: string): string | null {
+  const start = pointFromValue(draft.start);
+  if (!start) {
+    return null;
+  }
+  if (draft.term === "long") {
+    return fill(fromDate, { date: formatSchedulePoint(lang, start) });
+  }
+  const end = pointFromValue(draft.end);
+  return end ? `${formatSchedulePoint(lang, start)} – ${formatSchedulePoint(lang, end)}` : formatSchedulePoint(lang, start);
 }
 
 /** Fields whose error a change clears. */

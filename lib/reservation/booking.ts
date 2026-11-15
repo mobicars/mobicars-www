@@ -1,8 +1,10 @@
 import "server-only";
 
 import { parseDateTime } from "@internationalized/date";
+import { cacheLife, cacheTag } from "next/cache";
 
-import { calculateReservation, listAccessories, listAddons, listAllOffers, type Extra } from "@/lib/rentcarsoft";
+import { cacheEnabled } from "@/lib/cache";
+import { CACHE_TAGS, calculateReservation, listAccessories, listAddons, listAllOffers, type Extra } from "@/lib/rentcarsoft";
 import {
   selectedAccessories,
   selectedAddonIds,
@@ -11,9 +13,9 @@ import {
   type ExtrasView,
 } from "@/lib/reservation/extras";
 import { extensionCandidate, type ExtensionHint } from "@/lib/reservation/extend";
-import { toOfferCards, type OfferCard } from "@/lib/reservation/offers";
+import { toOfferCards, type OfferCard, type PlaceFees } from "@/lib/reservation/offers";
 import { toProtectionOptions, type ProtectionOption } from "@/lib/reservation/protection";
-import { toQuoteView, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
+import { toQuoteView, type QuoteAccessory, type QuoteLineView, type QuoteView } from "@/lib/reservation/quote";
 import {
   QUERY_KEYS,
   formatQueryDateTime,
@@ -52,6 +54,70 @@ export async function listOfferCards(lang: string, search: ReservationSearch): P
   );
 }
 
+/**
+ * The place fees for a daily search, so the car cards can show the price with
+ * delivery ("614 zł, w tym podstawienie 158 zł") instead of a total that jumps
+ * on the next step. One `calculateReservation` for the first priced car: the
+ * fees follow the places and times, not the car. Null for monthly rental, when
+ * nothing is added, or when the quote fails (the cards then show the rent alone,
+ * as before).
+ */
+export async function placeFeesFor(
+  lang: string,
+  search: ReservationSearch,
+  offers: OfferCard[],
+): Promise<PlaceFees | null> {
+  const probe = search.term === "short" ? offers.find((offer) => offer.totalPrice !== null) : undefined;
+  if (!probe) {
+    return null;
+  }
+  const { start, end } = rentalPeriod(search);
+  const args = [
+    lang,
+    probe.id,
+    search.pickup.id,
+    (search.dropoff ?? search.pickup).id,
+    toRentCarSoftDateTime(start),
+    toRentCarSoftDateTime(end),
+  ] as const;
+  const atAddress = search.pickup.address !== null || (search.dropoff ?? search.pickup).address !== null;
+  const fees = (cacheEnabled() ? cachedPlaceFees(...args) : quotePlaceFees(...args)).then((found) =>
+    found ? { ...found, atAddress } : null,
+  );
+  // The car list waits for this, so a slow calculate (its own limit is 20 s)
+  // gives up early and the cards show the rent alone.
+  const timeout = new Promise<null>((resolve) => setTimeout(() => resolve(null), PLACE_FEES_TIMEOUT_MS));
+  return Promise.race([fees.catch(() => null), timeout]);
+}
+
+const PLACE_FEES_TIMEOUT_MS = 2500;
+
+async function quotePlaceFees(
+  lang: string,
+  offerId: number,
+  pickUpPointId: number,
+  returnPointId: number,
+  pickUpDate: string,
+  returnDate: string,
+): Promise<Omit<PlaceFees, "atAddress"> | null> {
+  const quote = await calculateReservation({ offerId, pickUpPointId, returnPointId, pickUpDate, returnDate, lang });
+  const fees = {
+    pickup: quote.pickUpPrice ?? 0,
+    return: quote.returnPrice ?? 0,
+    relocation: quote.relocationPrice ?? 0,
+  };
+  const total = Math.round((fees.pickup + fees.return + fees.relocation) * 100) / 100;
+  return total > 0 ? { ...fees, total } : null;
+}
+
+/** Same lifetime and tag as a dated offer search (`SEARCH_CACHE_LIFE`, `rcs:search`): the list and its fees expire together. */
+async function cachedPlaceFees(...args: Parameters<typeof quotePlaceFees>): Promise<Omit<PlaceFees, "atAddress"> | null> {
+  "use cache";
+  cacheLife({ stale: 30, revalidate: 60, expire: 120 });
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.search);
+  return quotePlaceFees(...args);
+}
+
 /** A chosen extra with its name, for the last step's review and the receipt. */
 export type ChosenExtra = { id: number; name: string; quantity: number };
 
@@ -65,7 +131,7 @@ export async function quoteFor(
   promoCode: string | null = null,
 ): Promise<QuoteView> {
   const { start, end } = rentalPeriod(search);
-  return toQuoteView(
+  const view = toQuoteView(
     await calculateReservation({
       offerId,
       pickUpPointId: search.pickup.id,
@@ -80,7 +146,21 @@ export async function quoteFor(
       longTerm: search.term === "long" ? { months: search.months, monthlyKmLimit: search.km } : undefined,
     }),
     search.term === "long" ? search.months : null,
+    lang,
   );
+  return markAddressFees(view, search);
+}
+
+/** Names the place fees by where the car goes: the customer's address or a point (airport, station, office). */
+function markAddressFees(view: QuoteView, search: ReservationSearch): QuoteView {
+  const atAddress = { pickup: search.pickup.address !== null, return: (search.dropoff ?? search.pickup).address !== null };
+  const mark = (line: QuoteLineView): QuoteLineView =>
+    line.kind === "pickup" || line.kind === "return" ? { ...line, atAddress: atAddress[line.kind] } : line;
+  return {
+    ...view,
+    lines: view.lines.map(mark),
+    ...(view.monthly ? { monthly: { ...view.monthly, oneTimeLines: view.monthly.oneTimeLines.map(mark) } } : {}),
+  };
 }
 
 /** A discount code as typed: trimmed and upper-case, or null when empty or not code-like. */

@@ -17,10 +17,18 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
         ...Link
       }
     }
+    headerCta {
+      ...Link
+    }
     footerText
     legalLinks {
       ...Link
     }
+    paymentMethods {
+      method
+    }
+    companyName
+    legalText
   }
   announcement(locale: $locale, status: $status) {
     documentId
@@ -44,7 +52,26 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
       email
       address
       openingHours
+      availabilityNote
+      whatsapp
+      chatUrl
+      hours {
+        days
+        from
+        to
+        closed
+      }
+      legalName
+      nip
+      regon
+      krs
+      mapUrl
+      departments {
+        ...Department
+      }
     }
+    appStoreUrl
+    googlePlayUrl
     social {
       platform
       url
@@ -57,7 +84,7 @@ query LatestPosts($locale: I18NLocaleCode!, $status: PublicationStatus!, $limit:
   blogs(
     locale: $locale
     status: $status
-    sort: ["publishedAt:desc", "createdAt:desc"]
+    sort: ["createdAt:desc", "publishedAt:desc"]
     pagination: { limit: $limit }
   ) {
     documentId

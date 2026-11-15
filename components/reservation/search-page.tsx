@@ -27,11 +27,14 @@ import { getAccountDetails, getSession } from "@/lib/auth/dal";
 import {
   chosenExtras,
   listOfferCards,
+  placeFeesFor,
   extensionHint,
   loadBookingChoices,
   normalizePromo,
   quoteFor,
 } from "@/lib/reservation/booking";
+import { draftLabels } from "@/lib/reservation/draft-labels";
+import { extensionCandidate } from "@/lib/reservation/extend";
 import { monthlyAlternative } from "@/lib/reservation/monthly-hint";
 import { toPickupPlace, type PickupPlace } from "@/lib/reservation/places";
 import type { ProtectionOption } from "@/lib/reservation/protection";
@@ -73,8 +76,10 @@ export function ReservationSearchPage({
   term: ReservationTerm;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
+  // `min-h-svh`: in the static shell the footer already starts below the screen, so the
+  // streamed search pushing it down is not a visible layout shift (CLS).
   return (
-    <main className="flex flex-1 flex-col bg-surface">
+    <main className="flex min-h-svh flex-1 flex-col bg-surface">
       <Suspense fallback={<SearchBand lang={lang} term={term} />}>
         {/* The places load while the query is read. */}
         {Promise.all([searchParams, loadPlaces(lang)]).then(([query, places]) => (
@@ -287,8 +292,9 @@ async function Offers({
     // The protection and extras steps start over for another car or search; not
     // for a discount code, so the code box keeps its message when it drops one.
     const stepKey = `${car.id}|${searchToQuery(search)}`;
-    // Started now, awaited by the step that shows it.
-    const extension = extensionHint(lang, search, car, promo);
+    // Started now, awaited by the step that shows it. Only when a cheaper band is within reach:
+    // the step then keeps the hint's place while it is quoted, and no hint means no empty place.
+    const extension = search.term === "short" && extensionCandidate(car) ? extensionHint(lang, search, car, promo) : null;
     const { options, extrasView } = await loadBookingChoices(lang, search, car);
     // For the homepage's "finish your booking" banner.
     const where = compactTrip(lang, search, places);
@@ -298,8 +304,8 @@ async function Offers({
         segment={car.segment}
         image={car.image?.src ?? null}
         place={where.place}
-        dates={where.dates}
-        start={search.start}
+        search={search}
+        labels={draftLabels(search, car.segmentId)}
       />
     );
     // No package is preselected: the customer picks one (the free one included).
@@ -407,6 +413,7 @@ async function Offers({
         searchQuery={searchQuery}
         initialQuote={carQuote && !lostCar ? await carQuote : null}
         lostCar={lostCar}
+        placeFees={await placeFeesFor(lang, search, offers)}
       />
     </>
   );

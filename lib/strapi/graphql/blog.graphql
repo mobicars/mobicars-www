@@ -1,0 +1,87 @@
+# Blog posts at the old site's URLs, `/{lang}/blog/{slug}` (`modules/blog.ts`). Like
+# pages, only the new `blocks` zone is read; `components` belongs to mobicars-pl.
+
+# Every post of one language, only what a URL and the sitemap need.
+query BlogRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: Int!, $pageSize: Int!) {
+  blogs_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+    }
+    pageInfo {
+      page
+      pageCount
+    }
+  }
+}
+
+query BlogPost($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  blog(documentId: $documentId, locale: $locale, status: $status) {
+    ...BlogCard
+    updatedAt
+    seo {
+      metaTitle
+      metaDescription
+      noIndex
+      noFollow
+      shareImage {
+        ...Media
+      }
+    }
+    blocks {
+      __typename
+      ... on ComponentBlocksHero {
+        ...HeroBlock
+      }
+      ... on ComponentBlocksContent {
+        ...ContentBlock
+      }
+      ... on ComponentBlocksMediaText {
+        ...MediaTextBlock
+      }
+      ... on ComponentBlocksFeatures {
+        ...FeaturesBlock
+      }
+      ... on ComponentBlocksFaq {
+        ...FaqBlock
+      }
+      ... on ComponentBlocksReviews {
+        ...ReviewsBlock
+      }
+      ... on ComponentBlocksLocations {
+        ...LocationsBlock
+      }
+      ... on ComponentBlocksBlogPosts {
+        ...BlogPostsBlock
+      }
+      ... on ComponentBlocksScenarios {
+        ...ScenariosBlock
+      }
+      ... on ComponentBlocksComparison {
+        ...ComparisonBlock
+      }
+      ... on ComponentBlocksCars {
+        ...CarsBlock
+      }
+      ... on ComponentBlocksLogos {
+        ...LogosBlock
+      }
+      ... on ComponentBlocksLeadForm {
+        ...LeadFormBlock
+      }
+      ... on ComponentBlocksCtaBand {
+        ...CtaBandBlock
+      }
+      ... on ComponentBlocksTrustBar {
+        ...TrustBarBlock
+      }
+      ... on ComponentBlocksContact {
+        ...ContactBlock
+      }
+      ... on ComponentBlocksPromoCards {
+        ...PromoCardsBlock
+      }
+    }
+  }
+}

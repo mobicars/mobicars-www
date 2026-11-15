@@ -11,6 +11,10 @@ import {
   parseOffer,
   parsePriceGroup,
   parseReservationQuote,
+  collectSegments,
+  countLocations,
+  localizeCities,
+  splitAddress,
   parseServicePoint,
 } from "./internal/entities";
 import { RentCarSoftError } from "./internal/errors";
@@ -435,6 +439,117 @@ describe("normalization", () => {
         keys: [{ id: 2, value: "7" }],
       }).active,
       false,
+    );
+  });
+
+  it("collects car segments with names per language and terms", () => {
+    const offer = (id: number, segmentId: string | null, segmentName: string) =>
+      ({ ...parseOffer({ id, mark: "M", model: "X" }), segmentId, segmentName });
+    const segments = collectSegments(
+      {
+        pl: [offer(1, "1462", "Klasa A"), offer(2, "1462", "Klasa A"), offer(3, "1472", "SUV"), offer(9, null, "?")],
+        en: [offer(1, "1462", "A Class")],
+      },
+      [offer(4, "1472", "SUV"), offer(5, "2699", "VAN (7 os.)")],
+    );
+    assert.deepEqual(segments, [
+      { id: 1462, names: { pl: "Klasa A", en: "A Class", de: "Klasa A", uk: "Klasa A" }, cars: 2, terms: ["short"] },
+      { id: 1472, names: { pl: "SUV", en: "SUV", de: "SUV", uk: "SUV" }, cars: 1, terms: ["short", "long"] },
+      { id: 2699, names: { pl: "VAN (7 os.)", en: "VAN (7 os.)", de: "VAN (7 os.)", uk: "VAN (7 os.)" }, cars: 0, terms: ["long"] },
+    ]);
+  });
+
+  it("counts fixed pickup points, towns and airports", () => {
+    const point = (id: number, keys: { id: number; value: string }[], extra: Record<string, unknown> = {}) =>
+      parseServicePoint({ id, name: `P${id}`, keys: [{ id: 2, value: ACTIVE_SERVICE_POINT_STATUS_VALUE }, ...keys], ...extra });
+    const stats = countLocations([
+      point(1, [{ id: 3, value: "Warszawa" }]),
+      point(2, [{ id: 3, value: " warszawa " }], { isAirport: true }),
+      point(3, [{ id: 3, value: "Kraków" }], { isAirport: true }),
+      point(4, [{ id: 3, value: "Wrocław" }], { customAddresses: true }),
+      parseServicePoint({ id: 5, name: "Closed", keys: [{ id: 2, value: "7" }, { id: 3, value: "Radom" }] }),
+      point(6, []),
+    ]);
+    assert.deepEqual(stats, { points: 4, cities: 2, airports: 2 });
+  });
+
+  it("names each town in the list's language from its points' names", () => {
+    const point = (city: string, name: string) => ({ city, cityName: city, name });
+    const points = [
+      point("Warszawa", "Warschau – Flughafen Chopin"),
+      point("Warszawa", "Warschau – Büro"),
+      point("Legionowo", "Legionowo – Büro"),
+      point("Legionowo", "Legionowo – Wunschadresse"),
+      point("Legionowo", "Serock – Wunschadresse"),
+      point("Radom", "Radom Hauptbahnhof"),
+    ];
+    assert.deepEqual(
+      localizeCities(points, "de").map((each) => each.cityName),
+      ["Warschau", "Warschau", "Legionowo", "Legionowo", "Legionowo", "Radom"],
+    );
+    assert.deepEqual(localizeCities([point("Warszawa", "Warszawa - Lotnisko")], "pl")[0].cityName, "Warszawa");
+  });
+
+  it("splits a point's address into directions and the fee", () => {
+    assert.deepEqual(splitAddress("Parking P2 - wjazd obok Renaissance Hotel - od 79 zł"), {
+      addressNote: "Parking P2 - wjazd obok Renaissance Hotel",
+      fee: { amount: 79, from: true },
+    });
+    assert.deepEqual(splitAddress("od 49 zł"), { addressNote: null, fee: { amount: 49, from: true } });
+    assert.deepEqual(splitAddress("-  od 0 zł"), { addressNote: null, fee: { amount: 0, from: true } });
+    assert.deepEqual(splitAddress("Wpisz adres - 60 zł"), { addressNote: null, fee: { amount: 60, from: false } });
+    assert.deepEqual(splitAddress("Garaż podziemny/ naziemny osiedla"), {
+      addressNote: "Garaż podziemny/ naziemny osiedla",
+      fee: null,
+    });
+    assert.deepEqual(splitAddress(null), { addressNote: null, fee: null });
+  });
+
+  it("reads service-point contact, coordinates, limits and names", () => {
+    const point = parseServicePoint({
+      id: 479,
+      name: "Warszawa Biuro",
+      names: { "1": "Warszawa Biuro", "2": "Warsaw Office", "3": " ", "5": "Варшава – офіс", "9": "Other" },
+      latitude: null,
+      longitude: null,
+      customerInstruction: null,
+      minDays: null,
+      keys: [
+        { id: 5, value: " +48 600 000 000 " },
+        { id: 6, value: "biuro@example.com" },
+        { id: 7, value: "3" },
+        { id: 8, value: null },
+        { id: 13, value: "Wejście od ulicy" },
+        { id: 18, value: "52,2297" },
+        { id: 19, value: "20.9512" },
+      ],
+    });
+    assert.equal(point.phone, "+48 600 000 000");
+    assert.equal(point.email, "biuro@example.com");
+    assert.equal(point.latitude, 52.2297);
+    assert.equal(point.longitude, 20.9512);
+    assert.equal(point.minDays, 3);
+    assert.equal(point.maxDays, null);
+    assert.equal(point.instruction, "Wejście od ulicy");
+    assert.deepEqual(point.names, { pl: "Warszawa Biuro", en: "Warsaw Office", uk: "Варшава – офіс" });
+
+    const fields = parseServicePoint({
+      id: 2,
+      name: "Airport",
+      latitude: 50.1,
+      longitude: 19.8,
+      keys: [
+        { id: 18, value: "1" },
+        { id: 19, value: "not a number" },
+      ],
+    });
+    assert.equal(fields.latitude, 50.1);
+    assert.equal(fields.longitude, 19.8);
+    assert.deepEqual(fields.names, {});
+    assert.equal(fields.phone, null);
+    assert.equal(
+      parseServicePoint({ id: 3, name: "X", keys: [{ id: 19, value: "abc" }] }).longitude,
+      null,
     );
   });
 

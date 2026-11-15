@@ -1,12 +1,13 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import type { Lang } from "@/i18n/config";
+import { resolveAccountPath, resolveFleetPath, resolveReservationPath } from "@/i18n/routes";
 import { cacheEnabled } from "@/lib/cache";
 
 import { PageRoutesDocument } from "../generated/graphql";
 import { contentStatus } from "../internal/config";
 import { strapiRequest } from "../internal/http";
-import { buildRoutes, findRoute, type PageRoute, type RouteNode } from "../internal/routes";
+import { buildRoutes, findRoute, pageHref, type PageRoute, type RouteNode } from "../internal/routes";
 import { CACHE_TAGS } from "../internal/tags";
 
 /** Strapi's GraphQL caps a page at 100 entries in production (`amountLimit`). */
@@ -18,8 +19,24 @@ const MAX_REQUESTS = 20;
  * Every routable page of one language. One small list answers whether a URL
  * exists, builds `generateStaticParams`, hreflang and links between pages,
  * without a content query per URL.
+ *
+ * Only the language's own pages: a page with no version in this language has
+ * no URL here (404). No other language's text stands in.
  */
 export async function listPageRoutes(lang: Lang): Promise<PageRoute[]> {
+  return markServedByApp(lang, await loadOwnRoutes(lang));
+}
+
+/** Marks pages whose URL an app folder answers (`proxy.ts` rewrites it), e.g. the CMS `flota` page. */
+function markServedByApp(lang: Lang, routes: PageRoute[]): PageRoute[] {
+  return routes.map((route) => {
+    const path = pageHref(lang, route.segments);
+    const app = resolveFleetPath(lang, path) ?? resolveReservationPath(lang, path) ?? resolveAccountPath(lang, path);
+    return app ? { ...route, servedByApp: true } : route;
+  });
+}
+
+function loadOwnRoutes(lang: Lang): Promise<PageRoute[]> {
   return cacheEnabled() ? loadCachedRoutes(lang) : loadRoutes(lang);
 }
 
@@ -49,6 +66,7 @@ async function loadRoutes(lang: Lang): Promise<PageRoute[]> {
         documentId: node.documentId,
         slug: node.slug,
         parentDocumentId: node.parentPage?.documentId ?? null,
+        updatedAt: typeof node.updatedAt === "string" ? node.updatedAt : null,
       });
     }
     if (!pages_connection || page >= pages_connection.pageInfo.pageCount) {

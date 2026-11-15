@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Banknote, CalendarPlus, Car, CircleCheck, Mail, MapPin, Package, ShieldCheck } from "lucide-react";
+import { Banknote, CalendarPlus, Car, CircleCheck, MapPin, Package, ShieldCheck } from "lucide-react";
 import type { ReactNode } from "react";
 
+import { BookingSentEvent } from "@/components/reservation/booking-sent-event";
 import { ClearSearch } from "@/components/reservation/clear-search";
 import { formatMoney } from "@/components/reservation/format";
 import { QuoteLines } from "@/components/reservation/quote-lines";
@@ -27,17 +28,35 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
   const messages = getMessages(lang);
   const t = messages.confirmation;
   const d = messages.details;
-  const [emailBefore, emailAfter = ""] = t.emailNotice.split("{email}");
+  const [emailBefore, emailAfter = ""] = t.lead.split("{email}");
+  const nextSteps = [t.nextSteps.email, t.nextSteps.pay, t.nextSteps.pickup];
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-3 py-10 sm:px-6">
       <ClearSearch />
+      <BookingSentEvent
+        bookingKey={receipt.id ? String(receipt.id) : `${receipt.car.name}-${receipt.total}`}
+        total={receipt.total}
+        term={receipt.term}
+        protection={receipt.protection}
+        extrasCount={receipt.extras.length}
+      />
       <header className="flex flex-col items-center gap-3 text-center">
         <span className="flex size-16 items-center justify-center rounded-full bg-green-light text-green-medium">
           <CircleCheck className="size-9" strokeWidth={1.75} aria-hidden />
         </span>
         <h1 className="text-3xl font-semibold text-blue-dark sm:text-4xl">{t.title}</h1>
-        <p className="max-w-xl text-blue-dark/80">{receipt.term === "long" ? t.subtitleLong : t.subtitle}</p>
+        <p className="max-w-xl text-blue-dark/80">
+          {receipt.email ? (
+            <>
+              {emailBefore}
+              <span className="font-semibold text-blue-dark">{receipt.email}</span>
+              {emailAfter}
+            </>
+          ) : (
+            t.leadNoEmail
+          )}
+        </p>
         {receipt.id ? (
           <p className="rounded-full bg-white px-4 py-1.5 text-sm text-blue-dark shadow-sm">
             {t.orderNumber}: <span className="font-bold">{receipt.id}</span>
@@ -45,20 +64,23 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
         ) : null}
       </header>
 
-      <section className="flex flex-col gap-3 rounded-2xl bg-white p-5 text-sm text-blue-dark/80 shadow-sm sm:p-6">
-        <p>{t.text}</p>
-        <p>{t.text2}</p>
-        <p>{t.text3}</p>
-        {receipt.email ? (
-          <p className="flex items-center gap-2 text-blue-dark">
-            <Mail className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-            <span>
-              {emailBefore}
-              <span className="font-semibold">{receipt.email}</span>
-              {emailAfter}
-            </span>
-          </p>
-        ) : null}
+      <section
+        aria-labelledby="next-steps-title"
+        className="flex flex-col gap-4 rounded-2xl bg-white p-5 text-sm text-blue-dark/80 shadow-sm sm:p-6"
+      >
+        <h2 id="next-steps-title" className="text-xl font-semibold text-blue-dark">
+          {t.nextTitle}
+        </h2>
+        <ol className="flex flex-col gap-3">
+          {nextSteps.map((text, index) => (
+            <li key={index} className="flex items-start gap-3">
+              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-blue-light text-xs font-bold text-blue-dark">
+                {index + 1}
+              </span>
+              <span className="pt-0.5">{text}</span>
+            </li>
+          ))}
+        </ol>
       </section>
 
       {(
@@ -142,7 +164,8 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
         </div>
       ) : null}
 
-      <div className="flex flex-col justify-center gap-3 sm:flex-row">
+      <p className="text-center text-sm text-muted-dark">{t.accountNotice}</p>
+      <div className="-mt-3 flex flex-col justify-center gap-3 sm:flex-row">
         <Link
           href={receipt.signedIn ? accountHref(lang, "reservations") : accountHref(lang, "login")}
           className={buttonClass("primary", "md", "px-6")}

@@ -1,11 +1,12 @@
 "use client";
 
-import { useId, useState, type Ref } from "react";
+import { lazy, Suspense, useId, useState, type Ref } from "react";
 import { Dialog } from "react-aria-components";
 import { CalendarCheck2, CalendarRange, Gauge, type LucideIcon } from "lucide-react";
 
 import { BarField, SearchButton, type TermBarProps } from "@/components/reservation/bar-field";
-import { DialogHeader, OptionList, WidgetModal } from "@/components/reservation/dialog-parts";
+import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
+import { useIdlePreload } from "@/components/reservation/lazy-dialog";
 import { PlaceFields } from "@/components/reservation/place-fields";
 import { formatSchedulePoint, pointFromValue, valueFromPoint } from "@/components/reservation/schedule";
 import { formatKilometers, formatMonths } from "@/components/reservation/format";
@@ -15,6 +16,10 @@ import { useMessages } from "@/i18n/messages-context";
 import { reservationConfig } from "@/lib/reservation/config";
 
 /** Monthly rental: place, pickup date, month count and kilometer limit. */
+const loadOptionList = () => import("@/components/reservation/option-list");
+/** Months and kilometres: the list (React Aria `ListBox`) loads with the dialog's first use, not with the page. */
+const OptionList = lazy(() => loadOptionList().then((module) => ({ default: module.OptionList<number> })));
+
 export function LongTermBar({ places, draft, onChange, invalid, fieldRef }: TermBarProps) {
   const lang = useLang();
   const texts = useMessages().search;
@@ -103,6 +108,7 @@ function OptionField({
   const titleId = useId();
   const texts = useMessages().search;
   const [open, setOpen] = useState(false);
+  useIdlePreload(loadOptionList);
 
   return (
     <>
@@ -125,6 +131,7 @@ function OptionField({
           className="grid max-h-[inherit] min-h-0 grid-rows-[auto_minmax(0,1fr)] overflow-hidden outline-none"
         >
           <DialogHeader titleId={titleId} title={label} className="py-4" />
+          <Suspense fallback={<div className="min-h-48" aria-busy />}>
           <OptionList
             labelledBy={titleId}
             options={options}
@@ -136,6 +143,7 @@ function OptionField({
               setOpen(false);
             }}
           />
+          </Suspense>
         </Dialog>
       </WidgetModal>
     </>

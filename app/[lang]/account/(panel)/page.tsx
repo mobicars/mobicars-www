@@ -127,7 +127,7 @@ async function NextReservationCard({ lang }: { lang: Lang }) {
         <p className="text-sm text-muted-dark">{t.overview.noUpcoming}</p>
         <Link
           href={`/${lang}`}
-          className="inline-flex h-11 w-fit items-center rounded-lg bg-green-medium px-5 text-sm font-semibold text-white hover:bg-green-dark"
+          className="inline-flex h-11 w-fit items-center rounded-lg bg-go-strong px-5 text-sm font-semibold text-white hover:bg-green-dark"
         >
           {t.overview.bookCar}
         </Link>

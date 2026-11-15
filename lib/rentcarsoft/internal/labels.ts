@@ -56,8 +56,10 @@ export const DEFAULT_OFFER_KEY_IDS = [
   1, 2, 3, 8, 9, 11, 16, 17, 20, 64, 71, 72, 73, 74, 75, 131,
 ];
 
+/** Monthly rental also reads its own description: 127 (Polish, textarea) and 134 (English), checked live. */
 export const DEFAULT_LONG_TERM_OFFER_KEY_IDS = [
   ...DEFAULT_OFFER_KEY_IDS,
+  127,
   134,
 ];
 
@@ -87,7 +89,16 @@ export const TRAIN_STATION_YES_VALUE = "9";
 /** Live dictionary: service-point key 22, select value 13, label "Tak". */
 export const OFFICE_YES_VALUE = "13";
 
-export const DEFAULT_SERVICE_POINT_KEY_IDS = [2, 3, 4, 14, 21, 22];
+/**
+ * Keys read with every service point: status, place, contact (5 phone, 6
+ * e-mail), min/max rental (7, 8), customer instruction (13), postal code,
+ * coordinates (18, 19: the `latitude`/`longitude` fields are empty for most
+ * points) and the station/office flags.
+ */
+export const DEFAULT_SERVICE_POINT_KEY_IDS = [2, 3, 4, 5, 6, 7, 8, 13, 14, 18, 19, 21, 22];
+
+/** RentCarSoft language ids in `names` / `segmentNames`, by site language. */
+export const RCS_LANGUAGE_IDS = { pl: "1", en: "2", de: "3", uk: "5" } as const;
 
 export const CLIENT_KEY_LABELS: Record<number, string> = {
   1: "firstName",

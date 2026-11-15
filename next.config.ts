@@ -7,6 +7,10 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   reactCompiler: true,
   images: {
+    // AVIF first: the hero photo ~40 → ~25 KB on phones, car and blog images smaller too.
+    formats: ["image/avif", "image/webp"],
+    // 60 for photos below the first screen (cards, tiles, media-text, blog), 75 elsewhere.
+    qualities: [60, 75],
     remotePatterns: [
       // Car photos from the RentCarSoft offer gallery.
       new URL("https://mobicars.rentcarsoft.pl/grafiki/**"),

@@ -3,7 +3,7 @@ import { describe, it } from "node:test";
 
 import type { Extra } from "@/lib/rentcarsoft";
 
-import { toProtectionOptions } from "./protection";
+import { rowValue, toProtectionOptions } from "./protection";
 
 function extra(overrides: Partial<Extra>): Extra {
   return {
@@ -75,5 +75,17 @@ describe("protection options", () => {
       { key: "replacementCar", value: "Bezpłatnie", covered: true },
     ]);
     assert.equal(options[0].description, "<p>Ochrona Standard jest <strong>bezpłatna</strong>.</p>");
+  });
+
+  it("shows RentCarSoft's Polish row values in the page language", () => {
+    const row = (value: string, covered = false) => ({ key: "bodyworkDamage" as const, value, covered });
+    // Intl puts a no-break space between the currency and the number.
+    const show = (value: string, lang: "pl" | "en", covered = false) =>
+      rowValue(row(value, covered), lang, lang === "pl" ? "W cenie" : "Included").replace(/\s/g, " ");
+    assert.equal(show("1500 zł", "en"), "PLN 1,500");
+    assert.equal(show("0 zł", "en", true), "PLN 0");
+    assert.equal(show("Bezpłatnie", "en", true), "Included");
+    assert.equal(show("1500 zł", "pl"), "1500 zł");
+    assert.equal(show("do wartości auta", "en"), "do wartości auta");
   });
 });

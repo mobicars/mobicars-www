@@ -5,6 +5,8 @@ export type RouteNode = {
   documentId: string;
   slug: string;
   parentDocumentId: string | null;
+  /** ISO date of the last change in this language, when Strapi gives one. */
+  updatedAt?: string | null;
 };
 
 export type PageRoute = {
@@ -12,6 +14,14 @@ export type PageRoute = {
   documentId: string;
   /** Path below the language, `[]` for the home page: `["wynajem", "warszawa"]`. */
   segments: string[];
+  /** Last change of this language version (ISO), for the sitemap's `lastmod`. */
+  updatedAt?: string;
+  /**
+   * An app folder serves this URL instead (`/pl/flota` is `app/[lang]/fleet`):
+   * the CMS page is never shown. Links to it still lead to the app page; the
+   * sitemap, hreflang and static params leave it out.
+   */
+  servedByApp?: true;
 };
 
 /** The slug of the page served at `/{lang}`. */
@@ -42,7 +52,7 @@ export function buildRoutes(nodes: readonly RouteNode[]): PageRoute[] {
   for (const node of nodes) {
     const segments = pathOf(node, byId);
     if (segments) {
-      routes.push({ documentId: node.documentId, segments });
+      routes.push({ documentId: node.documentId, segments, ...(node.updatedAt ? { updatedAt: node.updatedAt } : {}) });
     }
   }
   return routes;

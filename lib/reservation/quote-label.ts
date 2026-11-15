@@ -6,7 +6,8 @@ import type { QuoteLineView } from "@/lib/reservation/quote";
 
 /**
  * The label of one quote line in the page language: "Wynajem (2 doby)",
- * "Podstawienie auta", or the API's own name for protection and extras.
+ * "Opłata za wydanie" or "Podstawienie pod adres", or the API's own name for
+ * protection and extras.
  * Shared by the summary panel, the last step's review and the thank-you page.
  */
 export function quoteLineLabel(line: QuoteLineView, t: Messages["quoteLines"], lang: Lang): string {
@@ -15,6 +16,10 @@ export function quoteLineLabel(line: QuoteLineView, t: Messages["quoteLines"], l
       return line.days ? fill(t.rentDays, { days: formatDays(lang, line.days) }) : t.rent;
     case "item":
       return line.name ?? t.item;
+    case "pickup":
+      return line.atAddress ? t.pickupAddress : t.pickup;
+    case "return":
+      return line.atAddress ? t.returnAddress : t.return;
     default:
       return t[line.kind];
   }

@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode, type SyntheticEvent } from "react"
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, GridList, GridListItem } from "react-aria-components";
-import { ArrowLeft, Globe, House, Minus, Package, Plus } from "lucide-react";
+import { ArrowLeft, Ban, Globe, House, Minus, Package, Plus } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
 import { formatMoney } from "@/components/reservation/format";
@@ -28,6 +28,7 @@ import {
   type ExtrasSelection,
   type ExtrasView,
 } from "@/lib/reservation/extras";
+import { termOfSearchQuery, trackExtrasChange, useBookingStep } from "@/lib/reservation/analytics";
 import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
 import type { ProtectionOption } from "@/lib/reservation/protection";
@@ -74,6 +75,7 @@ export function ExtrasStep({
 }) {
   const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
+  useBookingStep("extras", termOfSearchQuery(serverSearchQuery));
   const t = useMessages().extras;
   const [selection, setSelection] = useState(initialSelection);
   const quote = useQuote(
@@ -98,6 +100,7 @@ export function ExtrasStep({
   }, [droppedCount, initialSelection]);
 
   function update(next: ExtrasSelection) {
+    trackExtrasChange(view, selection, next);
     setSelection(next);
     const query = selectionToQuery(next);
     replaceParam(QUERY_KEYS.zone, query.zone);
@@ -127,7 +130,7 @@ export function ExtrasStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-labelledby="extras-title" className="@container flex min-w-0 flex-col gap-8">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 id="extras-title" className="text-2xl font-semibold text-blue-dark">
+          <h2 id="extras-title" tabIndex={-1} data-step-heading className="text-2xl font-semibold text-blue-dark outline-none">
             {t.title}
           </h2>
           <button
@@ -259,13 +262,19 @@ function BorderZones({
             {t.borderTitle}
           </h3>
           <p className="text-sm text-muted-dark">{t.borderText}</p>
+          {/* SWU 20: these countries are closed whatever the zone. */}
+          <p className="mt-1 flex items-start gap-1.5 text-sm font-semibold text-blue-dark">
+            <Ban className="mt-0.5 size-4 shrink-0 text-red-700" strokeWidth={1.75} aria-hidden />
+            {t.borderBanned}
+          </p>
         </div>
       </div>
       {/* Narrow: a swipe row with the chosen zone in view; wider: a grid. */}
       <Slider
         label={t.zones}
         startIndex={value === null ? 0 : zones.findIndex((zone) => zone.id === value) + 1}
-        className="-mx-5 scroll-px-5 px-5 pb-1 @md:mx-0 @md:grid @md:grid-cols-2 @md:overflow-visible @md:px-0 @3xl:grid-cols-4"
+        frameClassName="-mx-5 scroll-px-5 px-5 pb-1 @md:mx-0 @md:overflow-visible @md:px-0"
+        className="@md:grid @md:grid-cols-2 @3xl:grid-cols-4"
         itemClassName="w-[62%] @md:w-auto"
         dotsClassName="@md:hidden"
         count={zones.length + 1}
@@ -286,7 +295,7 @@ function BorderZones({
             className={`${className} outline-none`}
           >
             <ZoneCard id={NO_TRIP} className={itemClassName} title={t.noTrip} note={t.polandOnly} image={NO_TRIP_MAP}>
-              <span className="text-lg font-bold text-green-medium">{formatMoney(lang, 0)}</span>
+              <span className="text-lg font-bold text-go-strong">{formatMoney(lang, 0)}</span>
             </ZoneCard>
             {zones.map((zone) => (
               <ZoneCard
@@ -464,7 +473,7 @@ function SwitchLook({ on }: { on: boolean }) {
     <span
       aria-hidden
       className={`flex ${CONTROL_HEIGHT} w-12 shrink-0 items-center rounded-full p-1 transition-colors duration-300 ease-out motion-reduce:transition-none ${
-        on ? "bg-green-medium" : "bg-muted"
+        on ? "bg-go-strong" : "bg-muted"
       }`}
     >
       <span
@@ -496,7 +505,7 @@ function QuantitySwitch({ name, value, onChange }: { name: string; value: number
       onMouseDown={on ? stop : undefined}
       onClick={on ? stop : undefined}
       className={`relative flex ${CONTROL_HEIGHT} shrink-0 items-center overflow-hidden rounded-full transition-[width,background-color] duration-300 ease-out motion-reduce:transition-none ${
-        on ? "w-24 bg-green-medium" : "w-12 bg-muted"
+        on ? "w-24 bg-go-strong" : "w-12 bg-muted"
       }`}
     >
       <span

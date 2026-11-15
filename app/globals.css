@@ -1,9 +1,72 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/*
+ * The site is light only until a dark theme is designed. The old
+ * `prefers-color-scheme: dark` switch turned the page behind the blocks near
+ * black, which no block was drawn for.
+ */
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #083052;
+  color-scheme: light;
+}
+
+/*
+ * "Clear Road" design tokens. Brand colours stay as they are; these add the
+ * roles, the type scale, the section rhythm, shapes, shadows and motion that
+ * every block and the site chrome share (`components/ui/section.tsx`).
+ */
+@theme {
+  /* Surfaces and lines. `tint` is blue-light thinned with white, opaque on purpose. */
+  --color-canvas: #ffffff;
+  --color-tint: #eaf1f8;
+  --color-line: rgb(8 48 82 / 0.1);
+  --color-line-strong: rgb(8 48 82 / 0.18);
+  /*
+   * Green under white text. Brand green-medium gives 3.7:1 with white, under
+   * WCAG AA for button labels; this shade of it gives 5.1:1. Green-medium stays
+   * for icons, ticks and accents on white.
+   */
+  --color-go-strong: #4a7a14;
+
+  /* Fluid type: phone size → desktop size, sentence case everywhere. */
+  --text-display: clamp(2.25rem, 1.55rem + 3vw, 4rem);
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.025em;
+  --text-display--font-weight: 700;
+  --text-title: clamp(1.75rem, 1.4rem + 1.6vw, 2.75rem);
+  --text-title--line-height: 1.12;
+  --text-title--letter-spacing: -0.02em;
+  --text-title--font-weight: 700;
+  --text-subtitle: clamp(1.25rem, 1.15rem + 0.45vw, 1.5rem);
+  --text-subtitle--line-height: 1.3;
+  --text-subtitle--letter-spacing: -0.01em;
+  --text-subtitle--font-weight: 600;
+  --text-lead: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --text-lead--line-height: 1.55;
+  --text-eyebrow: 0.8125rem;
+  --text-eyebrow--line-height: 1.2;
+  --text-eyebrow--letter-spacing: 0.08em;
+  --text-eyebrow--font-weight: 700;
+
+  /* Section rhythm (`py-section`, `py-section-sm`) and the page gutter (`px-gutter`). */
+  --spacing-section: clamp(3.5rem, 2.25rem + 5vw, 7rem);
+  --spacing-section-sm: clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
+  --spacing-gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
+  /* Content width plus both gutters, so `max-w-page px-gutter` leaves 80rem of content. */
+  --container-page: calc(80rem + 2 * var(--spacing-gutter));
+  --container-reading: calc(46rem + 2 * var(--spacing-gutter));
+
+  --radius-card: 1.25rem;
+  --radius-control: 0.875rem;
+
+  --shadow-card: 0 1px 2px rgb(8 48 82 / 0.04), 0 4px 16px -4px rgb(8 48 82 / 0.08);
+  --shadow-lift: 0 2px 4px rgb(8 48 82 / 0.05), 0 16px 32px -12px rgb(8 48 82 / 0.18);
+  --shadow-float: 0 4px 8px rgb(8 48 82 / 0.06), 0 24px 56px -16px rgb(8 48 82 / 0.32);
+
+  /* Motion: `ease-out-soft` with `duration-150` (state changes) or `duration-250` (entrances). Tailwind has no duration tokens. */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -14,7 +77,7 @@
   --color-blue-medium: #0e5595;
   --color-blue-light: #d5e4f2;
   --color-green-dark: #32510d;
-  --color-green-medium: #5b9318;
+  --color-green-medium: #508115; /* white text 4.67:1 (AA); was #5b9318, 3.73:1 */
   --color-green-light: #dcebc8;
   --color-muted-dark: #5c6166;
   --color-muted: #d4d6da;
@@ -24,13 +87,6 @@
   --color-ink: #1b1f24;
   --text-xxs: 0.625rem;
   --text-xxs--line-height: 0.875rem;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
@@ -48,6 +104,14 @@ html,
 body {
   overflow-x: clip;
   overscroll-behavior-x: none;
+}
+
+/* Non-modal bars sliding in at the bottom (resume booking). */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
 }
 
 @keyframes modal-fade {
@@ -112,7 +176,8 @@ body {
   transform-origin: center;
 }
 
-/* `BottomSheet` (components/ui/sheet.tsx): React Aria plays it with the swipe and the slide in and out. */
+/* `BottomSheet` (components/ui/sheet.tsx) and the menu sheet (`components/layout/main-nav.tsx`): React Aria
+   plays it with the swipe and the slide in and out, so the backdrop follows the finger. */
 @keyframes sheet-backdrop {
   from {
     opacity: 0;
@@ -157,6 +222,11 @@ body {
     padding-bottom: 6rem;
   }
 
+  /* Keyboard focus and in-page jumps stop above the bar, never under it (WCAG 2.4.11). */
+  html:has([data-mobile-summary-bar]) {
+    scroll-padding-bottom: 7rem;
+  }
+
   /* Outside production the red preview banner (2.75rem) takes the bottom edge: the bar goes above it. */
   body:has([data-preview-banner]) [data-mobile-summary-bar] {
     bottom: 2.75rem;
@@ -179,6 +249,28 @@ body {
   --tw-prose-td-borders: var(--color-muted-light);
   line-height: 1.6;
 }
+/* Rich text on a dark section background (navy, blue, green, photo): all white, links underlined white, tables kept on white. */
+.rich-text-dark :is(h1, h2, h3, h4, h5, h6, strong) {
+  color: #fff;
+}
+.rich-text-dark a {
+  color: #fff;
+  text-decoration-color: rgb(255 255 255 / 0.7);
+}
+.rich-text-dark a:hover {
+  color: var(--color-blue-light);
+}
+.rich-text-dark li::marker {
+  color: #fff;
+}
+.rich-text-dark blockquote {
+  border-color: rgb(255 255 255 / 0.4);
+}
+.rich-text-dark table {
+  background: #fff;
+  color: var(--color-blue-dark);
+}
+
 .rich-text > :first-child {
   margin-top: 0;
 }
@@ -217,13 +309,57 @@ body {
   padding-bottom: 0.35em;
 }
 
-/* Menu sheet (`components/layout/main-nav.tsx`): React Aria plays this while the
-   sheet slides or is swiped, so the backdrop follows the finger. */
-@keyframes sheet-backdrop {
-  from {
-    opacity: 0;
+/*
+ * Carousel spotlight (`components/ui/carousel.tsx`, `spotlight`: reviews,
+ * features): once Embla runs (`data-carousel`), the slides beside the one in
+ * the middle (`data-active`) step back: dimmed, a little smaller, softly
+ * blurred and greyed, so they read as neighbours, not as part of the current
+ * one. A CSS transition when the middle slide changes: no work while swiping.
+ * Without JavaScript every slide stays full. Less motion: the same look, no
+ * transition.
+ */
+/* On the slide's content, not the `li`: Embla moves the `li` with `transform`, and a `scale` there would shrink that move too. */
+[data-carousel] > li > * {
+  transition:
+    opacity 250ms var(--ease-out-soft),
+    scale 250ms var(--ease-out-soft),
+    filter 250ms var(--ease-out-soft);
+}
+[data-carousel] > li:not([data-active]) > * {
+  opacity: 0.5;
+  scale: 0.92;
+  filter: blur(1.5px) grayscale(0.6);
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-carousel] > li > * {
+    transition: none;
   }
-  to {
-    opacity: 1;
-  }
+}
+
+
+/*
+ * `components/ui/carousel.tsx`: the row swipes natively (scroll-snap) until
+ * Embla takes it over (`data-embla`); then Embla moves the list itself, so
+ * the native scrolling, the snap and the spacers that centre the first and
+ * last card on their own go.
+ */
+[data-embla] {
+  overflow: hidden;
+  scroll-snap-type: none;
+  cursor: grab;
+  touch-action: pan-y pinch-zoom;
+}
+[data-embla]:active {
+  cursor: grabbing;
+}
+/* `bleed`: slides past the container show in the page margins; the section around clips at the screen edge. */
+[data-embla][data-bleed] {
+  overflow: visible;
+}
+[data-embla] > * {
+  will-change: transform;
+}
+[data-embla] > *::before,
+[data-embla] > *::after {
+  display: none;
 }

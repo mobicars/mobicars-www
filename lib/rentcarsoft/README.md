@@ -74,6 +74,7 @@ Catalog, cached for hours when the arguments are not date- or code-dependent, an
 - `listOfferKeys`, `listServicePointKeys`, `listClientKeys`, `listPriceGroupKeys`
 - `listOffers` (one page), `listAllOffers` (catalog walk), `getOffer`
 - `listServicePoints`, `getServicePoint`, `listDepartments`, `getDepartment`
+- `getLocationStats` (fixed points, towns, airports for copy), `listSegments` (car classes with names per language, car count and terms, for the CMS class picker via `GET /api/cms/rcs-segments`)
 - `listPriceGroups`, `getPriceGroup`
 - `listAddons`, `getAddon`, `listAccessories`, `getAccessory`
 
@@ -107,6 +108,8 @@ Mutations are not retried.
 - Service points are active when custom field 2 equals `6` (`Aktywny`). `listServicePoints` returns those points unless `includeInactive` is set.
 - `ServicePoint.city` and `ServicePoint.address` are trimmed custom fields 3 and 4. An empty value is `null`.
 - `ServicePoint.office` is custom field 22 with value `13` (`Tak`). `ServicePoint.trainStation` is custom field 21 with value `9` (`Tak`). `airport` stays the API boolean `isAirport`.
+- `ServicePoint.phone` and `email` are custom fields 5 and 6. `latitude`/`longitude` come from the API fields and, when those are empty (most points), from custom fields 18/19. `minDays`/`maxDays` fall back to fields 7/8 and `instruction` to field 13 the same way.
+- `ServicePoint.names` holds the name per site language from the API's `names` (RentCarSoft language ids 1 pl, 2 en, 3 de, 5 uk, `RCS_LANGUAGE_IDS`); a missing or blank translation is left out, so callers fall back to `name`.
 - Offer field 71 with value `81` sets `Offer.isPopular`.
 - On a dated short-term list, `Offer.isDiscounted` and `Offer.discountedCalculatedPrice` carry a segment promotion, and `Offer.promotion` its name and dates from `cennik[segmentId]`. The discounted total matched the calculate total on the live API.
 - `OfferImage.main` is the gallery's `default` flag: the offer's main photo.

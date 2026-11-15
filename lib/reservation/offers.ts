@@ -57,6 +57,22 @@ export type OfferCard = {
 };
 
 /**
+ * What the pickup and return places add to every car of a daily search:
+ * delivery to an address or an airport, collection, a one-way fee. The fees
+ * depend on the places and times, not the car, so one quote gives them for the
+ * whole list (`placeFeesFor` in `booking.ts`). Amounts are gross, as RentCarSoft
+ * sends them.
+ */
+export type PlaceFees = {
+  pickup: number;
+  return: number;
+  relocation: number;
+  total: number;
+  /** Delivered to or collected from the customer's address, not a point. */
+  atAddress: boolean;
+};
+
+/**
  * Cards for every car the list returns, including ones booked for the window
  * (`available: false`). A customer books a class, "X or similar", and the team
  * confirms the car, as on the old site. See `lib/reservation/README.md`.

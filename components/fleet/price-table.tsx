@@ -25,10 +25,13 @@ export function PriceTable({
   const until = promotion?.endsAt ? formatApiDate(lang, promotion.endsAt) : null;
   return (
     <div className="flex flex-col gap-3">
-      {promotion?.name && until ? (
+      {promotion && until ? (
         <p className="flex items-center gap-2 text-sm font-semibold text-green-dark">
           <BadgePercent className="size-4 shrink-0" aria-hidden />
-          {fill(t.promotionUntil, { name: promotion.name, date: until })}
+          {/* RentCarSoft names promotions in Polish only, so other languages get the generic line. */}
+          {lang === "pl" && promotion.name
+            ? fill(t.promotionUntil, { name: promotion.name, date: until })
+            : fill(t.promotionUntilGeneric, { date: until })}
         </p>
       ) : null}
       <table className="w-full overflow-hidden rounded-xl text-sm">

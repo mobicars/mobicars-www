@@ -6,6 +6,14 @@
     "mainNav": "Main menu",
     "allCars": "Whole fleet",
     "fromPerDay": "from {price} / day",
+    "placeCities": "Car rental by city",
+    "placeAirports": "Airport car rental",
+    "placeLocals": "Local car rental",
+    "placeLinks": "Car rental near you",
+    "hoursClosed": "closed",
+    "fleetQuickLinks": "Quick picks",
+    "fleetVans": "Vans",
+    "fleetElectric": "Electric cars",
     "airport": "Airport",
     "trainStation": "Train station",
     "office": "Office",
@@ -29,7 +37,27 @@
       "uk": "Ukrainian"
     },
     "description": "Car rental",
-    "fleet": "Fleet"
+    "fleet": "Fleet",
+    "book": "Book",
+    "myReservations": "My bookings",
+    "callHotline": "Call us on {phone}",
+    "callDepartment": "Call: {name}, {phone}",
+    "footerNav": "Footer links",
+    "payments": "Online payments",
+    "whatsapp": "WhatsApp",
+    "chat": "Chat",
+    "otherChannels": "Message us",
+    "paymentMethods": {
+      "blik": "BLIK",
+      "card": "Payment card",
+      "transfer": "Instant transfer",
+      "tpay": "Tpay",
+      "viva": "Viva Wallet",
+      "applePay": "Apple Pay",
+      "googlePay": "Google Pay"
+    },
+    "announcement": "Announcement",
+    "breadcrumbHome": "Home"
   },
   "account": {
     "login": {
@@ -107,7 +135,7 @@
       "amountDue": "Amount due",
       "totalPaid": "Paid",
       "remainingToPay": "Left to pay",
-      "deposit": "Deposit",
+      "deposit": "Security deposit",
       "paid": "Paid",
       "unpaid": "To pay",
       "mileage": "Mileage limit",
@@ -121,7 +149,13 @@
       "mileagePerDay": "{value} km / day",
       "mileageTotal": "{value} km in total"
     },
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "reservationHelp": {
+      "title": "Change or cancel",
+      "text": "To change or cancel your booking, contact us.",
+      "cancel": "Cancel more than 72 hours before pickup and we refund everything you paid. After that the advance payment is not refunded.",
+      "extend": "Want to extend your rental? Let us know at least 12 hours before it ends."
+    }
   },
   "auth": {
     "tabs": {
@@ -206,6 +240,21 @@
       "invalid_phone": "Enter a valid phone number.",
       "invalid_vat": "Enter a valid VAT number.",
       "exists": "An account with this email already exists. Sign in or reset your password."
+    },
+    "company": {
+      "street": "Company address (street and number)",
+      "postalCode": "Postal code",
+      "city": "City",
+      "fetch": "Get details",
+      "fetchLabel": "Get details of the company from the VAT register",
+      "fetching": "Loading…",
+      "hint": "We'll get the name and address from the Polish VAT register. You can edit them.",
+      "badTaxId": "This tax number (NIP) is not valid – check the digits.",
+      "filled": "We've filled in the name and address from the VAT register. Check them before you send.",
+      "notFound": "We couldn't find the company in the VAT register – please fill in the details yourself.",
+      "invalid": "The VAT register didn't recognise this tax number – check it or fill in the details yourself.",
+      "limit": "The VAT register isn't taking more searches right now – please fill in the details yourself.",
+      "error": "We couldn't connect to the VAT register – please fill in the details yourself."
     }
   },
   "accountDetails": {
@@ -258,8 +307,8 @@
   "quoteLines": {
     "rent": "Rental",
     "rentDays": "Rental ({days})",
-    "pickup": "Car delivery",
-    "return": "Car collection",
+    "pickup": "Pickup fee",
+    "return": "Return fee",
     "relocation": "Return at another location",
     "item": "Extra",
     "free": "included",
@@ -271,7 +320,9 @@
     "oneTimeTotal": "One-time total",
     "totalFor": "Total for {months}",
     "kmLimit": "Limit: {perMonth} km / month ({total} km in total)",
-    "overLimit": "Each km over the limit: {fee}"
+    "overLimit": "Each km over the limit: {fee}",
+    "pickupAddress": "Delivery to address",
+    "returnAddress": "Collection from address"
   },
   "fleet": {
     "metaTitle": "Fleet – cars for rent | MobiCars",
@@ -335,7 +386,7 @@
     "luggage": "Suitcases: {large} large, {small} small",
     "orSimilar": "or similar",
     "metaTitleFallback": "{name} rental – {segment} | MobiCars",
-    "metaDescriptionFallback": "Rent a {name} ({segment}) from MobiCars. From {price} per day, book online in minutes.",
+    "metaDescriptionFallback": "Rent a {name} ({segment}) from MobiCars. From {price} per day for rentals of {days}+ days, book online in minutes.",
     "carTitle": "{name} rental",
     "bookTitle": "Book this car",
     "bookLead": "Choose the place and dates – the next step shows the price for the whole rental.",
@@ -359,7 +410,7 @@
     "monthlyLead": "You can also rent this car by the month. The price depends on the period and the mileage limit.",
     "monthlyFrom": "from {price} / month incl. VAT",
     "monthlyLink": "See monthly rental",
-    "deposit": "Deposit: {price}",
+    "deposit": "Security deposit: {price}",
     "specsTitle": "Specifications",
     "specs": {
       "engine": "Engine",
@@ -404,7 +455,60 @@
     "nextPhoto": "Next photo",
     "noPhoto": "No photo",
     "suitcases": "Suitcases",
-    "suitcasesValue": "large: {large}, small: {small}"
+    "suitcasesValue": "large: {large}, small: {small}",
+    "checkAvailability": "Check availability",
+    "allCars": "Whole fleet",
+    "breadcrumbLabel": "Breadcrumb",
+    "monthlyFromNote": "for {months}-month rental, {km} km/month",
+    "dailyFromNote": "for rentals of {days}+ days",
+    "oneDayPrice": "1 day: {price}",
+    "placeFeeNote": "+ a delivery fee may apply, depending on the place",
+    "promotionUntilGeneric": "Offer until {date}",
+    "detailsUnavailable": "Details of this car are temporarily unavailable. Call us: {phone} or book online.",
+    "detailsUnavailableNoPhone": "Details of this car are temporarily unavailable. Book online or check back shortly.",
+    "detailsUnavailableBook": "Book now",
+    "noPromotions": "We have no promotions running right now.",
+    "noPromotionsLink": "See the whole fleet",
+    "tabsLabel": "Car categories",
+    "tabsAll": "All",
+    "tabsSeats7": "7+ seats",
+    "tabsSeeAll": "See all: {category} ({count})",
+    "includedTitle": "Included",
+    "included": [
+      "No deposit",
+      "Third-party liability and comprehensive insurance (OC and AC)",
+      "No mileage limit in Poland",
+      "Free cancellation up to 72 hours before pick-up"
+    ],
+    "sectionsLabel": "On this page",
+    "termsTitle": "Rental terms",
+    "termsMore": "All questions",
+    "terms": [
+      {
+        "question": "Who can rent a car?",
+        "answer": "A driver aged 21 or over who has held a category B driving licence for at least a year."
+      },
+      {
+        "question": "What documents do I need?",
+        "answer": "A driving licence, an ID card or passport, and a payment card."
+      },
+      {
+        "question": "Do I have to pay a deposit?",
+        "answer": "No. Rentals are without a deposit."
+      },
+      {
+        "question": "How do booking and payment work?",
+        "answer": "After you send your booking, we confirm it within 2 hours during office hours and within 24 hours outside them. Then you pay an advance payment of 15% of the price (min. PLN 100). You pay the rest at pick-up."
+      },
+      {
+        "question": "Can I cancel or extend the rental?",
+        "answer": "You can cancel free of charge up to 72 hours before pick-up; after that the advance payment is not refunded. You can extend the rental if you let us know at least 12 hours before it ends."
+      },
+      {
+        "question": "Can I drive abroad?",
+        "answer": "Yes, if you add it when booking (travel abroad is a paid extra, and outside Poland there is a limit of 400 km per day). Taking the car to Russia, Belarus or Ukraine is not allowed."
+      }
+    ]
   },
   "cars": {
     "categories": {
@@ -450,7 +554,7 @@
       "other": "classes"
     },
     "perMonth": "/ month",
-    "next": "NEXT",
+    "next": "Next: protection",
     "orSimilar": "or similar",
     "carsInClass": "Cars in class {name}",
     "popular": "Popular",
@@ -462,14 +566,16 @@
       "many": "seats",
       "other": "seats"
     },
-    "deposit": "Deposit {amount}",
+    "deposit": "Security deposit {amount}",
     "priceLater": "We will calculate the price in the next step",
     "net": "{amount} net",
     "regularPrice": "Regular price:",
     "promoPrice": "Promotional price:",
     "promotion": "Promotion",
-    "promotionValid": "Price valid for pick-up",
-    "promotionUntil": "until {date}"
+    "promotionUntil": "for pickup by {date}",
+    "promotionDiscount": "−{percent}%",
+    "placeFees": "incl. pickup and return fees {amount}",
+    "placeFeesAddress": "incl. delivery to address {amount}"
   },
   "steps": {
     "label": "Booking steps",
@@ -490,7 +596,7 @@
     "none": "There are no protection packages to choose for this car. Basic insurance is included in the price.",
     "packages": "Protection packages",
     "recommended": "Most popular",
-    "next": "NEXT",
+    "next": "Next: extras",
     "hint": "Choose a protection package to continue.",
     "included": "Included",
     "gross": "incl. VAT",
@@ -507,9 +613,9 @@
       "replacementCar": "Replacement car"
     },
     "downgradeTitle": "Change protection package?",
-    "downgradeText": "Anything can happen, and good protection is essential. Are you sure you want to change your protection package?",
-    "cancel": "Cancel",
-    "confirmDowngrade": "Yes, change",
+    "downgradeText": "With a lower package you'll pay more if there's damage.",
+    "cancel": "Keep current",
+    "confirmDowngrade": "Yes, change package",
     "perMonth": "/ month"
   },
   "extras": {
@@ -518,7 +624,7 @@
     "droppedOne": "One of the extras you chose earlier is not available for this car or these dates and has been removed.",
     "droppedMany": "Some of the extras you chose earlier are not available for this car or these dates and have been removed.",
     "none": "There are no extras to choose for this car and these dates.",
-    "next": "NEXT",
+    "next": "Next: your details",
     "groups": {
       "kids": "For children",
       "multimedia": "Multimedia and app",
@@ -538,15 +644,16 @@
     "more": "More",
     "perMonth": "/ month",
     "upgrade": {
-      "title": "Drive worry-free with {name}",
-      "price": "Only +{price} {unit}",
+      "title": "{name} package: lower costs if there's damage",
+      "price": "+{price} {unit}",
       "gains": "You get:",
       "button": "Switch to {name}",
       "changing": "Switching…",
       "perDay": "/ day",
       "perMonth": "/ month",
-      "confirmTitle": "Do you want to upgrade your protection and enjoy peace of mind?"
-    }
+      "confirmTitle": "Switch to the {name} protection package?"
+    },
+    "borderBanned": "Driving into Russia, Belarus or Ukraine is not allowed."
   },
   "upsell": {
     "title": "Need more comfort?",
@@ -561,10 +668,12 @@
       "other": "seats"
     },
     "wholeRental": "+{price} for the whole rental",
-    "confirmTitle": "Do you want to change the car class?",
-    "cancel": "No, go back",
-    "confirm": "Yes, confirm",
-    "perMonth": "/ month"
+    "confirmTitle": "Switch to a bigger car?",
+    "cancel": "Keep as is",
+    "confirm": "Yes, change",
+    "perMonth": "/ month",
+    "confirmCar": "Yes, change car",
+    "confirmProtection": "Yes, change package"
   },
   "summary": {
     "title": "Your booking",
@@ -590,13 +699,14 @@
     "copyFailed": "Couldn't copy the link"
   },
   "search": {
+    "loading": "Loading…",
     "termLabel": "Rental type",
-    "tabShort": "DAILY",
-    "tabLong": "MONTHLY",
-    "submit": "Search",
+    "tabShort": "By the day",
+    "tabLong": "By the month",
+    "submit": "Show cars",
     "updating": "Updating cars and prices…",
     "restartTitle": "Start over?",
-    "restartText": "You don’t need to click “Search”: changing the location or dates updates the cars and prices right away, and your choices are kept. “Search” takes you back to the start, to choosing a car.",
+    "restartText": "You don’t need to click “Show cars”: changing the location or dates updates the cars and prices right away, and your choices are kept. The button takes you back to the start, to choosing a car.",
     "cancel": "Cancel",
     "restartConfirm": "Back to choosing a car",
     "completeSearch": "Complete your search",
@@ -691,26 +801,26 @@
   "booking": {
     "titleShort": "Short-term rental",
     "titleLong": "Long-term rental",
-    "badgeShort": "BY THE DAY",
-    "badgeLong": "BY THE MONTH",
+    "badgeShort": "By the day",
+    "badgeLong": "By the month",
     "chooseCar": "Choose a car",
-    "chooseCarIntro": "The longer the rental, the lower the daily price. Our team will confirm the reservation after checking the car's availability.",
+    "chooseCarIntro": "The longer you rent, the lower the daily price. You book a car class, and we'll confirm availability by email.",
     "noCars": "No cars available for these dates",
     "noCarsHint": "Change the dates or pickup location at the top of the page and try again.",
     "lostCar": "The selected car is not available for the new location or dates. Please choose a car again.",
     "monthlyHint": {
       "title": "Renting for {days}?",
-      "text": "Renting by the month is usually much cheaper: a fixed monthly rate and a kilometre limit of your choice.",
+      "text": "Monthly rental means a fixed rate and a mileage limit you choose. See if it's cheaper.",
       "button": "See prices for {months}"
     },
     "extend": {
       "title": "Take {days} instead of {current}",
       "text": "Every day gets cheaper: {before} → {after}.",
-      "cost": "Only +{cost} for the whole rental.",
+      "cost": "+{cost} for the whole rental.",
       "free": "At no extra cost.",
       "button": "Extend to {days}",
       "extending": "Extending…",
-      "confirmTitle": "Do you want to extend your rental to lower the daily cost?"
+      "confirmTitle": "Extend your rental to {days}?"
     },
     "resume": {
       "title": "You have an unfinished booking",
@@ -737,16 +847,16 @@
     "noExtras": "No extras",
     "change": "Change",
     "changeLabel": "Change: {title}",
-    "deposit": "Deposit",
-    "title": "Your data",
-    "description": "Complete the form or log in to provide your details.",
+    "deposit": "Security deposit",
+    "title": "Your details",
+    "description": "Enter the driver's details. Have an account? Sign in and we'll fill them in.",
     "customerType": "Customer type",
     "individual": "Individual customer",
     "company": "Corporate client",
     "companyName": "Company name",
     "vatNumber": "Tax Identification Number",
     "contactPerson": "Contact person (name and surname)",
-    "contactPersonHint": "If the vehicle is to be collected by a person not indicated in the National Court Register or CEIDG as authorized to represent the company, we will send a link to supplement the authorization by email.",
+    "contactPersonHint": "Someone not listed in the company register picking up? We'll email a link for the authorisation.",
     "firstName": "Name",
     "lastName": "Surname",
     "email": "E-mail",
@@ -754,61 +864,59 @@
     "password": "Password",
     "confirm": "Repeat password",
     "passwordMin": "At least {count} characters.",
-    "passwordHint": "A password that will allow you to log in to your customer panel and manage your reservations, as well as speed up future reservations.",
-    "comment": "Additional information / notes",
+    "passwordHint": "Password for your account – check bookings and book faster next time.",
+    "comment": "Notes (optional)",
     "invoice": "I want to receive a VAT invoice",
     "invoiceHint": "Otherwise, a receipt will be issued automatically.",
     "flightNumber": "Flight number",
     "flightPlaceholder": "e.g. LO 3912",
     "flightHint": "Optional. You are picking the car up at the airport: your flight number helps us get it ready if your flight is delayed.",
     "consentsLegend": "Consents",
-    "documents": "To place an order, please read the documents below, always available on our website at [https://mobicars.pl/en/documents](/en/documents) and mark the mandatory fields marked with an asterisk (*).",
+    "documents": "Before sending your booking, read the [rental documents](/en/documents) and tick the required consents (*).",
     "checkAll": "Select all required consents.",
     "requiredMark": "(required)",
     "consents": {
-      "regulations": "I declare that I have read and accept the [Reservation Regulations](/en/documents/regulations).",
-      "standardTerms": "I declare that I have read and accept the [Standard Terms and Conditions](/en/documents/standard-terms-and-conditions) containing the rules for renting and using the vehicle.",
-      "privacyPolicy": "I declare that I have read and accept the [Privacy Policy](/en/documents/privacy-policy) and the principles of personal data processing contained therein.",
-      "transfer": "If MobiCars Sp. z o.o. Sp.k. is unable to complete the reservation, I consent to its transfer and sharing of my personal data with other rental companies cooperating with MobiCars Sp. z o.o. Sp.k., in order to reserve a car for me."
+      "regulations": "I have read and accept the [Booking Terms](/en/documents/regulations).",
+      "standardTerms": "I have read and accept the [Standard Terms and Conditions](/en/documents/standard-terms-and-conditions) – the rules for renting and using the car.",
+      "privacyPolicy": "I have read and accept the [Privacy Policy](/en/documents/privacy-policy) and the data processing rules it contains.",
+      "transfer": "If MobiCars Sp. z o.o. Sp. k. can't fulfil my booking, I agree that it and my personal data may be passed to rental companies working with MobiCars to book a car for me."
     },
-    "submit": "Book now",
-    "submitting": "Booking…",
+    "submit": "Send booking",
+    "submitting": "Sending your booking…",
     "waitingForPrice": "Waiting for the current price.",
     "signedInAs": "You are booking as {email}. Customer type, name and e-mail come from your account; you can change the phone number for this reservation.",
     "logout": "Log out",
     "haveAccount": "I already have a {mobi}account.",
     "loginPrompt": "Log in and we will fill in your details for you.",
     "errors": {
-      "required": "This field is required.",
-      "email": "Enter a valid e-mail address.",
-      "phone": "The phone number you provided appears to be incorrect.",
+      "required": "Please fill in this field.",
+      "email": "Enter an email address like name@example.com.",
+      "phone": "Enter a phone number, e.g. 600 100 200, and check the country.",
       "passwordLength": "The password must be at least {count} characters long.",
-      "passwordMatch": "The passwords provided are not identical.",
-      "consents": "Select required consents.",
-      "tooLong": "This text is too long."
+      "passwordMatch": "The passwords don't match.",
+      "consents": "Tick the required consents to send your booking.",
+      "tooLong": "Shorten this text."
     },
     "submitErrors": {
-      "invalid": "Please correct the highlighted fields.",
+      "invalid": "Fix the highlighted fields to send your booking.",
       "search": "This pickup time is no longer available. Change the pickup time at the top of the page.",
       "choices": "The selected car, protection or an extra is no longer available for these dates. Go back to the previous steps and check your choice.",
-      "price": "The price has changed since the quote. Check the new amount and click “Book now” again.",
-      "account_exists": "An account with the details you provided exists. Please log in to continue.",
-      "timeout": "No server response. Please check your email or try again.",
-      "rate_limited": "Too many booking attempts. Please try again in a few minutes.",
-      "server": "A server error occurred. Please try again.",
-      "promo": "The discount code is no longer valid for these dates. Remove it or enter another one and click “Book now” again."
+      "price": "The price has changed since it was calculated. Check the new amount and send your booking again.",
+      "account_exists": "You already have an account with these details. Sign in to finish your booking.",
+      "timeout": "We didn't get a response in time. Before trying again, check your inbox – your booking may already have arrived.",
+      "rate_limited": "Too many attempts in a short time. Try again in a few minutes or call +48 881 328 328.",
+      "server": "Something went wrong on our side. Your choices are saved – try again in a moment or call +48 881 328 328.",
+      "promo": "The discount code no longer works for these dates. Remove it or enter another one and send your booking again."
+    },
+    "afterSubmit": {
+      "confirm": "We'll confirm the car's availability by email: within 2 hours during office hours, within 24 hours outside them. We accept online bookings around the clock.",
+      "payment": "You pay nothing now. Once confirmed, we'll send a link to pay the advance payment (15% of the booking value, at least PLN 100); you pay the rest by card at pickup."
     }
   },
   "confirmation": {
-    "metaTitle": "Order placed",
-    "title": "Your order has been placed!",
-    "subtitle": "Thank you for placing an order for short-term car rental with mobicars.",
-    "subtitleLong": "Thank you for placing an order for long-term car rental with mobicars.",
-    "text": "The order must still be confirmed by us, which will be done by email as soon as possible. In the case of night hours or holidays, we will send information no later than within 12 hours.",
-    "text2": "After we accept the reservation, you will receive an email with a link to pay the deposit to confirm the reservation.",
-    "text3": "If you pay the deposit, you will pay the remaining amount when you pick up the vehicle with your payment card.",
-    "orderNumber": "Order number",
-    "emailNotice": "We will send messages to {email}.",
+    "metaTitle": "Booking sent",
+    "title": "Booking sent",
+    "orderNumber": "Booking number",
     "reservationTitle": "Your reservation",
     "myReservations": "My reservations",
     "loginToPanel": "Log in to the customer panel",
@@ -817,9 +925,18 @@
       "button": "Add to calendar",
       "pickupTitle": "MobiCars car pickup: {car}",
       "returnTitle": "MobiCars car return: {car}",
-      "description": "{car} or similar. Order number: {id}. MobiCars hotline: +48 881 328 328.",
+      "description": "{car} or similar. Booking number: {id}. MobiCars phone: +48 881 328 328.",
       "hint": "Adds the pickup and the return to your calendar (Google, Apple, Outlook)."
-    }
+    },
+    "lead": "Thank you! We're checking the car's availability. We'll email {email}: within 2 hours during office hours, within 24 hours outside them.",
+    "leadNoEmail": "Thank you! We're checking the car's availability. We'll confirm by email: within 2 hours during office hours, within 24 hours outside them.",
+    "nextTitle": "What happens next",
+    "nextSteps": {
+      "email": "You'll get an email with the confirmation and a link to pay the advance payment: 15% of the booking value, at least PLN 100.",
+      "pay": "Once the advance payment is made, your booking is confirmed. You can cancel free of charge up to 72 hours before pickup; after that the advance payment is not refunded.",
+      "pickup": "You pay the rest by card when you pick up the car."
+    },
+    "accountNotice": "You'll see your booking in My bookings after signing in."
   },
   "promo": {
     "question": "Have a discount code?",
@@ -832,5 +949,100 @@
     "rateLimited": "Too many attempts. Please try again in a few minutes.",
     "failed": "We couldn't check the code. Please try again.",
     "note": "The discount is already included in the price below."
+  },
+  "blocks": {
+    "faqTitle": "Frequently asked questions",
+    "heroAtGlance": "At a glance",
+    "heroHighlights": "Why choose us",
+    "reviewsOutOf": "{rating} out of 5",
+    "reviewsCount": {
+      "one": "{count} review",
+      "few": "{count} reviews",
+      "many": "{count} reviews",
+      "other": "{count} reviews"
+    },
+    "readMore": "Read more",
+    "reviewsListLabel": "Customer reviews",
+    "reviewsPrevious": "Previous review",
+    "reviewsNext": "Next review",
+    "reviewsGoTo": "Review {index} of {count}",
+    "carouselPrevious": "Previous",
+    "carouselNext": "Next",
+    "carouselGoTo": "Item {index} of {count}",
+    "appStore": "Download on the App Store",
+    "googlePlay": "Get it on Google Play",
+    "locations": {
+      "title": "Where to pick up your car",
+      "airport": "Airport",
+      "station": "Station",
+      "office": "MobiCars office",
+      "delivery": "Delivery to your address",
+      "fee": "Fee: {price}",
+      "feeFrom": "Fee: from {price}",
+      "feeNone": "No extra fee",
+      "book": "Book",
+      "bookLabel": "Book a car: {place}",
+      "map": "Map",
+      "mapLabel": "Map: {place} – Google Maps (new tab)",
+      "call": "Call: {place}",
+      "showAll": "Show all ({count})",
+      "unavailable": "We could not load the list of points right now.",
+      "unavailableLink": "See pickup points in the booking form",
+      "citiesLabel": "Cities",
+      "mapCaption": "Map of towns with MobiCars pickup points",
+      "pointCount": {
+        "one": "{count} location",
+        "few": "{count} locations",
+        "many": "{count} locations",
+        "other": "{count} locations"
+      }
+    },
+    "faqCategories": "Question categories",
+    "faqOther": "Other questions",
+    "faqSearch": "Search questions",
+    "faqSearchPlaceholder": "Search questions…",
+    "faqNoResults": "No questions match your search.",
+    "trustLabel": "Why MobiCars",
+    "faqMoreTitle": "Didn't find your answer?",
+    "faqMoreText": "Write or call us – we'll help you choose the car and dates.",
+    "promoCode": "Code",
+    "promoCopy": "Copy code",
+    "promoCopied": "Code {code} copied",
+    "promoUntil": "Valid until {date}",
+    "blogBreadcrumb": "Blog",
+    "readingTime": {
+      "one": "{count} min read",
+      "few": "{count} min read",
+      "many": "{count} min read",
+      "other": "{count} min read"
+    },
+    "toc": "Contents ({count})",
+    "blogCtaTitle": "Need a car?",
+    "blogCtaText": "See available cars and prices for your dates. No deposit and no mileage limit in Poland.",
+    "blogCtaButton": "Check availability",
+    "relatedPosts": "Read also",
+    "readArticle": "Read article",
+    "opensInNewTab": "opens in a new tab",
+    "showMore": "Show more",
+    "shownOf": "Showing {shown} of {total}",
+    "mapLabel": "Map of MobiCars pickup points",
+    "mapLoading": "Loading the map…",
+    "mapAirport": "Airport",
+    "mapStation": "Station",
+    "mapOffice": "Office",
+    "mapAirports": "Airports",
+    "mapStations": "Stations",
+    "mapOffices": "Offices",
+    "mapRoute": "Get directions",
+    "mapClose": "Close",
+    "mapCluster": "{count} points nearby – zoom in",
+    "mapUnavailable": "The map is unavailable right now. Our points:",
+    "mapPoints": "Pickup points",
+    "mapSearch": "Search for a city or point",
+    "mapNoResults": "No points for “{query}”",
+    "mapFilter": "Show on the map"
+  },
+  "dates": {
+    "laterReturnExtraDay": "Returning later in the day than the pickup time adds another day."
   }
 }

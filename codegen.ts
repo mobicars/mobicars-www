@@ -35,7 +35,8 @@ const config: CodegenConfig = {
         documentMode: "string",
         useTypeImports: true,
         enumsAsTypes: true,
-        avoidOptionals: true,
+        // Result fields are always present (null when empty); inputs such as filters stay optional.
+        avoidOptionals: { field: true, object: true, inputValue: false, defaultValue: false },
         scalars: { ID: "string", I18NLocaleCode: "string" },
       },
     },

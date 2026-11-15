@@ -1,20 +1,23 @@
-import { BadgePercent, CarFront, DoorOpen, Fuel, Luggage, Settings2, Star, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, BadgePercent, CarFront, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+import { DailyNotes } from "@/components/fleet/daily-notes";
 import type { Lang } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { fleetHref } from "@/i18n/routes";
 import type { FleetCard as FleetCardData } from "@/lib/fleet/cars";
 import { fill } from "@/i18n/fill";
-import { countLabel, formatPrice } from "@/lib/fleet/format";
+import { countLabel, formatApiDate, formatPrice } from "@/lib/fleet/format";
 
 export type FleetTexts = Messages["fleet"];
 
 /**
- * One car on the fleet list and under "Podobne samochody". The whole card is
- * one link to the car page (the name is the link; the rest is stretched over
- * it), so it is one tab stop. Prices are the base "from" prices.
+ * The one car card of the site: the fleet list, "Podobne samochody" and the
+ * CMS cars block (`components/blocks/cars.tsx`). Server-safe markup, no state.
+ * The whole card is one link to the car page (the name is the link; the rest
+ * is stretched over it), so it is one tab stop. Prices are the base "from"
+ * prices of `lib/fleet/cars.ts`.
  */
 export function FleetCard({
   car,
@@ -22,6 +25,9 @@ export function FleetCard({
   t,
   headingLevel = "h2",
   priority = false,
+  showPromotionEnd = false,
+  compact = false,
+  sizes = "(min-width: 1280px) 300px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 92vw",
 }: {
   car: FleetCardData;
   lang: Lang;
@@ -29,24 +35,36 @@ export function FleetCard({
   headingLevel?: "h2" | "h3";
   /** The first row of the list: load the photo eagerly. */
   priority?: boolean;
+  /** `sizes` of the photo when the card is not in the fleet grid (a scroll row). */
+  sizes?: string;
+  /** "Promocja do {date}" (a block of promotions only). Generic, as RentCarSoft names promotions in Polish only. */
+  showPromotionEnd?: boolean;
+  /**
+   * The fleet list on phones: photo on the left (40%), name, class, three
+   * specs and one "from" price, about a third of the height. From `sm` the
+   * usual card. Same data and link.
+   */
+  compact?: boolean;
 }) {
   const Heading = headingLevel;
-  const luggage =
-    car.suitcases.large !== null || car.suitcases.small !== null
-      ? fill(t.luggage, { large: car.suitcases.large ?? 0, small: car.suitcases.small ?? 0 })
-      : null;
+  const promotionEnd = showPromotionEnd && car.promotionEndsAt ? formatApiDate(lang, car.promotionEndsAt) : null;
 
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-muted bg-white shadow-sm transition-shadow duration-200 ease-out focus-within:ring-2 focus-within:ring-blue-medium hover:shadow-md motion-reduce:transition-none">
-      <div className="relative aspect-[16/10] bg-surface">
+    <article
+      className={`group relative flex h-full overflow-hidden rounded-card border border-line bg-white focus-within:ring-2 focus-within:ring-blue-medium focus-within:ring-offset-2 ${
+        compact ? "flex-col max-sm:flex-row" : "flex-col"
+      }`}
+    >
+      {/* Flat, like the new sections: no shadow or lift; on hover the photo zooms in a little. */}
+      <div className={`relative aspect-[16/10] overflow-hidden bg-surface ${compact ? "max-sm:aspect-auto max-sm:w-[40%] max-sm:shrink-0" : ""}`}>
         {car.image ? (
           <Image
             src={car.image.src}
             alt={car.image.alt}
             fill
             priority={priority}
-            sizes="(min-width: 1280px) 300px, (min-width: 1024px) 30vw, (min-width: 640px) 45vw, 90vw"
-            className="object-contain p-3 transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transition-none"
+            sizes={sizes}
+            className={`object-contain p-4 transition-transform duration-500 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${compact ? "max-sm:p-2" : ""}`}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-muted-dark">
@@ -54,24 +72,24 @@ export function FleetCard({
             <span className="sr-only">{t.noPhoto}</span>
           </div>
         )}
-        <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
+        <div className={`absolute top-3 left-3 flex flex-wrap gap-1.5 ${compact ? "max-sm:top-2 max-sm:left-2 max-sm:[&>span:nth-child(n+2)]:hidden" : ""}`}>
           {car.promotion ? (
-            <Badge icon={BadgePercent} className="bg-green-medium text-white">
+            <Badge icon={BadgePercent} className="bg-go-strong text-white">
               {t.promotion}
             </Badge>
           ) : null}
           {car.popular ? (
-            <Badge icon={Star} className="bg-white/95 text-blue-dark shadow-sm">
+            <Badge icon={Star} className="bg-white text-blue-dark">
               {t.popular}
             </Badge>
           ) : null}
         </div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div>
-          <p className="text-xs font-semibold tracking-wide text-blue-medium uppercase">{car.segment}</p>
-          <Heading className="mt-0.5 text-lg leading-snug font-bold text-blue-dark">
+      <div className={`flex min-w-0 flex-1 flex-col p-4 sm:gap-4 sm:p-5 ${compact ? "gap-2 max-sm:p-3" : "gap-4"}`}>
+        <div className="flex flex-col gap-1">
+          <p className="text-xs font-semibold text-blue-medium">{car.segment}</p>
+          <Heading className={`leading-snug font-bold text-blue-dark text-balance ${compact ? "text-base sm:text-lg" : "text-lg"}`}>
             <Link
               href={fleetHref(lang, car.slug)}
               className="outline-none after:absolute after:inset-0 after:content-['']"
@@ -79,28 +97,26 @@ export function FleetCard({
               {car.name}
             </Link>
           </Heading>
-          <p className="text-xs text-muted-dark">{t.orSimilar}</p>
+            <p className={`text-xs text-muted-dark ${compact ? "max-sm:hidden" : ""}`}>{t.orSimilar}</p>
+          {promotionEnd ? (
+            <p className="text-xs font-semibold text-green-dark">{fill(t.promotionUntilGeneric, { date: promotionEnd })}</p>
+          ) : null}
         </div>
 
-        <ul className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-blue-dark/80">
+        <ul className={`flex flex-wrap gap-x-4 gap-y-2 text-blue-dark/80 ${compact ? "gap-x-3 text-xs sm:gap-x-4 sm:text-sm" : "text-sm"}`}>
           <Spec icon={Users} label={car.seats ? countLabel(lang, car.seats, t.seatCount) : null} short={car.seats} />
-          <Spec icon={DoorOpen} label={car.doors ? countLabel(lang, car.doors, t.doorCount) : null} short={car.doors} />
           <Spec icon={Settings2} label={car.transmission} />
           <Spec icon={Fuel} label={car.fuel?.label ?? null} />
-          <Spec
-            icon={Luggage}
-            label={luggage}
-            short={luggage ? `${car.suitcases.large ?? 0} + ${car.suitcases.small ?? 0}` : null}
-          />
         </ul>
 
-        <div className="mt-auto flex items-end justify-between gap-3 border-t border-muted-light pt-3">
-          <CardPrice car={car} lang={lang} t={t} />
+        <div className={`mt-auto flex items-end justify-between gap-3 border-t border-line pt-4 ${compact ? "max-sm:border-0 max-sm:pt-0" : ""}`}>
+          <CardPrice car={car} lang={lang} t={t} compact={compact} />
           <span
             aria-hidden
-            className="shrink-0 rounded-xl bg-blue-medium px-3 py-2 text-sm font-bold text-white transition-colors duration-200 ease-out group-hover:bg-blue-dark motion-reduce:transition-none"
+            className={`${compact ? "max-sm:hidden" : ""} inline-flex shrink-0 items-center gap-1 text-sm font-bold text-blue-medium transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none`}
           >
             {t.details}
+            <ArrowRight className="size-4" strokeWidth={2} />
           </span>
         </div>
       </div>
@@ -108,7 +124,8 @@ export function FleetCard({
   );
 }
 
-function CardPrice({ car, lang, t }: { car: FleetCardData; lang: Lang; t: FleetTexts }) {
+/** The compact phone card keeps one price: the monthly one only when there is no daily one. */
+function CardPrice({ car, lang, t, compact = false }: { car: FleetCardData; lang: Lang; t: FleetTexts; compact?: boolean }) {
   if (car.dailyFrom === null && car.monthlyFrom === null) {
     return <p className="text-xs text-muted-dark">{t.priceOnRequest}</p>;
   }
@@ -116,12 +133,17 @@ function CardPrice({ car, lang, t }: { car: FleetCardData; lang: Lang; t: FleetT
     <div className="min-w-0">
       {car.dailyFrom !== null ? (
         <p className={`text-sm whitespace-nowrap ${car.promotion ? "text-green-dark" : "text-blue-dark"}`}>
-          {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.dailyFrom)}</span>{" "}
+          {t.from} <span className={`font-bold tracking-tight tabular-nums ${compact ? "text-xl sm:text-2xl" : "text-2xl"}`}>{formatPrice(lang, car.dailyFrom)}</span>{" "}
           <span className="text-xs font-semibold">{t.perDay}</span>
         </p>
       ) : null}
+      {car.daily ? (
+        <div className={compact ? "max-sm:hidden" : undefined}>
+          <DailyNotes daily={car.daily} lang={lang} t={t} />
+        </div>
+      ) : null}
       {car.monthlyFrom !== null ? (
-        <p className="text-xs text-muted-dark">
+        <p className={`text-xs text-muted-dark ${compact && car.dailyFrom !== null ? "max-sm:hidden" : ""}`}>
           {t.from} {formatPrice(lang, car.monthlyFrom)} {t.perMonth}
         </p>
       ) : null}
@@ -131,7 +153,7 @@ function CardPrice({ car, lang, t }: { car: FleetCardData; lang: Lang; t: FleetT
 
 function Badge({ icon: Icon, className, children }: { icon: LucideIcon; className: string; children: string }) {
   return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xxs font-bold uppercase ${className}`}>
+    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold ${className}`}>
       <Icon className="size-3" aria-hidden />
       {children}
     </span>
@@ -139,12 +161,23 @@ function Badge({ icon: Icon, className, children }: { icon: LucideIcon; classNam
 }
 
 /** An icon with a short value; screen readers hear the full label ("5 miejsc"). */
-function Spec({ icon: Icon, label, short }: { icon: LucideIcon; label: string | null; short?: string | number | null }) {
+function Spec({
+  icon: Icon,
+  label,
+  short,
+  hidden = false,
+}: {
+  icon: LucideIcon;
+  label: string | null;
+  short?: string | number | null;
+  /** Left out of the compact phone card (from `sm` it shows). */
+  hidden?: boolean;
+}) {
   if (!label) {
     return null;
   }
   return (
-    <li className="flex min-w-0 items-center gap-1">
+    <li className={`flex min-w-0 items-center gap-1 ${hidden ? "max-sm:hidden" : ""}`}>
       <Icon className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
       {short !== undefined && short !== null ? (
         <>

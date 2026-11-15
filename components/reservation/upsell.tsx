@@ -54,7 +54,8 @@ export function Upsell({ options }: { options: UpsellOption[] }) {
       {options.length > 1 ? (
         <Slider
           label={t.cars}
-          className="-mx-3 scroll-px-3 px-3 pb-1 @xl:mx-0 @xl:grid @xl:grid-cols-2 @xl:gap-4 @xl:overflow-visible @xl:px-0"
+          frameClassName="-mx-3 scroll-px-3 px-3 pb-1 @xl:mx-0 @xl:overflow-visible @xl:px-0"
+          className="@xl:grid @xl:grid-cols-2 @xl:gap-4"
           itemClassName="w-[85%] @xl:w-auto"
           dotsClassName="@xl:hidden"
         >
@@ -74,6 +75,7 @@ export function Upsell({ options }: { options: UpsellOption[] }) {
       <ConfirmQuestion
         open={confirm !== null}
         title={t.confirmTitle}
+        confirmLabel={t.confirmCar}
         onCancel={() => setConfirm(null)}
         onConfirm={() => confirm && switchCar(confirm)}
       />
@@ -123,7 +125,7 @@ function UpsellCard({
           <p className="text-xs text-muted-dark">{fill(t.orSimilar, { segment: car.segment })}</p>
         </div>
         <p className="shrink-0 text-right">
-          <span className={`block font-bold text-green-medium ${wide ? "text-2xl" : "text-lg"}`}>
+          <span className={`block font-bold text-go-strong ${wide ? "text-2xl" : "text-lg"}`}>
             +{formatMoney(lang, option.increase)}
           </span>
           <span className="block text-xxs text-muted-dark">{option.unit === "month" ? t.perMonth : t.perDay}</span>

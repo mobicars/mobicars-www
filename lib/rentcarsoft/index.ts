@@ -25,11 +25,16 @@ export type { Offer, OfferImage, OfferPriceBand, OfferPriceList, OfferPromotion 
 
 export {
   getDepartment,
+  getLocationStats,
   getServicePoint,
   listDepartments,
   listServicePoints,
 } from "./modules/locations";
-export type { Department, ServicePoint } from "./internal/entities";
+export { countLocations } from "./internal/entities";
+export type { Department, LocationStats, ServicePoint, ServicePointLang } from "./internal/entities";
+
+export { listSegments } from "./modules/segments";
+export type { RcsSegment } from "./internal/entities";
 
 export { getPriceGroup, listPriceGroups } from "./modules/price-groups";
 export type { PriceBand, PriceGroup, PriceGroupMonthlyInfo } from "./internal/entities";
