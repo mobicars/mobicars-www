@@ -3,7 +3,7 @@ import type { ReservationTerm } from "@/lib/reservation/search";
 
 import { slugWords } from "@/lib/fleet/slug";
 
-import type { BlogCardFragment, BlogSectionFragment, CarsSectionFragment, MapSectionFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
+import type { BlogCardFragment, BlogSectionFragment, CarsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
 import { parseBlogCard, parseCtas, parseMedia, resolveLink, sectionPostsKey, type BlogPostCard, type Cta, type Media } from "./entities";
 import { parseRichBlocks, richBlocksText, type RichBlocks } from "./rich-blocks";
 import type { PageRoute } from "./routes";
@@ -312,10 +312,56 @@ export type FormSection = {
   spacing: "small" | "medium" | "large";
 };
 
+/**
+ * Customer reviews (`sections.reviews`, the Strapi `rating` collection) in the
+ * page's language: the newest or the picked ones. `carousel`: cards;
+ * `spotlight`: one large review at a time. `score`: the overall score the
+ * editor typed (never worked out from the reviews). No reviews in the page's
+ * language: no section.
+ */
+export type ReviewsSection = {
+  type: "reviews";
+  id: string;
+  badge: string | null;
+  title: string | null;
+  text: string | null;
+  headerAlign: "start" | "center";
+  /** Never empty. */
+  reviews: SectionReview[];
+  layout: "carousel" | "spotlight";
+  score: { value: number; label: string | null } | null;
+  ctas: Cta[];
+  background: SectionBackground;
+  width: "full" | "boxed" | "contained";
+  spacing: "small" | "medium" | "large";
+};
+
+/** One review as shown: no date and no source. */
+export type SectionReview = {
+  id: string;
+  author: string;
+  /** 1–5. */
+  rating: number;
+  text: string;
+};
+
+/** One image whole, in its own proportions (`sections.image`): the content's width or narrow, an optional caption. */
+export type ImageSection = {
+  type: "image";
+  id: string;
+  image: Media;
+  /** Another crop below 768 px. */
+  imageMobile: Media | null;
+  size: "content" | "narrow";
+  caption: string | null;
+  background: SectionBackground;
+  spacing: "small" | "medium" | "large";
+};
+
 /** Test page only: the name and note of the variant shown under it. */
 export type VariantLabelSection = { type: "variantLabel"; id: string; title: string; note: string | null };
 
-export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | MapSection | SplitSection | FormSection | VariantLabelSection;
+export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | VariantLabelSection;
 
 type RawSection = NonNullable<NonNullable<PageQuery["page"]>["sections"]>[number];
 
@@ -324,6 +370,7 @@ export function parseSections(
   lang: Lang,
   routes: readonly PageRoute[],
   latestPosts: Readonly<Record<string, readonly (BlogCardFragment | null)[]>> = {},
+  latestReviews: Readonly<Record<string, readonly (SectionReviewFragment | null)[]>> = {},
 ): Section[] {
   // Anchors taken on this page, so two FAQ sections with the same group titles do not share an id.
   const anchors = new Set<string>();
@@ -362,6 +409,14 @@ export function parseSections(
       case "ComponentSectionsSplit": {
         const split = parseSplitSection(section, lang, routes);
         return split ? [split] : [];
+      }
+      case "ComponentSectionsReviews": {
+        const reviews = parseReviewsSection(section, lang, routes, latestReviews[section.id] ?? []);
+        return reviews ? [reviews] : [];
+      }
+      case "ComponentSectionsImage": {
+        const image = parseImageSection(section);
+        return image ? [image] : [];
       }
       case "ComponentSectionsVariantLabel":
         return [{ type: "variantLabel", id: section.id, title: section.title, note: section.note || null }];
@@ -709,5 +764,63 @@ function parseSplitSection(raw: SplitSectionFragment, lang: Lang, routes: readon
     background: parseBackground(raw.background),
     width: raw.splitWidth,
     spacing: raw.splitSpacing,
+  };
+}
+
+/** How many of the newest reviews a `latest` Reviews section shows: the CMS's 1–12, 6 when unset. */
+export function reviewsLimit(raw: Pick<ReviewsSectionFragment, "reviewsLimit">): number {
+  return Math.min(12, Math.max(1, raw.reviewsLimit ?? 6));
+}
+
+/** Star emoji (and the spaces after them) some reviews start with: the section draws the stars itself. */
+const LEADING_STARS = /^(?:[\s\u2605\u2B50\uFE0F]|\u2728)+/u;
+
+function parseReviewsSection(
+  raw: ReviewsSectionFragment,
+  lang: Lang,
+  routes: readonly PageRoute[],
+  latest: readonly (SectionReviewFragment | null)[],
+): ReviewsSection | null {
+  const selected = raw.reviewsSource === "selected";
+  const all = (selected ? (raw.ratings ?? []) : latest).flatMap((review): SectionReview[] => {
+    const text = review?.text.replace(LEADING_STARS, "").trim();
+    return review && text ? [{ id: review.documentId, author: review.name.trim(), rating: Math.min(5, Math.max(1, Math.round(review.rate))), text }] : [];
+  });
+  const reviews = selected ? all : all.slice(0, reviewsLimit(raw));
+  // None in the page's language (or none picked): no section, heading included.
+  if (reviews.length === 0) {
+    return null;
+  }
+  const score = raw.showScore === true && raw.score != null && Number.isFinite(raw.score) ? Math.min(5, Math.max(0, raw.score)) : null;
+  return {
+    type: "reviews",
+    id: raw.id,
+    badge: raw.badge || null,
+    title: raw.reviewsTitle || null,
+    text: raw.reviewsText || null,
+    headerAlign: raw.reviewsHeaderAlign === "start" ? "start" : "center",
+    reviews,
+    layout: raw.reviewsLayout === "spotlight" ? "spotlight" : "carousel",
+    score: score === null ? null : { value: score, label: raw.scoreLabel?.trim() || null },
+    ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
+    background: parseBackground(raw.background),
+    width: raw.reviewsWidth,
+    spacing: raw.reviewsSpacing,
+  };
+}
+
+function parseImageSection(raw: ImageSectionFragment): ImageSection | null {
+  if (!raw.picture?.url) {
+    return null;
+  }
+  return {
+    type: "image",
+    id: raw.id,
+    image: parseMedia(raw.picture),
+    imageMobile: raw.pictureMobile?.url ? parseMedia(raw.pictureMobile) : null,
+    size: raw.imageSize === "narrow" ? "narrow" : "content",
+    caption: raw.caption?.trim() || null,
+    background: parseBackground(raw.background),
+    spacing: raw.imageSpacing,
   };
 }

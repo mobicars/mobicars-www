@@ -28,6 +28,7 @@ import type {
   PartLinkFragment,
   ReviewsBlockFragment,
   ReviewsQuery,
+  SectionReviewFragment,
   ScenariosBlockFragment,
   SeoFragment,
   TrustBarBlockFragment,
@@ -36,7 +37,7 @@ import type {
 } from "../generated/graphql";
 import { strapiUrl } from "./config";
 import { parseRichBlocks, richBlocksText, type RichBlocks } from "./rich-blocks";
-import { parseSections, type Section } from "./sections";
+import { parseSections, reviewsLimit, type Section } from "./sections";
 import { blogHref, pageHref, type PageRoute } from "./routes";
 import { safeUrl } from "./url";
 
@@ -566,6 +567,7 @@ export function parsePage(
   latestPosts: Readonly<Record<string, readonly (BlogCardFragment | null)[]>> = {},
   reviews: ReviewsQuery["ratings"] = [],
   now: Date = new Date(),
+  latestReviews: Readonly<Record<string, readonly (SectionReviewFragment | null)[]>> = {},
 ): Page {
   return {
     documentId: raw.documentId,
@@ -578,7 +580,7 @@ export function parsePage(
       image: raw.seo?.shareImage ? parseMedia(raw.seo.shareImage) : null,
     },
     blocks: parseBlocks(raw.blocks ?? [], lang, routes, latestPosts, reviews, now),
-    sections: parseSections(raw.sections ?? [], lang, routes, latestPosts),
+    sections: parseSections(raw.sections ?? [], lang, routes, latestPosts, latestReviews),
     pickupId: raw.pickupPoint && raw.pickupPoint > 0 ? raw.pickupPoint : null,
     changesAt: nextPromoChange(raw, now)?.toISOString() ?? null,
   };
@@ -670,6 +672,13 @@ export function latestPostQueries(raw: RawPage): { blockId: string; limit: numbe
     section?.__typename === "ComponentSectionsBlog" && section.blogSource === "latest" ? [{ blockId: sectionPostsKey(section.id), limit: 4, categoryId: null }] : [],
   );
   return [...sections, ...latestBlockQueries(raw)];
+}
+
+/** The Reviews sections showing the newest reviews: what to read for each (in the page's language) before `parsePage`. */
+export function latestReviewQueries(raw: RawPage): { sectionId: string; limit: number }[] {
+  return (raw.sections ?? []).flatMap((section) =>
+    section?.__typename === "ComponentSectionsReviews" && section.reviewsSource === "latest" ? [{ sectionId: section.id, limit: reviewsLimit(section) }] : [],
+  );
 }
 
 /** The key of a Blog section's newest posts among `latestPosts` (block ids could repeat a section's). */

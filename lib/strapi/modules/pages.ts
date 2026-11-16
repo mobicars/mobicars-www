@@ -3,9 +3,9 @@ import { cacheTag } from "next/cache";
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
 
-import { BlogCardsDocument, PageDocument, ReviewsDocument } from "../generated/graphql";
+import { BlogCardsDocument, PageDocument, ReviewsDocument, SectionReviewsDocument } from "../generated/graphql";
 import { contentStatus } from "../internal/config";
-import { latestPostQueries, pageNeedsReviews, parsePage, type Page } from "../internal/entities";
+import { latestPostQueries, latestReviewQueries, pageNeedsReviews, parsePage, type Page } from "../internal/entities";
 import { strapiRequest } from "../internal/http";
 import { cacheUntil } from "../internal/page-cache";
 import { CACHE_TAGS } from "../internal/tags";
@@ -45,11 +45,18 @@ async function loadPage(lang: Lang, documentId: string): Promise<Page | null> {
   if (!page) {
     return null;
   }
-  // `latest` blog blocks list the newest posts, and reviews blocks the `rating`
-  // collection: neither can be selected by the page query.
+  // `latest` blog blocks list the newest posts, and reviews blocks and sections
+  // the `rating` collection: none can be selected by the page query.
   const reviews = pageNeedsReviews(page)
     ? strapiRequest(ReviewsDocument, { status: contentStatus() }).then(({ ratings }) => ratings)
     : Promise.resolve([]);
+  // Reviews sections with the newest reviews read those in the page's language.
+  const latestReviews = Promise.all(
+    latestReviewQueries(page).map(async ({ sectionId, limit }) => {
+      const { ratings } = await strapiRequest(SectionReviewsDocument, { locale: lang, status: contentStatus(), limit });
+      return [sectionId, ratings] as const;
+    }),
+  );
   const latest = await Promise.all(
     latestPostQueries(page).map(async ({ blockId, limit, categoryId }) => {
       const { blogs } = await strapiRequest(BlogCardsDocument, {
@@ -61,5 +68,5 @@ async function loadPage(lang: Lang, documentId: string): Promise<Page | null> {
       return [blockId, blogs] as const;
     }),
   );
-  return parsePage(page, lang, routes, Object.fromEntries(latest), await reviews);
+  return parsePage(page, lang, routes, Object.fromEntries(latest), await reviews, undefined, Object.fromEntries(await latestReviews));
 }

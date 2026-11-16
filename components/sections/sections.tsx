@@ -7,7 +7,9 @@ import { Cars } from "./cars";
 import { Faq } from "./faq";
 import { Features } from "./features";
 import { Hero } from "./hero";
+import { ImageBlock } from "./image";
 import { MapBlock } from "./map";
+import { Reviews } from "./reviews";
 import { Social } from "./social";
 import { FormBlock } from "./form";
 import { Split } from "./split";
@@ -50,6 +52,10 @@ export function Sections({ sections, lang, title, pickupId }: { sections: Sectio
             return <Split key={`split-${section.id}`} section={section} lang={lang} />;
           case "form":
             return <FormBlock key={`form-${section.id}`} section={section} lang={lang} />;
+          case "reviews":
+            return <Reviews key={`reviews-${section.id}`} section={section} lang={lang} />;
+          case "image":
+            return <ImageBlock key={`image-${section.id}`} section={section} />;
           case "variantLabel":
             return <VariantLabel key={`variant-${section.id}`} section={section} />;
         }

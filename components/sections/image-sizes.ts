@@ -67,3 +67,12 @@ export function frameSizes(width: SectionWidth): string {
   if (width === "contained") return `(min-width: 1024px) ${CONTENT.full.desktop}, (min-width: 640px) calc(96vw - 16px), calc(100vw - 32px)`;
   return "100vw";
 }
+
+/** The Image section's picture: the content's width (`content`) or at most 48rem, 768 px (`narrow`), in a `full` section. */
+export function pictureSizes(size: "content" | "narrow"): string {
+  const c = CONTENT.full;
+  if (size === "narrow") {
+    return `(min-width: 1024px) 768px, (min-width: 640px) min(${c.tablet}, 768px), calc(${c.phone})`;
+  }
+  return `(min-width: 1024px) calc(${c.desktop}), (min-width: 640px) calc(${c.tablet}), calc(${c.phone})`;
+}

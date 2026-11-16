@@ -49,6 +49,12 @@ query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
       ... on ComponentSectionsForm {
         ...FormSection
       }
+      ... on ComponentSectionsReviews {
+        ...ReviewsSection
+      }
+      ... on ComponentSectionsImage {
+        ...ImageSection
+      }
       ... on ComponentSectionsVariantLabel {
         id
         title
@@ -400,6 +406,13 @@ fragment LocationsBlock on ComponentBlocksLocations {
   showMap
   section {
     ...Section
+  }
+}
+
+# The newest reviews in one language, for a Reviews section with `source: latest`.
+query SectionReviews($locale: I18NLocaleCode!, $status: PublicationStatus!, $limit: Int!) {
+  ratings(locale: $locale, status: $status, sort: ["date:desc", "documentId:asc"], pagination: { limit: $limit }) {
+    ...SectionReview
   }
 }
 
@@ -760,6 +773,58 @@ fragment MapSection on ComponentSectionsMap {
   }
   mapWidth: width
   mapSpacing: spacing
+}
+
+# `sections.reviews`. `ratings`: the picked reviews, in the page's language
+# (a localized relation); the newest come from `SectionReviews`. Fields other
+# sections have with other types are aliased.
+fragment ReviewsSection on ComponentSectionsReviews {
+  id
+  badge
+  reviewsTitle: title
+  reviewsText: text
+  reviewsHeaderAlign: headerAlign
+  reviewsSource: source
+  reviewsLimit: limit
+  ratings {
+    ...SectionReview
+  }
+  reviewsLayout: layout
+  showScore
+  score
+  scoreLabel
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  reviewsWidth: width
+  reviewsSpacing: spacing
+}
+
+fragment SectionReview on Rating {
+  documentId
+  name
+  rate
+  text
+}
+
+# `sections.image`. Fields other sections have with other types are aliased.
+fragment ImageSection on ComponentSectionsImage {
+  id
+  picture: image {
+    ...Media
+  }
+  pictureMobile: imageMobile {
+    ...Media
+  }
+  imageSize: size
+  caption
+  background {
+    ...SectionBackground
+  }
+  imageSpacing: spacing
 }
 
 # `sections.split` (Two columns). Fields other sections have with other types are aliased.

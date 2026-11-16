@@ -1055,6 +1055,16 @@ type ComponentSectionsHero {
   width: ENUM_COMPONENTSECTIONSHERO_WIDTH!
 }
 
+type ComponentSectionsImage {
+  background: ComponentPartsBackground
+  caption: String
+  id: ID!
+  image: UploadFile!
+  imageMobile: UploadFile
+  size: ENUM_COMPONENTSECTIONSIMAGE_SIZE!
+  spacing: ENUM_COMPONENTSECTIONSIMAGE_SPACING!
+}
+
 type ComponentSectionsMap {
   background: ComponentPartsBackground
   badge: String
@@ -1068,6 +1078,26 @@ type ComponentSectionsMap {
   text: String
   title: String
   width: ENUM_COMPONENTSECTIONSMAP_WIDTH!
+}
+
+type ComponentSectionsReviews {
+  background: ComponentPartsBackground
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  headerAlign: ENUM_COMPONENTSECTIONSREVIEWS_HEADERALIGN!
+  id: ID!
+  layout: ENUM_COMPONENTSECTIONSREVIEWS_LAYOUT!
+  limit: Int
+  ratings(filters: RatingFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Rating]!
+  ratings_connection(filters: RatingFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): RatingRelationResponseCollection
+  score: Float
+  scoreLabel: String
+  showScore: Boolean
+  source: ENUM_COMPONENTSECTIONSREVIEWS_SOURCE!
+  spacing: ENUM_COMPONENTSECTIONSREVIEWS_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSREVIEWS_WIDTH!
 }
 
 type ComponentSectionsSocial {
@@ -2109,6 +2139,17 @@ enum ENUM_COMPONENTSECTIONSHERO_WIDTH {
   full
 }
 
+enum ENUM_COMPONENTSECTIONSIMAGE_SIZE {
+  content
+  narrow
+}
+
+enum ENUM_COMPONENTSECTIONSIMAGE_SPACING {
+  large
+  medium
+  small
+}
+
 enum ENUM_COMPONENTSECTIONSMAP_HEADERALIGN {
   center
   start
@@ -2121,6 +2162,33 @@ enum ENUM_COMPONENTSECTIONSMAP_SPACING {
 }
 
 enum ENUM_COMPONENTSECTIONSMAP_WIDTH {
+  boxed
+  contained
+  full
+}
+
+enum ENUM_COMPONENTSECTIONSREVIEWS_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSREVIEWS_LAYOUT {
+  carousel
+  spotlight
+}
+
+enum ENUM_COMPONENTSECTIONSREVIEWS_SOURCE {
+  latest
+  selected
+}
+
+enum ENUM_COMPONENTSECTIONSREVIEWS_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSREVIEWS_WIDTH {
   boxed
   contained
   full
@@ -2259,40 +2327,6 @@ enum ENUM_COMPONENTSITESOCIALLINK_PLATFORM {
   youtube
 }
 
-enum ENUM_REVIEWSOURCE_LASTSTATUS {
-  disabled
-  error
-  expired
-  never
-  ok
-  stale
-}
-
-enum ENUM_REVIEWSOURCE_PLATFORM {
-  facebook
-  google
-  manual
-}
-
-enum ENUM_REVIEW_HIDDENREASON {
-  duplicate
-  legal
-  offensive
-  other
-  personalData
-  spam
-}
-
-enum ENUM_REVIEW_ORIGIN {
-  manual
-  synced
-}
-
-enum ENUM_REVIEW_RECOMMENDATION {
-  negative
-  positive
-}
-
 type Error {
   code: String!
   message: String
@@ -2408,7 +2442,7 @@ type FooterRelationResponseCollection {
   nodes: [Footer!]!
 }
 
-union GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksRichText | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | Review | ReviewSource | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
+union GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksRichText | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
 
 type Global {
   createdAt: DateTime
@@ -2706,7 +2740,13 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Page
-  createRating(data: RatingInput!, status: PublicationStatus = PUBLISHED): Rating
+  createRating(
+    data: RatingInput!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): Rating
   createRegulation(
     data: RegulationInput!
 
@@ -2714,8 +2754,6 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Regulation
-  createReview(data: ReviewInput!, status: PublicationStatus = PUBLISHED): Review
-  createReviewSource(data: ReviewSourceInput!, status: PublicationStatus = PUBLISHED): ReviewSource
   createReviewWorkflowsWorkflow(data: ReviewWorkflowsWorkflowInput!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflow
   createReviewWorkflowsWorkflowStage(data: ReviewWorkflowsWorkflowStageInput!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStage
   createSale(
@@ -2802,15 +2840,18 @@ type Mutation {
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
-  deleteRating(documentId: ID!): DeleteMutationResponse
+  deleteRating(
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+  ): DeleteMutationResponse
   deleteRegulation(
     documentId: ID!
 
     """The locale to use for the query"""
     locale: I18NLocaleCode
   ): DeleteMutationResponse
-  deleteReview(documentId: ID!): DeleteMutationResponse
-  deleteReviewSource(documentId: ID!): DeleteMutationResponse
   deleteReviewWorkflowsWorkflow(documentId: ID!): DeleteMutationResponse
   deleteReviewWorkflowsWorkflowStage(documentId: ID!): DeleteMutationResponse
   deleteSale(
@@ -2949,7 +2990,14 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Page
-  updateRating(data: RatingInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): Rating
+  updateRating(
+    data: RatingInput!
+    documentId: ID!
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    status: PublicationStatus = PUBLISHED
+  ): Rating
   updateRegulation(
     data: RegulationInput!
     documentId: ID!
@@ -2958,8 +3006,6 @@ type Mutation {
     locale: I18NLocaleCode
     status: PublicationStatus = PUBLISHED
   ): Regulation
-  updateReview(data: ReviewInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): Review
-  updateReviewSource(data: ReviewSourceInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): ReviewSource
   updateReviewWorkflowsWorkflow(data: ReviewWorkflowsWorkflowInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflow
   updateReviewWorkflowsWorkflowStage(data: ReviewWorkflowsWorkflowStageInput!, documentId: ID!, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStage
   updateSale(
@@ -3089,7 +3135,7 @@ type PageRelationResponseCollection {
   nodes: [Page!]!
 }
 
-union PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
+union PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
 
 scalar PageSectionsDynamicZoneInput
 
@@ -3370,9 +3416,37 @@ type Query {
     sort: [String] = []
     status: PublicationStatus = PUBLISHED
   ): PageEntityResponseCollection
-  rating(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): Rating
-  ratings(filters: RatingFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [Rating]!
-  ratings_connection(filters: RatingFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): RatingEntityResponseCollection
+  rating(
+    documentId: ID!
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    publicationFilter: PublicationFilter
+    status: PublicationStatus = PUBLISHED
+  ): Rating
+  ratings(
+    filters: RatingFiltersInput
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    pagination: PaginationArg = {}
+    publicationFilter: PublicationFilter
+    sort: [String] = []
+    status: PublicationStatus = PUBLISHED
+  ): [Rating]!
+  ratings_connection(
+    filters: RatingFiltersInput
+    hasPublishedVersion: Boolean
+
+    """The locale to use for the query"""
+    locale: I18NLocaleCode
+    pagination: PaginationArg = {}
+    publicationFilter: PublicationFilter
+    sort: [String] = []
+    status: PublicationStatus = PUBLISHED
+  ): RatingEntityResponseCollection
   regulation(
     documentId: ID!
     hasPublishedVersion: Boolean
@@ -3404,18 +3478,12 @@ type Query {
     sort: [String] = []
     status: PublicationStatus = PUBLISHED
   ): RegulationEntityResponseCollection
-  review(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): Review
-  reviewSource(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): ReviewSource
-  reviewSources(filters: ReviewSourceFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [ReviewSource]!
-  reviewSources_connection(filters: ReviewSourceFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewSourceEntityResponseCollection
   reviewWorkflowsWorkflow(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflow
   reviewWorkflowsWorkflowStage(documentId: ID!, hasPublishedVersion: Boolean, publicationFilter: PublicationFilter, status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStage
   reviewWorkflowsWorkflowStages(filters: ReviewWorkflowsWorkflowStageFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [ReviewWorkflowsWorkflowStage]!
   reviewWorkflowsWorkflowStages_connection(filters: ReviewWorkflowsWorkflowStageFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowStageEntityResponseCollection
   reviewWorkflowsWorkflows(filters: ReviewWorkflowsWorkflowFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [ReviewWorkflowsWorkflow]!
   reviewWorkflowsWorkflows_connection(filters: ReviewWorkflowsWorkflowFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewWorkflowsWorkflowEntityResponseCollection
-  reviews(filters: ReviewFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): [Review]!
-  reviews_connection(filters: ReviewFiltersInput, hasPublishedVersion: Boolean, pagination: PaginationArg = {}, publicationFilter: PublicationFilter, sort: [String] = [], status: PublicationStatus = PUBLISHED): ReviewEntityResponseCollection
   sale(
     documentId: ID!
     hasPublishedVersion: Boolean
@@ -3502,6 +3570,9 @@ type Rating {
   createdAt: DateTime
   date: Date!
   documentId: ID!
+  locale: String
+  localizations(filters: RatingFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Rating]!
+  localizations_connection(filters: RatingFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): RatingRelationResponseCollection
   name: String!
   publishedAt: DateTime
   rate: Int!
@@ -3520,6 +3591,8 @@ input RatingFiltersInput {
   createdAt: DateTimeFilterInput
   date: DateFilterInput
   documentId: IDFilterInput
+  locale: StringFilterInput
+  localizations: RatingFiltersInput
   name: StringFilterInput
   not: RatingFiltersInput
   or: [RatingFiltersInput]
@@ -3532,12 +3605,15 @@ input RatingFiltersInput {
 
 input RatingInput {
   date: Date
-  locale: String
   name: String
   publishedAt: DateTime
   rate: Int
   source: String
   text: String
+}
+
+type RatingRelationResponseCollection {
+  nodes: [Rating!]!
 }
 
 type Regulation {
@@ -3581,173 +3657,6 @@ input RegulationInput {
 
 type RegulationRelationResponseCollection {
   nodes: [Regulation!]!
-}
-
-type Review {
-  authorIsAnonymous: Boolean
-  authorName: String
-  authorPhotoUrl: String
-  createdAt: DateTime
-  documentId: ID!
-  externalId: String!
-  featured: Boolean!
-  featuredOrder: Int
-  hidden: Boolean!
-  language: String
-  origin: ENUM_REVIEW_ORIGIN!
-  ownerReply: String
-  ownerReplyAt: DateTime
-  publishedAt: DateTime
-  rating: Int
-  recommendation: ENUM_REVIEW_RECOMMENDATION
-  removedAt: DateTime
-  reviewCreatedAt: DateTime!
-  reviewUpdatedAt: DateTime
-  source: ReviewSource
-  text: String
-  updatedAt: DateTime
-  url: String
-}
-
-type ReviewEntityResponseCollection {
-  nodes: [Review!]!
-  pageInfo: Pagination!
-}
-
-input ReviewFiltersInput {
-  and: [ReviewFiltersInput]
-  authorIsAnonymous: BooleanFilterInput
-  authorName: StringFilterInput
-  authorPhotoUrl: StringFilterInput
-  createdAt: DateTimeFilterInput
-  documentId: IDFilterInput
-  externalId: StringFilterInput
-  featured: BooleanFilterInput
-  featuredOrder: IntFilterInput
-  hidden: BooleanFilterInput
-  language: StringFilterInput
-  not: ReviewFiltersInput
-  or: [ReviewFiltersInput]
-  origin: StringFilterInput
-  ownerReply: StringFilterInput
-  ownerReplyAt: DateTimeFilterInput
-  publishedAt: DateTimeFilterInput
-  rating: IntFilterInput
-  recommendation: StringFilterInput
-  removedAt: DateTimeFilterInput
-  reviewCreatedAt: DateTimeFilterInput
-  reviewUpdatedAt: DateTimeFilterInput
-  source: ReviewSourceFiltersInput
-  text: StringFilterInput
-  updatedAt: DateTimeFilterInput
-  url: StringFilterInput
-}
-
-input ReviewInput {
-  authorIsAnonymous: Boolean
-  authorName: String
-  authorPhotoUrl: String
-  contentHash: String
-  externalId: String
-  featured: Boolean
-  featuredOrder: Int
-  hidden: Boolean
-  hiddenNote: String
-  hiddenReason: ENUM_REVIEW_HIDDENREASON
-  language: String
-  locale: String
-  origin: ENUM_REVIEW_ORIGIN
-  ownerReply: String
-  ownerReplyAt: DateTime
-  publishedAt: DateTime
-  rating: Int
-  recommendation: ENUM_REVIEW_RECOMMENDATION
-  removedAt: DateTime
-  reviewCreatedAt: DateTime
-  reviewUpdatedAt: DateTime
-  source: ID
-  syncedAt: DateTime
-  text: String
-  url: String
-}
-
-type ReviewRelationResponseCollection {
-  nodes: [Review!]!
-}
-
-type ReviewSource {
-  createdAt: DateTime
-  documentId: ID!
-  enabled: Boolean!
-  externalId: String
-  key: String!
-  label: String!
-  lastStatus: ENUM_REVIEWSOURCE_LASTSTATUS!
-  placeId: String
-  platform: ENUM_REVIEWSOURCE_PLATFORM!
-  profileUrl: String
-  publishedAt: DateTime
-  rating: Float
-  ratingCount: Int
-  reviews(filters: ReviewFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Review]!
-  reviews_connection(filters: ReviewFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): ReviewRelationResponseCollection
-  servicePoint: ServicePoint
-  syncedAt: DateTime
-  updatedAt: DateTime
-  writeReviewUrl: String
-}
-
-type ReviewSourceEntityResponseCollection {
-  nodes: [ReviewSource!]!
-  pageInfo: Pagination!
-}
-
-input ReviewSourceFiltersInput {
-  and: [ReviewSourceFiltersInput]
-  createdAt: DateTimeFilterInput
-  documentId: IDFilterInput
-  enabled: BooleanFilterInput
-  externalId: StringFilterInput
-  key: StringFilterInput
-  label: StringFilterInput
-  lastStatus: StringFilterInput
-  not: ReviewSourceFiltersInput
-  or: [ReviewSourceFiltersInput]
-  placeId: StringFilterInput
-  platform: StringFilterInput
-  profileUrl: StringFilterInput
-  publishedAt: DateTimeFilterInput
-  rating: FloatFilterInput
-  ratingCount: IntFilterInput
-  reviews: ReviewFiltersInput
-  servicePoint: ServicePointFiltersInput
-  syncedAt: DateTimeFilterInput
-  updatedAt: DateTimeFilterInput
-  writeReviewUrl: StringFilterInput
-}
-
-input ReviewSourceInput {
-  consecutiveFailures: Int
-  enabled: Boolean
-  externalId: String
-  key: String
-  label: String
-  lastAttemptAt: DateTime
-  lastError: String
-  lastStatus: ENUM_REVIEWSOURCE_LASTSTATUS
-  locale: String
-  nextSyncAt: DateTime
-  placeId: String
-  platform: ENUM_REVIEWSOURCE_PLATFORM
-  profileUrl: String
-  publishedAt: DateTime
-  rating: Float
-  ratingCount: Int
-  reviews: [ID]
-  servicePoint: ID
-  syncLockUntil: DateTime
-  syncedAt: DateTime
-  writeReviewUrl: String
 }
 
 type ReviewWorkflowsWorkflow {

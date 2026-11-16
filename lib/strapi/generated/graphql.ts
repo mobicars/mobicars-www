@@ -1448,6 +1448,17 @@ export type ComponentSectionsHeroCtasArgs = {
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
+export type ComponentSectionsImage = {
+  __typename?: 'ComponentSectionsImage';
+  background: Maybe<ComponentPartsBackground>;
+  caption: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  image: UploadFile;
+  imageMobile: Maybe<UploadFile>;
+  size: Enum_Componentsectionsimage_Size;
+  spacing: Enum_Componentsectionsimage_Spacing;
+};
+
 export type ComponentSectionsMap = {
   __typename?: 'ComponentSectionsMap';
   background: Maybe<ComponentPartsBackground>;
@@ -1467,6 +1478,48 @@ export type ComponentSectionsMap = {
 
 export type ComponentSectionsMapCtasArgs = {
   filters: InputMaybe<ComponentPartsCtaFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+export type ComponentSectionsReviews = {
+  __typename?: 'ComponentSectionsReviews';
+  background: Maybe<ComponentPartsBackground>;
+  badge: Maybe<Scalars['String']['output']>;
+  ctas: Maybe<Array<Maybe<ComponentPartsCta>>>;
+  headerAlign: Enum_Componentsectionsreviews_Headeralign;
+  id: Scalars['ID']['output'];
+  layout: Enum_Componentsectionsreviews_Layout;
+  limit: Maybe<Scalars['Int']['output']>;
+  ratings: Array<Maybe<Rating>>;
+  ratings_connection: Maybe<RatingRelationResponseCollection>;
+  score: Maybe<Scalars['Float']['output']>;
+  scoreLabel: Maybe<Scalars['String']['output']>;
+  showScore: Maybe<Scalars['Boolean']['output']>;
+  source: Enum_Componentsectionsreviews_Source;
+  spacing: Enum_Componentsectionsreviews_Spacing;
+  text: Maybe<Scalars['String']['output']>;
+  title: Maybe<Scalars['String']['output']>;
+  width: Enum_Componentsectionsreviews_Width;
+};
+
+
+export type ComponentSectionsReviewsCtasArgs = {
+  filters: InputMaybe<ComponentPartsCtaFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type ComponentSectionsReviewsRatingsArgs = {
+  filters: InputMaybe<RatingFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type ComponentSectionsReviewsRatings_ConnectionArgs = {
+  filters: InputMaybe<RatingFiltersInput>;
   pagination?: InputMaybe<PaginationArg>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
@@ -2562,6 +2615,15 @@ export type Enum_Componentsectionshero_Width =
   | 'contained'
   | 'full';
 
+export type Enum_Componentsectionsimage_Size =
+  | 'content'
+  | 'narrow';
+
+export type Enum_Componentsectionsimage_Spacing =
+  | 'large'
+  | 'medium'
+  | 'small';
+
 export type Enum_Componentsectionsmap_Headeralign =
   | 'center'
   | 'start';
@@ -2572,6 +2634,28 @@ export type Enum_Componentsectionsmap_Spacing =
   | 'small';
 
 export type Enum_Componentsectionsmap_Width =
+  | 'boxed'
+  | 'contained'
+  | 'full';
+
+export type Enum_Componentsectionsreviews_Headeralign =
+  | 'center'
+  | 'start';
+
+export type Enum_Componentsectionsreviews_Layout =
+  | 'carousel'
+  | 'spotlight';
+
+export type Enum_Componentsectionsreviews_Source =
+  | 'latest'
+  | 'selected';
+
+export type Enum_Componentsectionsreviews_Spacing =
+  | 'large'
+  | 'medium'
+  | 'small';
+
+export type Enum_Componentsectionsreviews_Width =
   | 'boxed'
   | 'contained'
   | 'full';
@@ -2686,35 +2770,6 @@ export type Enum_Componentsitesociallink_Platform =
   | 'tiktok'
   | 'x'
   | 'youtube';
-
-export type Enum_Reviewsource_Laststatus =
-  | 'disabled'
-  | 'error'
-  | 'expired'
-  | 'never'
-  | 'ok'
-  | 'stale';
-
-export type Enum_Reviewsource_Platform =
-  | 'facebook'
-  | 'google'
-  | 'manual';
-
-export type Enum_Review_Hiddenreason =
-  | 'duplicate'
-  | 'legal'
-  | 'offensive'
-  | 'other'
-  | 'personalData'
-  | 'spam';
-
-export type Enum_Review_Origin =
-  | 'manual'
-  | 'synced';
-
-export type Enum_Review_Recommendation =
-  | 'negative'
-  | 'positive';
 
 export type Error = {
   __typename?: 'Error';
@@ -2847,7 +2902,7 @@ export type FooterRelationResponseCollection = {
   nodes: Array<Footer>;
 };
 
-export type GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksRichText | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | Review | ReviewSource | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser;
+export type GenericMorph = Announcement | Blog | BlogCategory | City | ComponentBlocksBlogPosts | ComponentBlocksCars | ComponentBlocksComparison | ComponentBlocksContact | ComponentBlocksContent | ComponentBlocksCtaBand | ComponentBlocksFaq | ComponentBlocksFeatures | ComponentBlocksHero | ComponentBlocksLeadForm | ComponentBlocksLocations | ComponentBlocksLogos | ComponentBlocksMediaText | ComponentBlocksPromoCards | ComponentBlocksReviews | ComponentBlocksRichText | ComponentBlocksScenarios | ComponentBlocksTrustBar | ComponentElementsComparisonColumn | ComponentElementsComparisonRow | ComponentElementsComparisonValue | ComponentElementsCta | ComponentElementsDepartment | ComponentElementsFaqItem | ComponentElementsFeature | ComponentElementsHighlight | ComponentElementsLink | ComponentElementsListItem | ComponentElementsLogo | ComponentElementsOpeningHours | ComponentElementsPromo | ComponentElementsScenario | ComponentElementsSection | ComponentElementsSectionHeader | ComponentElementsSeo | ComponentElementsSettings | ComponentElementsStatRef | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSeo | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | FaqCategory | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | ServicePoint | Site | Social | UploadFile | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser;
 
 export type Global = {
   __typename?: 'Global';
@@ -3153,8 +3208,6 @@ export type Mutation = {
   createPage: Maybe<Page>;
   createRating: Maybe<Rating>;
   createRegulation: Maybe<Regulation>;
-  createReview: Maybe<Review>;
-  createReviewSource: Maybe<ReviewSource>;
   createReviewWorkflowsWorkflow: Maybe<ReviewWorkflowsWorkflow>;
   createReviewWorkflowsWorkflowStage: Maybe<ReviewWorkflowsWorkflowStage>;
   createSale: Maybe<Sale>;
@@ -3178,8 +3231,6 @@ export type Mutation = {
   deletePage: Maybe<DeleteMutationResponse>;
   deleteRating: Maybe<DeleteMutationResponse>;
   deleteRegulation: Maybe<DeleteMutationResponse>;
-  deleteReview: Maybe<DeleteMutationResponse>;
-  deleteReviewSource: Maybe<DeleteMutationResponse>;
   deleteReviewWorkflowsWorkflow: Maybe<DeleteMutationResponse>;
   deleteReviewWorkflowsWorkflowStage: Maybe<DeleteMutationResponse>;
   deleteSale: Maybe<DeleteMutationResponse>;
@@ -3215,8 +3266,6 @@ export type Mutation = {
   updatePage: Maybe<Page>;
   updateRating: Maybe<Rating>;
   updateRegulation: Maybe<Regulation>;
-  updateReview: Maybe<Review>;
-  updateReviewSource: Maybe<ReviewSource>;
   updateReviewWorkflowsWorkflow: Maybe<ReviewWorkflowsWorkflow>;
   updateReviewWorkflowsWorkflowStage: Maybe<ReviewWorkflowsWorkflowStage>;
   updateSale: Maybe<Sale>;
@@ -3282,6 +3331,7 @@ export type MutationCreatePageArgs = {
 
 export type MutationCreateRatingArgs = {
   data: RatingInput;
+  locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
   status?: InputMaybe<PublicationStatus>;
 };
 
@@ -3289,18 +3339,6 @@ export type MutationCreateRatingArgs = {
 export type MutationCreateRegulationArgs = {
   data: RegulationInput;
   locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type MutationCreateReviewArgs = {
-  data: ReviewInput;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type MutationCreateReviewSourceArgs = {
-  data: ReviewSourceInput;
   status?: InputMaybe<PublicationStatus>;
 };
 
@@ -3414,22 +3452,13 @@ export type MutationDeletePageArgs = {
 
 export type MutationDeleteRatingArgs = {
   documentId: Scalars['ID']['input'];
+  locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
 };
 
 
 export type MutationDeleteRegulationArgs = {
   documentId: Scalars['ID']['input'];
   locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
-};
-
-
-export type MutationDeleteReviewArgs = {
-  documentId: Scalars['ID']['input'];
-};
-
-
-export type MutationDeleteReviewSourceArgs = {
-  documentId: Scalars['ID']['input'];
 };
 
 
@@ -3602,6 +3631,7 @@ export type MutationUpdatePageArgs = {
 export type MutationUpdateRatingArgs = {
   data: RatingInput;
   documentId: Scalars['ID']['input'];
+  locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
   status?: InputMaybe<PublicationStatus>;
 };
 
@@ -3610,20 +3640,6 @@ export type MutationUpdateRegulationArgs = {
   data: RegulationInput;
   documentId: Scalars['ID']['input'];
   locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type MutationUpdateReviewArgs = {
-  data: ReviewInput;
-  documentId: Scalars['ID']['input'];
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type MutationUpdateReviewSourceArgs = {
-  data: ReviewSourceInput;
-  documentId: Scalars['ID']['input'];
   status?: InputMaybe<PublicationStatus>;
 };
 
@@ -3793,7 +3809,7 @@ export type PageRelationResponseCollection = {
   nodes: Array<Page>;
 };
 
-export type PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsMap | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error;
+export type PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error;
 
 export type Pagination = {
   __typename?: 'Pagination';
@@ -3861,18 +3877,12 @@ export type Query = {
   regulation: Maybe<Regulation>;
   regulations: Array<Maybe<Regulation>>;
   regulations_connection: Maybe<RegulationEntityResponseCollection>;
-  review: Maybe<Review>;
-  reviewSource: Maybe<ReviewSource>;
-  reviewSources: Array<Maybe<ReviewSource>>;
-  reviewSources_connection: Maybe<ReviewSourceEntityResponseCollection>;
   reviewWorkflowsWorkflow: Maybe<ReviewWorkflowsWorkflow>;
   reviewWorkflowsWorkflowStage: Maybe<ReviewWorkflowsWorkflowStage>;
   reviewWorkflowsWorkflowStages: Array<Maybe<ReviewWorkflowsWorkflowStage>>;
   reviewWorkflowsWorkflowStages_connection: Maybe<ReviewWorkflowsWorkflowStageEntityResponseCollection>;
   reviewWorkflowsWorkflows: Array<Maybe<ReviewWorkflowsWorkflow>>;
   reviewWorkflowsWorkflows_connection: Maybe<ReviewWorkflowsWorkflowEntityResponseCollection>;
-  reviews: Array<Maybe<Review>>;
-  reviews_connection: Maybe<ReviewEntityResponseCollection>;
   sale: Maybe<Sale>;
   sales: Array<Maybe<Sale>>;
   sales_connection: Maybe<SaleEntityResponseCollection>;
@@ -4166,6 +4176,7 @@ export type QueryPages_ConnectionArgs = {
 export type QueryRatingArgs = {
   documentId: Scalars['ID']['input'];
   hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
+  locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
   publicationFilter: InputMaybe<PublicationFilter>;
   status?: InputMaybe<PublicationStatus>;
 };
@@ -4174,6 +4185,7 @@ export type QueryRatingArgs = {
 export type QueryRatingsArgs = {
   filters: InputMaybe<RatingFiltersInput>;
   hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
+  locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
   pagination?: InputMaybe<PaginationArg>;
   publicationFilter: InputMaybe<PublicationFilter>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
@@ -4184,6 +4196,7 @@ export type QueryRatingsArgs = {
 export type QueryRatings_ConnectionArgs = {
   filters: InputMaybe<RatingFiltersInput>;
   hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
+  locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
   pagination?: InputMaybe<PaginationArg>;
   publicationFilter: InputMaybe<PublicationFilter>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
@@ -4215,42 +4228,6 @@ export type QueryRegulations_ConnectionArgs = {
   filters: InputMaybe<RegulationFiltersInput>;
   hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
   locale: InputMaybe<Scalars['I18NLocaleCode']['input']>;
-  pagination?: InputMaybe<PaginationArg>;
-  publicationFilter: InputMaybe<PublicationFilter>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QueryReviewArgs = {
-  documentId: Scalars['ID']['input'];
-  hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
-  publicationFilter: InputMaybe<PublicationFilter>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QueryReviewSourceArgs = {
-  documentId: Scalars['ID']['input'];
-  hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
-  publicationFilter: InputMaybe<PublicationFilter>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QueryReviewSourcesArgs = {
-  filters: InputMaybe<ReviewSourceFiltersInput>;
-  hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
-  pagination?: InputMaybe<PaginationArg>;
-  publicationFilter: InputMaybe<PublicationFilter>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QueryReviewSources_ConnectionArgs = {
-  filters: InputMaybe<ReviewSourceFiltersInput>;
-  hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
   pagination?: InputMaybe<PaginationArg>;
   publicationFilter: InputMaybe<PublicationFilter>;
   sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
@@ -4306,26 +4283,6 @@ export type QueryReviewWorkflowsWorkflowsArgs = {
 
 export type QueryReviewWorkflowsWorkflows_ConnectionArgs = {
   filters: InputMaybe<ReviewWorkflowsWorkflowFiltersInput>;
-  hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
-  pagination?: InputMaybe<PaginationArg>;
-  publicationFilter: InputMaybe<PublicationFilter>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QueryReviewsArgs = {
-  filters: InputMaybe<ReviewFiltersInput>;
-  hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
-  pagination?: InputMaybe<PaginationArg>;
-  publicationFilter: InputMaybe<PublicationFilter>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-  status?: InputMaybe<PublicationStatus>;
-};
-
-
-export type QueryReviews_ConnectionArgs = {
-  filters: InputMaybe<ReviewFiltersInput>;
   hasPublishedVersion: InputMaybe<Scalars['Boolean']['input']>;
   pagination?: InputMaybe<PaginationArg>;
   publicationFilter: InputMaybe<PublicationFilter>;
@@ -4499,12 +4456,29 @@ export type Rating = {
   createdAt: Maybe<Scalars['DateTime']['output']>;
   date: Scalars['Date']['output'];
   documentId: Scalars['ID']['output'];
+  locale: Maybe<Scalars['String']['output']>;
+  localizations: Array<Maybe<Rating>>;
+  localizations_connection: Maybe<RatingRelationResponseCollection>;
   name: Scalars['String']['output'];
   publishedAt: Maybe<Scalars['DateTime']['output']>;
   rate: Scalars['Int']['output'];
   source: Scalars['String']['output'];
   text: Scalars['String']['output'];
   updatedAt: Maybe<Scalars['DateTime']['output']>;
+};
+
+
+export type RatingLocalizationsArgs = {
+  filters: InputMaybe<RatingFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+};
+
+
+export type RatingLocalizations_ConnectionArgs = {
+  filters: InputMaybe<RatingFiltersInput>;
+  pagination?: InputMaybe<PaginationArg>;
+  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
 export type RatingEntityResponseCollection = {
@@ -4518,6 +4492,8 @@ export type RatingFiltersInput = {
   createdAt?: InputMaybe<DateTimeFilterInput>;
   date?: InputMaybe<DateFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
+  locale?: InputMaybe<StringFilterInput>;
+  localizations?: InputMaybe<RatingFiltersInput>;
   name?: InputMaybe<StringFilterInput>;
   not?: InputMaybe<RatingFiltersInput>;
   or?: InputMaybe<Array<InputMaybe<RatingFiltersInput>>>;
@@ -4530,12 +4506,16 @@ export type RatingFiltersInput = {
 
 export type RatingInput = {
   date?: InputMaybe<Scalars['Date']['input']>;
-  locale?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
   rate?: InputMaybe<Scalars['Int']['input']>;
   source?: InputMaybe<Scalars['String']['input']>;
   text?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type RatingRelationResponseCollection = {
+  __typename?: 'RatingRelationResponseCollection';
+  nodes: Array<Rating>;
 };
 
 export type Regulation = {
@@ -4596,192 +4576,6 @@ export type RegulationInput = {
 export type RegulationRelationResponseCollection = {
   __typename?: 'RegulationRelationResponseCollection';
   nodes: Array<Regulation>;
-};
-
-export type Review = {
-  __typename?: 'Review';
-  authorIsAnonymous: Maybe<Scalars['Boolean']['output']>;
-  authorName: Maybe<Scalars['String']['output']>;
-  authorPhotoUrl: Maybe<Scalars['String']['output']>;
-  createdAt: Maybe<Scalars['DateTime']['output']>;
-  documentId: Scalars['ID']['output'];
-  externalId: Scalars['String']['output'];
-  featured: Scalars['Boolean']['output'];
-  featuredOrder: Maybe<Scalars['Int']['output']>;
-  hidden: Scalars['Boolean']['output'];
-  language: Maybe<Scalars['String']['output']>;
-  origin: Enum_Review_Origin;
-  ownerReply: Maybe<Scalars['String']['output']>;
-  ownerReplyAt: Maybe<Scalars['DateTime']['output']>;
-  publishedAt: Maybe<Scalars['DateTime']['output']>;
-  rating: Maybe<Scalars['Int']['output']>;
-  recommendation: Maybe<Enum_Review_Recommendation>;
-  removedAt: Maybe<Scalars['DateTime']['output']>;
-  reviewCreatedAt: Scalars['DateTime']['output'];
-  reviewUpdatedAt: Maybe<Scalars['DateTime']['output']>;
-  source: Maybe<ReviewSource>;
-  text: Maybe<Scalars['String']['output']>;
-  updatedAt: Maybe<Scalars['DateTime']['output']>;
-  url: Maybe<Scalars['String']['output']>;
-};
-
-export type ReviewEntityResponseCollection = {
-  __typename?: 'ReviewEntityResponseCollection';
-  nodes: Array<Review>;
-  pageInfo: Pagination;
-};
-
-export type ReviewFiltersInput = {
-  and?: InputMaybe<Array<InputMaybe<ReviewFiltersInput>>>;
-  authorIsAnonymous?: InputMaybe<BooleanFilterInput>;
-  authorName?: InputMaybe<StringFilterInput>;
-  authorPhotoUrl?: InputMaybe<StringFilterInput>;
-  createdAt?: InputMaybe<DateTimeFilterInput>;
-  documentId?: InputMaybe<IdFilterInput>;
-  externalId?: InputMaybe<StringFilterInput>;
-  featured?: InputMaybe<BooleanFilterInput>;
-  featuredOrder?: InputMaybe<IntFilterInput>;
-  hidden?: InputMaybe<BooleanFilterInput>;
-  language?: InputMaybe<StringFilterInput>;
-  not?: InputMaybe<ReviewFiltersInput>;
-  or?: InputMaybe<Array<InputMaybe<ReviewFiltersInput>>>;
-  origin?: InputMaybe<StringFilterInput>;
-  ownerReply?: InputMaybe<StringFilterInput>;
-  ownerReplyAt?: InputMaybe<DateTimeFilterInput>;
-  publishedAt?: InputMaybe<DateTimeFilterInput>;
-  rating?: InputMaybe<IntFilterInput>;
-  recommendation?: InputMaybe<StringFilterInput>;
-  removedAt?: InputMaybe<DateTimeFilterInput>;
-  reviewCreatedAt?: InputMaybe<DateTimeFilterInput>;
-  reviewUpdatedAt?: InputMaybe<DateTimeFilterInput>;
-  source?: InputMaybe<ReviewSourceFiltersInput>;
-  text?: InputMaybe<StringFilterInput>;
-  updatedAt?: InputMaybe<DateTimeFilterInput>;
-  url?: InputMaybe<StringFilterInput>;
-};
-
-export type ReviewInput = {
-  authorIsAnonymous?: InputMaybe<Scalars['Boolean']['input']>;
-  authorName?: InputMaybe<Scalars['String']['input']>;
-  authorPhotoUrl?: InputMaybe<Scalars['String']['input']>;
-  contentHash?: InputMaybe<Scalars['String']['input']>;
-  externalId?: InputMaybe<Scalars['String']['input']>;
-  featured?: InputMaybe<Scalars['Boolean']['input']>;
-  featuredOrder?: InputMaybe<Scalars['Int']['input']>;
-  hidden?: InputMaybe<Scalars['Boolean']['input']>;
-  hiddenNote?: InputMaybe<Scalars['String']['input']>;
-  hiddenReason?: InputMaybe<Enum_Review_Hiddenreason>;
-  language?: InputMaybe<Scalars['String']['input']>;
-  locale?: InputMaybe<Scalars['String']['input']>;
-  origin?: InputMaybe<Enum_Review_Origin>;
-  ownerReply?: InputMaybe<Scalars['String']['input']>;
-  ownerReplyAt?: InputMaybe<Scalars['DateTime']['input']>;
-  publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  rating?: InputMaybe<Scalars['Int']['input']>;
-  recommendation?: InputMaybe<Enum_Review_Recommendation>;
-  removedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  reviewCreatedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  reviewUpdatedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  source?: InputMaybe<Scalars['ID']['input']>;
-  syncedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  text?: InputMaybe<Scalars['String']['input']>;
-  url?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ReviewRelationResponseCollection = {
-  __typename?: 'ReviewRelationResponseCollection';
-  nodes: Array<Review>;
-};
-
-export type ReviewSource = {
-  __typename?: 'ReviewSource';
-  createdAt: Maybe<Scalars['DateTime']['output']>;
-  documentId: Scalars['ID']['output'];
-  enabled: Scalars['Boolean']['output'];
-  externalId: Maybe<Scalars['String']['output']>;
-  key: Scalars['String']['output'];
-  label: Scalars['String']['output'];
-  lastStatus: Enum_Reviewsource_Laststatus;
-  placeId: Maybe<Scalars['String']['output']>;
-  platform: Enum_Reviewsource_Platform;
-  profileUrl: Maybe<Scalars['String']['output']>;
-  publishedAt: Maybe<Scalars['DateTime']['output']>;
-  rating: Maybe<Scalars['Float']['output']>;
-  ratingCount: Maybe<Scalars['Int']['output']>;
-  reviews: Array<Maybe<Review>>;
-  reviews_connection: Maybe<ReviewRelationResponseCollection>;
-  servicePoint: Maybe<ServicePoint>;
-  syncedAt: Maybe<Scalars['DateTime']['output']>;
-  updatedAt: Maybe<Scalars['DateTime']['output']>;
-  writeReviewUrl: Maybe<Scalars['String']['output']>;
-};
-
-
-export type ReviewSourceReviewsArgs = {
-  filters: InputMaybe<ReviewFiltersInput>;
-  pagination?: InputMaybe<PaginationArg>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-};
-
-
-export type ReviewSourceReviews_ConnectionArgs = {
-  filters: InputMaybe<ReviewFiltersInput>;
-  pagination?: InputMaybe<PaginationArg>;
-  sort?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
-};
-
-export type ReviewSourceEntityResponseCollection = {
-  __typename?: 'ReviewSourceEntityResponseCollection';
-  nodes: Array<ReviewSource>;
-  pageInfo: Pagination;
-};
-
-export type ReviewSourceFiltersInput = {
-  and?: InputMaybe<Array<InputMaybe<ReviewSourceFiltersInput>>>;
-  createdAt?: InputMaybe<DateTimeFilterInput>;
-  documentId?: InputMaybe<IdFilterInput>;
-  enabled?: InputMaybe<BooleanFilterInput>;
-  externalId?: InputMaybe<StringFilterInput>;
-  key?: InputMaybe<StringFilterInput>;
-  label?: InputMaybe<StringFilterInput>;
-  lastStatus?: InputMaybe<StringFilterInput>;
-  not?: InputMaybe<ReviewSourceFiltersInput>;
-  or?: InputMaybe<Array<InputMaybe<ReviewSourceFiltersInput>>>;
-  placeId?: InputMaybe<StringFilterInput>;
-  platform?: InputMaybe<StringFilterInput>;
-  profileUrl?: InputMaybe<StringFilterInput>;
-  publishedAt?: InputMaybe<DateTimeFilterInput>;
-  rating?: InputMaybe<FloatFilterInput>;
-  ratingCount?: InputMaybe<IntFilterInput>;
-  reviews?: InputMaybe<ReviewFiltersInput>;
-  servicePoint?: InputMaybe<ServicePointFiltersInput>;
-  syncedAt?: InputMaybe<DateTimeFilterInput>;
-  updatedAt?: InputMaybe<DateTimeFilterInput>;
-  writeReviewUrl?: InputMaybe<StringFilterInput>;
-};
-
-export type ReviewSourceInput = {
-  consecutiveFailures?: InputMaybe<Scalars['Int']['input']>;
-  enabled?: InputMaybe<Scalars['Boolean']['input']>;
-  externalId?: InputMaybe<Scalars['String']['input']>;
-  key?: InputMaybe<Scalars['String']['input']>;
-  label?: InputMaybe<Scalars['String']['input']>;
-  lastAttemptAt?: InputMaybe<Scalars['DateTime']['input']>;
-  lastError?: InputMaybe<Scalars['String']['input']>;
-  lastStatus?: InputMaybe<Enum_Reviewsource_Laststatus>;
-  locale?: InputMaybe<Scalars['String']['input']>;
-  nextSyncAt?: InputMaybe<Scalars['DateTime']['input']>;
-  placeId?: InputMaybe<Scalars['String']['input']>;
-  platform?: InputMaybe<Enum_Reviewsource_Platform>;
-  profileUrl?: InputMaybe<Scalars['String']['input']>;
-  publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  rating?: InputMaybe<Scalars['Float']['input']>;
-  ratingCount?: InputMaybe<Scalars['Int']['input']>;
-  reviews?: InputMaybe<Array<InputMaybe<Scalars['ID']['input']>>>;
-  servicePoint?: InputMaybe<Scalars['ID']['input']>;
-  syncLockUntil?: InputMaybe<Scalars['DateTime']['input']>;
-  syncedAt?: InputMaybe<Scalars['DateTime']['input']>;
-  writeReviewUrl?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ReviewWorkflowsWorkflow = {
@@ -5486,7 +5280,7 @@ export type PageQueryVariables = Exact<{
 }>;
 
 
-export type PageQuery = { __typename?: 'Query', page: { __typename?: 'Page', documentId: string, title: string, seo: { __typename?: 'ComponentSharedSeo', metaTitle: string, metaDescription: string | null, noIndex: boolean | null, noFollow: boolean | null, shareImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null, sections: Array<{ __typename: 'ComponentSectionsBlog', id: string, badge: string | null, blogTitle: string | null, blogText: string | null, blogHeaderAlign: Enum_Componentsectionsblog_Headeralign, blogSource: Enum_Componentsectionsblog_Source, blogLayout: Enum_Componentsectionsblog_Layout, blogWidth: Enum_Componentsectionsblog_Width, blogSpacing: Enum_Componentsectionsblog_Spacing, posts: Array<{ __typename?: 'Blog', documentId: string, title: string, slug: string, excerpt: string | null, publishedAt: any | null, createdAt: any | null, category: { __typename?: 'BlogCategory', documentId: string, name: string, color: Enum_Blogcategory_Color | null } | null, coverImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsCards', id: string, badge: string | null, visibleCards: number | null, cardsTitle: string | null, cardsText: string | null, cardsHeaderAlign: Enum_Componentsectionscards_Headeralign, cardsDisplay: Enum_Componentsectionscards_Display, cardsWidth: Enum_Componentsectionscards_Width, cardsSpacing: Enum_Componentsectionscards_Spacing, cards: Array<{ __typename?: 'ComponentPartsCard', icon: string | null, title: string, text: string | null, tone: Enum_Componentpartscard_Tone, pattern: boolean | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsCars', id: string, badge: string | null, segmentIds: any | null, carIds: any | null, limit: number | null, carsTitle: string | null, carsText: string | null, carsHeaderAlign: Enum_Componentsectionscars_Headeralign, carsSource: Enum_Componentsectionscars_Source, carsCategory: Enum_Componentsectionscars_Category | null, carsLayout: Enum_Componentsectionscars_Layout, carsWidth: Enum_Componentsectionscars_Width, carsSpacing: Enum_Componentsectionscars_Spacing, moreCard: { __typename?: 'ComponentPartsCard', icon: string | null, title: string, text: string | null, tone: Enum_Componentpartscard_Tone, pattern: boolean | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsFaq', id: string, badge: string | null, structuredData: boolean | null, faqTitle: string | null, faqText: string | null, faqHeaderAlign: Enum_Componentsectionsfaq_Headeralign, faqSearch: boolean | null, faqTextWidth: Enum_Componentsectionsfaq_Textwidth, faqWidth: Enum_Componentsectionsfaq_Width, faqSpacing: Enum_Componentsectionsfaq_Spacing, groups: Array<{ __typename?: 'ComponentPartsFaqGroup', title: string | null, icon: string | null, items: Array<{ __typename?: 'ComponentPartsFaqItem', question: string, answer: string } | null> } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsFeatures', id: string, badge: string | null, text: string | null, headerAlign: Enum_Componentsectionsfeatures_Headeralign, variant: Enum_Componentsectionsfeatures_Variant, display: Enum_Componentsectionsfeatures_Display, featuresTitle: string | null, featuresWidth: Enum_Componentsectionsfeatures_Width, featuresSpacing: Enum_Componentsectionsfeatures_Spacing, items: Array<{ __typename?: 'ComponentPartsFeatureItem', icon: string | null, title: string, text: string | null } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsForm', id: string, badge: string | null, formKind: Enum_Componentsectionsform_Formkind, formWidth: Enum_Componentsectionsform_Formwidth, formTitle: string | null, formText: string | null, formHeaderAlign: Enum_Componentsectionsform_Headeralign, formFrameWidth: Enum_Componentsectionsform_Width, formSpacing: Enum_Componentsectionsform_Spacing, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsHero', id: string, badge: string | null, title: string, subtitle: string | null, overlay: Enum_Componentsectionshero_Overlay, search: Enum_Componentsectionshero_Search, searchTerm: Enum_Componentsectionshero_Searchterm | null, searchSide: Enum_Componentsectionshero_Searchside | null, width: Enum_Componentsectionshero_Width, spacing: Enum_Componentsectionshero_Spacing, align: Enum_Componentsectionshero_Align | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, video: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, videoMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | { __typename: 'ComponentSectionsMap', id: string, badge: string | null, showList: boolean | null, fullBleed: boolean | null, mapTitle: string | null, mapText: string | null, mapHeaderAlign: Enum_Componentsectionsmap_Headeralign, mapShowLegend: boolean | null, mapWidth: Enum_Componentsectionsmap_Width, mapSpacing: Enum_Componentsectionsmap_Spacing, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsSocial', id: string, badge: string | null, showContact: boolean | null, socialTitle: string | null, socialText: string | null, socialLayout: Enum_Componentsectionssocial_Layout, socialWidth: Enum_Componentsectionssocial_Width, socialSpacing: Enum_Componentsectionssocial_Spacing, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsSplit', id: string, imageFit: Enum_Componentsectionssplit_Imagefit, imageStyle: Enum_Componentsectionssplit_Imagestyle, statValue: string | null, statLabel: string | null, badge: string | null, content: Enum_Componentsectionssplit_Content, mediaSide: Enum_Componentsectionssplit_Mediaside, splitMedia: Enum_Componentsectionssplit_Media, splitShowLegend: boolean | null, splitTitle: string | null, splitText: string | null, splitBody: string | null, splitStructuredData: boolean | null, splitWidth: Enum_Componentsectionssplit_Width, splitSpacing: Enum_Componentsectionssplit_Spacing, splitImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageSecond: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, features: Array<{ __typename?: 'ComponentPartsFeatureItem', icon: string | null, title: string, text: string | null } | null> | null, faqs: Array<{ __typename?: 'ComponentPartsFaqItem', question: string, answer: string } | null> | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsText', id: string, badge: string | null, body: string | null, textWidth: Enum_Componentsectionstext_Textwidth, collapsible: boolean | null, previewParagraphs: number | null, textTitle: string | null, textAlign: Enum_Componentsectionstext_Align, textFrameWidth: Enum_Componentsectionstext_Width, textSpacing: Enum_Componentsectionstext_Spacing, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsVariantLabel', id: string, title: string, note: string | null } | { __typename: 'Error' } | null> | null, blocks: Array<{ __typename: 'ComponentBlocksBlogPosts', id: string, badge: string | null, title: string, subtitle: string | null, source: Enum_Componentblocksblogposts_Source, limit: number | null, category: { __typename?: 'BlogCategory', documentId: string } | null, posts: Array<{ __typename?: 'Blog', documentId: string, title: string, slug: string, excerpt: string | null, publishedAt: any | null, createdAt: any | null, category: { __typename?: 'BlogCategory', documentId: string, name: string, color: Enum_Blogcategory_Color | null } | null, coverImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } } | null>, cta: { __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null } | { __typename: 'ComponentBlocksCars', id: string, segmentIds: any | null, limit: number | null, defaultCategory: Enum_Componentblockscars_Defaultcategory | null, onlyPromotions: boolean | null, carsSource: Enum_Componentblockscars_Source, carsCategory: Enum_Componentblockscars_Category | null, carsLayout: Enum_Componentblockscars_Layout, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, carsCta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksComparison', id: string, footnote: string | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, columns: Array<{ __typename?: 'ComponentElementsComparisonColumn', label: string, highlighted: boolean | null } | null>, rows: Array<{ __typename?: 'ComponentElementsComparisonRow', criterion: string, values: Array<{ __typename?: 'ComponentElementsComparisonValue', kind: Enum_Componentelementscomparisonvalue_Kind, text: string | null } | null> | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksContact', id: string, showCompany: boolean | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, contactImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, formTopics: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, departments: Array<{ __typename?: 'ComponentElementsDepartment', name: string, text: string | null, phone: string | null, email: string | null, hours: string | null, showInFooter: boolean | null, schedule: Array<{ __typename?: 'ComponentElementsOpeningHours', days: any, from: any | null, to: any | null, closed: boolean | null } | null> | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksContent', id: string, body: string | null, align: Enum_Componentblockscontent_Align | null, collapsible: boolean | null, previewParagraphs: number | null, collapsedLabel: string | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, ctas: Array<{ __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksCtaBand', id: string, title: string, text: string | null, tone: Enum_Componentblocksctaband_Tone, eyebrow: string | null, showStoreBadges: boolean | null, ctaVariant: Enum_Componentblocksctaband_Variant | null, primary: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null }, secondary: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, ctaImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, ctaImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, media: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | { __typename: 'ComponentBlocksFaq', id: string, structuredData: boolean | null, groupByCategory: boolean | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, items: Array<{ __typename?: 'ComponentElementsFaqItem', question: string, answer: string, category: { __typename?: 'FaqCategory', documentId: string, name: string, slug: string, icon: string | null, order: number | null } | null } | null>, faqCta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksFeatures', id: string, variant: Enum_Componentblocksfeatures_Variant, heading: string | null, items: Array<{ __typename?: 'ComponentElementsFeature', title: string, text: string | null, icon: string | null, tone: Enum_Componentelementsfeature_Tone | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null> } | { __typename: 'ComponentBlocksHero', id: string, badge: string | null, title: string, subtitle: string | null, overlay: Enum_Componentblockshero_Overlay, height: Enum_Componentblockshero_Height, reservationLayout: Enum_Componentblockshero_Reservationlayout, reservationDefaultTerm: Enum_Componentblockshero_Reservationdefaultterm, searchSide: Enum_Componentblockshero_Searchside | null, focalPoint: Enum_Componentblockshero_Focalpoint | null, breadcrumbLabel: string | null, heroLayout: Enum_Componentblockshero_Layout | null, ctas: Array<{ __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundVideo: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, highlights: Array<{ __typename?: 'ComponentElementsHighlight', icon: string | null, text: string } | null> | null, trust: { __typename?: 'ComponentBlocksTrustBar', id: string, showRating: boolean | null, trustVariant: Enum_Componentblockstrustbar_Variant, stats: Array<{ __typename?: 'ComponentElementsStatRef', kind: Enum_Componentelementsstatref_Kind } | null> | null, claims: Array<{ __typename?: 'ComponentElementsHighlight', icon: string | null, text: string } | null> | null } | null } | { __typename: 'ComponentBlocksLeadForm', id: string, contactTitle: string | null, contactText: string | null, consent: string, successTitle: string, successText: string | null, formVariant: Enum_Componentblocksleadform_Variant, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, steps: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksLocations', id: string, city: string | null, showMap: boolean | null, locationsFilter: Enum_Componentblockslocations_Filter, locationsLayout: Enum_Componentblockslocations_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksLogos', id: string, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, logos: Array<{ __typename?: 'ComponentElementsLogo', name: string, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksMediaText', id: string, body: string | null, imagePosition: Enum_Componentblocksmediatext_Imageposition | null, imageStyle: Enum_Componentblocksmediatext_Imagestyle | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null }, ctas: Array<{ __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksPromoCards', id: string, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, promos: Array<{ __typename?: 'ComponentElementsPromo', title: string, text: string | null, code: string | null, validFrom: any | null, validUntil: any | null, tone: Enum_Componentelementspromo_Tone | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, termsLink: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksReviews', id: string, limit: number | null, showSummary: boolean | null, reviewSource: Enum_Componentblocksreviews_Source | null, reviewsLayout: Enum_Componentblocksreviews_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksScenarios', id: string, scenariosLayout: Enum_Componentblocksscenarios_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, items: Array<{ __typename?: 'ComponentElementsScenario', label: string, title: string, audience: string | null, text: string | null, benefits: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, cta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksTrustBar', id: string, showRating: boolean | null, trustVariant: Enum_Componentblockstrustbar_Variant, stats: Array<{ __typename?: 'ComponentElementsStatRef', kind: Enum_Componentelementsstatref_Kind } | null> | null, claims: Array<{ __typename?: 'ComponentElementsHighlight', icon: string | null, text: string } | null> | null } | { __typename: 'Error' } | null> | null } | null };
+export type PageQuery = { __typename?: 'Query', page: { __typename?: 'Page', documentId: string, title: string, seo: { __typename?: 'ComponentSharedSeo', metaTitle: string, metaDescription: string | null, noIndex: boolean | null, noFollow: boolean | null, shareImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null, sections: Array<{ __typename: 'ComponentSectionsBlog', id: string, badge: string | null, blogTitle: string | null, blogText: string | null, blogHeaderAlign: Enum_Componentsectionsblog_Headeralign, blogSource: Enum_Componentsectionsblog_Source, blogLayout: Enum_Componentsectionsblog_Layout, blogWidth: Enum_Componentsectionsblog_Width, blogSpacing: Enum_Componentsectionsblog_Spacing, posts: Array<{ __typename?: 'Blog', documentId: string, title: string, slug: string, excerpt: string | null, publishedAt: any | null, createdAt: any | null, category: { __typename?: 'BlogCategory', documentId: string, name: string, color: Enum_Blogcategory_Color | null } | null, coverImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsCards', id: string, badge: string | null, visibleCards: number | null, cardsTitle: string | null, cardsText: string | null, cardsHeaderAlign: Enum_Componentsectionscards_Headeralign, cardsDisplay: Enum_Componentsectionscards_Display, cardsWidth: Enum_Componentsectionscards_Width, cardsSpacing: Enum_Componentsectionscards_Spacing, cards: Array<{ __typename?: 'ComponentPartsCard', icon: string | null, title: string, text: string | null, tone: Enum_Componentpartscard_Tone, pattern: boolean | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsCars', id: string, badge: string | null, segmentIds: any | null, carIds: any | null, limit: number | null, carsTitle: string | null, carsText: string | null, carsHeaderAlign: Enum_Componentsectionscars_Headeralign, carsSource: Enum_Componentsectionscars_Source, carsCategory: Enum_Componentsectionscars_Category | null, carsLayout: Enum_Componentsectionscars_Layout, carsWidth: Enum_Componentsectionscars_Width, carsSpacing: Enum_Componentsectionscars_Spacing, moreCard: { __typename?: 'ComponentPartsCard', icon: string | null, title: string, text: string | null, tone: Enum_Componentpartscard_Tone, pattern: boolean | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsFaq', id: string, badge: string | null, structuredData: boolean | null, faqTitle: string | null, faqText: string | null, faqHeaderAlign: Enum_Componentsectionsfaq_Headeralign, faqSearch: boolean | null, faqTextWidth: Enum_Componentsectionsfaq_Textwidth, faqWidth: Enum_Componentsectionsfaq_Width, faqSpacing: Enum_Componentsectionsfaq_Spacing, groups: Array<{ __typename?: 'ComponentPartsFaqGroup', title: string | null, icon: string | null, items: Array<{ __typename?: 'ComponentPartsFaqItem', question: string, answer: string } | null> } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsFeatures', id: string, badge: string | null, text: string | null, headerAlign: Enum_Componentsectionsfeatures_Headeralign, variant: Enum_Componentsectionsfeatures_Variant, display: Enum_Componentsectionsfeatures_Display, featuresTitle: string | null, featuresWidth: Enum_Componentsectionsfeatures_Width, featuresSpacing: Enum_Componentsectionsfeatures_Spacing, items: Array<{ __typename?: 'ComponentPartsFeatureItem', icon: string | null, title: string, text: string | null } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsForm', id: string, badge: string | null, formKind: Enum_Componentsectionsform_Formkind, formWidth: Enum_Componentsectionsform_Formwidth, formTitle: string | null, formText: string | null, formHeaderAlign: Enum_Componentsectionsform_Headeralign, formFrameWidth: Enum_Componentsectionsform_Width, formSpacing: Enum_Componentsectionsform_Spacing, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsHero', id: string, badge: string | null, title: string, subtitle: string | null, overlay: Enum_Componentsectionshero_Overlay, search: Enum_Componentsectionshero_Search, searchTerm: Enum_Componentsectionshero_Searchterm | null, searchSide: Enum_Componentsectionshero_Searchside | null, width: Enum_Componentsectionshero_Width, spacing: Enum_Componentsectionshero_Spacing, align: Enum_Componentsectionshero_Align | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, video: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, videoMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | { __typename: 'ComponentSectionsImage', id: string, caption: string | null, imageSize: Enum_Componentsectionsimage_Size, imageSpacing: Enum_Componentsectionsimage_Spacing, picture: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null }, pictureMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsMap', id: string, badge: string | null, showList: boolean | null, fullBleed: boolean | null, mapTitle: string | null, mapText: string | null, mapHeaderAlign: Enum_Componentsectionsmap_Headeralign, mapShowLegend: boolean | null, mapWidth: Enum_Componentsectionsmap_Width, mapSpacing: Enum_Componentsectionsmap_Spacing, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsReviews', id: string, badge: string | null, showScore: boolean | null, score: number | null, scoreLabel: string | null, reviewsTitle: string | null, reviewsText: string | null, reviewsHeaderAlign: Enum_Componentsectionsreviews_Headeralign, reviewsSource: Enum_Componentsectionsreviews_Source, reviewsLimit: number | null, reviewsLayout: Enum_Componentsectionsreviews_Layout, reviewsWidth: Enum_Componentsectionsreviews_Width, reviewsSpacing: Enum_Componentsectionsreviews_Spacing, ratings: Array<{ __typename?: 'Rating', documentId: string, name: string, rate: number, text: string } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsSocial', id: string, badge: string | null, showContact: boolean | null, socialTitle: string | null, socialText: string | null, socialLayout: Enum_Componentsectionssocial_Layout, socialWidth: Enum_Componentsectionssocial_Width, socialSpacing: Enum_Componentsectionssocial_Spacing, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsSplit', id: string, imageFit: Enum_Componentsectionssplit_Imagefit, imageStyle: Enum_Componentsectionssplit_Imagestyle, statValue: string | null, statLabel: string | null, badge: string | null, content: Enum_Componentsectionssplit_Content, mediaSide: Enum_Componentsectionssplit_Mediaside, splitMedia: Enum_Componentsectionssplit_Media, splitShowLegend: boolean | null, splitTitle: string | null, splitText: string | null, splitBody: string | null, splitStructuredData: boolean | null, splitWidth: Enum_Componentsectionssplit_Width, splitSpacing: Enum_Componentsectionssplit_Spacing, splitImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageSecond: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, features: Array<{ __typename?: 'ComponentPartsFeatureItem', icon: string | null, title: string, text: string | null } | null> | null, faqs: Array<{ __typename?: 'ComponentPartsFaqItem', question: string, answer: string } | null> | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsText', id: string, badge: string | null, body: string | null, textWidth: Enum_Componentsectionstext_Textwidth, collapsible: boolean | null, previewParagraphs: number | null, textTitle: string | null, textAlign: Enum_Componentsectionstext_Align, textFrameWidth: Enum_Componentsectionstext_Width, textSpacing: Enum_Componentsectionstext_Spacing, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentSectionsVariantLabel', id: string, title: string, note: string | null } | { __typename: 'Error' } | null> | null, blocks: Array<{ __typename: 'ComponentBlocksBlogPosts', id: string, badge: string | null, title: string, subtitle: string | null, source: Enum_Componentblocksblogposts_Source, limit: number | null, category: { __typename?: 'BlogCategory', documentId: string } | null, posts: Array<{ __typename?: 'Blog', documentId: string, title: string, slug: string, excerpt: string | null, publishedAt: any | null, createdAt: any | null, category: { __typename?: 'BlogCategory', documentId: string, name: string, color: Enum_Blogcategory_Color | null } | null, coverImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } } | null>, cta: { __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null } | { __typename: 'ComponentBlocksCars', id: string, segmentIds: any | null, limit: number | null, defaultCategory: Enum_Componentblockscars_Defaultcategory | null, onlyPromotions: boolean | null, carsSource: Enum_Componentblockscars_Source, carsCategory: Enum_Componentblockscars_Category | null, carsLayout: Enum_Componentblockscars_Layout, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, carsCta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksComparison', id: string, footnote: string | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, columns: Array<{ __typename?: 'ComponentElementsComparisonColumn', label: string, highlighted: boolean | null } | null>, rows: Array<{ __typename?: 'ComponentElementsComparisonRow', criterion: string, values: Array<{ __typename?: 'ComponentElementsComparisonValue', kind: Enum_Componentelementscomparisonvalue_Kind, text: string | null } | null> | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksContact', id: string, showCompany: boolean | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, contactImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, formTopics: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, departments: Array<{ __typename?: 'ComponentElementsDepartment', name: string, text: string | null, phone: string | null, email: string | null, hours: string | null, showInFooter: boolean | null, schedule: Array<{ __typename?: 'ComponentElementsOpeningHours', days: any, from: any | null, to: any | null, closed: boolean | null } | null> | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksContent', id: string, body: string | null, align: Enum_Componentblockscontent_Align | null, collapsible: boolean | null, previewParagraphs: number | null, collapsedLabel: string | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, ctas: Array<{ __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksCtaBand', id: string, title: string, text: string | null, tone: Enum_Componentblocksctaband_Tone, eyebrow: string | null, showStoreBadges: boolean | null, ctaVariant: Enum_Componentblocksctaband_Variant | null, primary: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null }, secondary: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, ctaImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, ctaImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, media: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | { __typename: 'ComponentBlocksFaq', id: string, structuredData: boolean | null, groupByCategory: boolean | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, items: Array<{ __typename?: 'ComponentElementsFaqItem', question: string, answer: string, category: { __typename?: 'FaqCategory', documentId: string, name: string, slug: string, icon: string | null, order: number | null } | null } | null>, faqCta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksFeatures', id: string, variant: Enum_Componentblocksfeatures_Variant, heading: string | null, items: Array<{ __typename?: 'ComponentElementsFeature', title: string, text: string | null, icon: string | null, tone: Enum_Componentelementsfeature_Tone | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null> } | { __typename: 'ComponentBlocksHero', id: string, badge: string | null, title: string, subtitle: string | null, overlay: Enum_Componentblockshero_Overlay, height: Enum_Componentblockshero_Height, reservationLayout: Enum_Componentblockshero_Reservationlayout, reservationDefaultTerm: Enum_Componentblockshero_Reservationdefaultterm, searchSide: Enum_Componentblockshero_Searchside | null, focalPoint: Enum_Componentblockshero_Focalpoint | null, breadcrumbLabel: string | null, heroLayout: Enum_Componentblockshero_Layout | null, ctas: Array<{ __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundVideo: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, highlights: Array<{ __typename?: 'ComponentElementsHighlight', icon: string | null, text: string } | null> | null, trust: { __typename?: 'ComponentBlocksTrustBar', id: string, showRating: boolean | null, trustVariant: Enum_Componentblockstrustbar_Variant, stats: Array<{ __typename?: 'ComponentElementsStatRef', kind: Enum_Componentelementsstatref_Kind } | null> | null, claims: Array<{ __typename?: 'ComponentElementsHighlight', icon: string | null, text: string } | null> | null } | null } | { __typename: 'ComponentBlocksLeadForm', id: string, contactTitle: string | null, contactText: string | null, consent: string, successTitle: string, successText: string | null, formVariant: Enum_Componentblocksleadform_Variant, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, steps: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksLocations', id: string, city: string | null, showMap: boolean | null, locationsFilter: Enum_Componentblockslocations_Filter, locationsLayout: Enum_Componentblockslocations_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksLogos', id: string, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, logos: Array<{ __typename?: 'ComponentElementsLogo', name: string, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksMediaText', id: string, body: string | null, imagePosition: Enum_Componentblocksmediatext_Imageposition | null, imageStyle: Enum_Componentblocksmediatext_Imagestyle | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null }, ctas: Array<{ __typename?: 'ComponentElementsCta', variant: Enum_Componentelementscta_Variant, icon: string | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksPromoCards', id: string, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, promos: Array<{ __typename?: 'ComponentElementsPromo', title: string, text: string | null, code: string | null, validFrom: any | null, validUntil: any | null, tone: Enum_Componentelementspromo_Tone | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, link: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, termsLink: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksReviews', id: string, limit: number | null, showSummary: boolean | null, reviewSource: Enum_Componentblocksreviews_Source | null, reviewsLayout: Enum_Componentblocksreviews_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksScenarios', id: string, scenariosLayout: Enum_Componentblocksscenarios_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, items: Array<{ __typename?: 'ComponentElementsScenario', label: string, title: string, audience: string | null, text: string | null, benefits: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, cta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null } | { __typename: 'ComponentBlocksTrustBar', id: string, showRating: boolean | null, trustVariant: Enum_Componentblockstrustbar_Variant, stats: Array<{ __typename?: 'ComponentElementsStatRef', kind: Enum_Componentelementsstatref_Kind } | null> | null, claims: Array<{ __typename?: 'ComponentElementsHighlight', icon: string | null, text: string } | null> | null } | { __typename: 'Error' } | null> | null } | null };
 
 export type ScenariosBlockFragment = { __typename?: 'ComponentBlocksScenarios', id: string, scenariosLayout: Enum_Componentblocksscenarios_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, items: Array<{ __typename?: 'ComponentElementsScenario', label: string, title: string, audience: string | null, text: string | null, benefits: Array<{ __typename?: 'ComponentElementsListItem', text: string } | null> | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, cta: { __typename?: 'ComponentElementsLink', label: string | null, linkType: Enum_Componentelementslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null } | null>, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
 
@@ -5515,6 +5309,15 @@ export type MediaTextBlockFragment = { __typename?: 'ComponentBlocksMediaText', 
 export type ReviewsBlockFragment = { __typename?: 'ComponentBlocksReviews', id: string, limit: number | null, showSummary: boolean | null, reviewSource: Enum_Componentblocksreviews_Source | null, reviewsLayout: Enum_Componentblocksreviews_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
 
 export type LocationsBlockFragment = { __typename?: 'ComponentBlocksLocations', id: string, city: string | null, showMap: boolean | null, locationsFilter: Enum_Componentblockslocations_Filter, locationsLayout: Enum_Componentblockslocations_Layout | null, header: { __typename?: 'ComponentElementsSectionHeader', eyebrow: string | null, title: string | null, lead: string | null } | null, section: { __typename?: 'ComponentElementsSection', tone: Enum_Componentelementssection_Tone | null, spacing: Enum_Componentelementssection_Spacing | null, width: Enum_Componentelementssection_Width | null, anchor: string | null, background: Enum_Componentelementssection_Background | null, ornament: Enum_Componentelementssection_Ornament | null, backgroundImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, backgroundImageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
+
+export type SectionReviewsQueryVariables = Exact<{
+  locale: Scalars['I18NLocaleCode']['input'];
+  status: PublicationStatus;
+  limit: Scalars['Int']['input'];
+}>;
+
+
+export type SectionReviewsQuery = { __typename?: 'Query', ratings: Array<{ __typename?: 'Rating', documentId: string, name: string, rate: number, text: string } | null> };
 
 export type ReviewsQueryVariables = Exact<{
   status: PublicationStatus;
@@ -5564,6 +5367,12 @@ export type SocialSectionFragment = { __typename?: 'ComponentSectionsSocial', id
 export type CarsSectionFragment = { __typename?: 'ComponentSectionsCars', id: string, badge: string | null, segmentIds: any | null, carIds: any | null, limit: number | null, carsTitle: string | null, carsText: string | null, carsHeaderAlign: Enum_Componentsectionscars_Headeralign, carsSource: Enum_Componentsectionscars_Source, carsCategory: Enum_Componentsectionscars_Category | null, carsLayout: Enum_Componentsectionscars_Layout, carsWidth: Enum_Componentsectionscars_Width, carsSpacing: Enum_Componentsectionscars_Spacing, moreCard: { __typename?: 'ComponentPartsCard', icon: string | null, title: string, text: string | null, tone: Enum_Componentpartscard_Tone, pattern: boolean | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
 
 export type MapSectionFragment = { __typename?: 'ComponentSectionsMap', id: string, badge: string | null, showList: boolean | null, fullBleed: boolean | null, mapTitle: string | null, mapText: string | null, mapHeaderAlign: Enum_Componentsectionsmap_Headeralign, mapShowLegend: boolean | null, mapWidth: Enum_Componentsectionsmap_Width, mapSpacing: Enum_Componentsectionsmap_Spacing, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
+
+export type ReviewsSectionFragment = { __typename?: 'ComponentSectionsReviews', id: string, badge: string | null, showScore: boolean | null, score: number | null, scoreLabel: string | null, reviewsTitle: string | null, reviewsText: string | null, reviewsHeaderAlign: Enum_Componentsectionsreviews_Headeralign, reviewsSource: Enum_Componentsectionsreviews_Source, reviewsLimit: number | null, reviewsLayout: Enum_Componentsectionsreviews_Layout, reviewsWidth: Enum_Componentsectionsreviews_Width, reviewsSpacing: Enum_Componentsectionsreviews_Spacing, ratings: Array<{ __typename?: 'Rating', documentId: string, name: string, rate: number, text: string } | null>, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
+
+export type SectionReviewFragment = { __typename?: 'Rating', documentId: string, name: string, rate: number, text: string };
+
+export type ImageSectionFragment = { __typename?: 'ComponentSectionsImage', id: string, caption: string | null, imageSize: Enum_Componentsectionsimage_Size, imageSpacing: Enum_Componentsectionsimage_Spacing, picture: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null }, pictureMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
 
 export type SplitSectionFragment = { __typename?: 'ComponentSectionsSplit', id: string, imageFit: Enum_Componentsectionssplit_Imagefit, imageStyle: Enum_Componentsectionssplit_Imagestyle, statValue: string | null, statLabel: string | null, badge: string | null, content: Enum_Componentsectionssplit_Content, mediaSide: Enum_Componentsectionssplit_Mediaside, splitMedia: Enum_Componentsectionssplit_Media, splitShowLegend: boolean | null, splitTitle: string | null, splitText: string | null, splitBody: string | null, splitStructuredData: boolean | null, splitWidth: Enum_Componentsectionssplit_Width, splitSpacing: Enum_Componentsectionssplit_Spacing, splitImage: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageSecond: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, features: Array<{ __typename?: 'ComponentPartsFeatureItem', icon: string | null, title: string, text: string | null } | null> | null, faqs: Array<{ __typename?: 'ComponentPartsFaqItem', question: string, answer: string } | null> | null, ctas: Array<{ __typename?: 'ComponentPartsCta', variant: Enum_Componentpartscta_Variant, icon: string | null, link: { __typename?: 'ComponentPartsLink', label: string | null, linkType: Enum_Componentpartslink_Linktype, customUrl: string | null, newTab: boolean | null, page: { __typename?: 'Page', documentId: string } | null, blog: { __typename?: 'Blog', slug: string } | null } } | null> | null, background: { __typename?: 'ComponentPartsBackground', tone: Enum_Componentpartsbackground_Tone, pattern: boolean | null, image: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null, imageMobile: { __typename?: 'UploadFile', url: string, mime: string, width: number | null, height: number | null, alternativeText: string | null } | null } | null };
 
@@ -7248,6 +7057,114 @@ fragment Media on UploadFile {
   height
   alternativeText
 }`, {"fragmentName":"MapSection"}) as unknown as TypedDocumentString<MapSectionFragment, unknown>;
+export const SectionReviewFragmentDoc = new TypedDocumentString(`
+    fragment SectionReview on Rating {
+  documentId
+  name
+  rate
+  text
+}
+    `, {"fragmentName":"SectionReview"}) as unknown as TypedDocumentString<SectionReviewFragment, unknown>;
+export const ReviewsSectionFragmentDoc = new TypedDocumentString(`
+    fragment ReviewsSection on ComponentSectionsReviews {
+  id
+  badge
+  reviewsTitle: title
+  reviewsText: text
+  reviewsHeaderAlign: headerAlign
+  reviewsSource: source
+  reviewsLimit: limit
+  ratings {
+    ...SectionReview
+  }
+  reviewsLayout: layout
+  showScore
+  score
+  scoreLabel
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  reviewsWidth: width
+  reviewsSpacing: spacing
+}
+    fragment SectionBackground on ComponentPartsBackground {
+  tone
+  pattern
+  image {
+    ...Media
+  }
+  imageMobile {
+    ...Media
+  }
+}
+fragment SectionReview on Rating {
+  documentId
+  name
+  rate
+  text
+}
+fragment PartLink on ComponentPartsLink {
+  label
+  linkType
+  customUrl
+  newTab
+  page {
+    documentId
+  }
+  blog {
+    slug
+  }
+}
+fragment PartCta on ComponentPartsCta {
+  variant
+  icon
+  link {
+    ...PartLink
+  }
+}
+fragment Media on UploadFile {
+  url
+  mime
+  width
+  height
+  alternativeText
+}`, {"fragmentName":"ReviewsSection"}) as unknown as TypedDocumentString<ReviewsSectionFragment, unknown>;
+export const ImageSectionFragmentDoc = new TypedDocumentString(`
+    fragment ImageSection on ComponentSectionsImage {
+  id
+  picture: image {
+    ...Media
+  }
+  pictureMobile: imageMobile {
+    ...Media
+  }
+  imageSize: size
+  caption
+  background {
+    ...SectionBackground
+  }
+  imageSpacing: spacing
+}
+    fragment SectionBackground on ComponentPartsBackground {
+  tone
+  pattern
+  image {
+    ...Media
+  }
+  imageMobile {
+    ...Media
+  }
+}
+fragment Media on UploadFile {
+  url
+  mime
+  width
+  height
+  alternativeText
+}`, {"fragmentName":"ImageSection"}) as unknown as TypedDocumentString<ImageSectionFragment, unknown>;
 export const SplitSectionFragmentDoc = new TypedDocumentString(`
     fragment SplitSection on ComponentSectionsSplit {
   id
@@ -8163,6 +8080,12 @@ export const PageDocument = new TypedDocumentString(`
       ... on ComponentSectionsForm {
         ...FormSection
       }
+      ... on ComponentSectionsReviews {
+        ...ReviewsSection
+      }
+      ... on ComponentSectionsImage {
+        ...ImageSection
+      }
       ... on ComponentSectionsVariantLabel {
         id
         title
@@ -8784,6 +8707,51 @@ fragment MapSection on ComponentSectionsMap {
   mapWidth: width
   mapSpacing: spacing
 }
+fragment ReviewsSection on ComponentSectionsReviews {
+  id
+  badge
+  reviewsTitle: title
+  reviewsText: text
+  reviewsHeaderAlign: headerAlign
+  reviewsSource: source
+  reviewsLimit: limit
+  ratings {
+    ...SectionReview
+  }
+  reviewsLayout: layout
+  showScore
+  score
+  scoreLabel
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  reviewsWidth: width
+  reviewsSpacing: spacing
+}
+fragment SectionReview on Rating {
+  documentId
+  name
+  rate
+  text
+}
+fragment ImageSection on ComponentSectionsImage {
+  id
+  picture: image {
+    ...Media
+  }
+  pictureMobile: imageMobile {
+    ...Media
+  }
+  imageSize: size
+  caption
+  background {
+    ...SectionBackground
+  }
+  imageSpacing: spacing
+}
 fragment SplitSection on ComponentSectionsSplit {
   id
   splitMedia: media
@@ -8931,6 +8899,23 @@ fragment HeroBlock on ComponentBlocksHero {
     ...TrustBarBlock
   }
 }`) as unknown as TypedDocumentString<PageQuery, PageQueryVariables>;
+export const SectionReviewsDocument = new TypedDocumentString(`
+    query SectionReviews($locale: I18NLocaleCode!, $status: PublicationStatus!, $limit: Int!) {
+  ratings(
+    locale: $locale
+    status: $status
+    sort: ["date:desc", "documentId:asc"]
+    pagination: {limit: $limit}
+  ) {
+    ...SectionReview
+  }
+}
+    fragment SectionReview on Rating {
+  documentId
+  name
+  rate
+  text
+}`) as unknown as TypedDocumentString<SectionReviewsQuery, SectionReviewsQueryVariables>;
 export const ReviewsDocument = new TypedDocumentString(`
     query Reviews($status: PublicationStatus!) {
   ratings(status: $status, sort: ["date:desc"], pagination: {limit: 100}) {

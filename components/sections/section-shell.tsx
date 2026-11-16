@@ -50,12 +50,15 @@ export function SectionShell({
   spacing,
   width = "full",
   labelledBy,
+  strongOverlay = false,
   children,
 }: {
   background: SectionBackground;
   spacing: keyof typeof SPACING;
   width?: SectionWidth;
   labelledBy?: string;
+  /** A darker layer over the background photo, for text set straight on it (the Reviews spotlight). */
+  strongOverlay?: boolean;
   children: ReactNode;
 }) {
   const frame = FRAME[width];
@@ -63,7 +66,7 @@ export function SectionShell({
     <div className={frame.outer}>
       {/* `overflow-clip`, not `hidden`: it still clips the rounded corners and the photo, but makes no scroll container, so `sticky` inside (the FAQ menu) works. */}
       <section aria-labelledby={labelledBy} className={`relative isolate overflow-clip ${TONES[background.tone]} ${SPACING[spacing]} ${frame.box}`}>
-        {background.tone === "image" ? <BackgroundPhoto image={background.image} imageMobile={background.imageMobile} sizes={frameSizes(width)} /> : null}
+        {background.tone === "image" ? <BackgroundPhoto image={background.image} imageMobile={background.imageMobile} sizes={frameSizes(width)} strong={strongOverlay} /> : null}
         {"pattern" in background && background.pattern ? <Pattern tone={background.tone} place="section" /> : null}
         {/* Above the photo and its layer by markup order (no negative z-index, which accessibility checkers misread). */}
         <div className={`relative mx-auto w-full ${frame.inner}`}>{children}</div>
@@ -73,7 +76,17 @@ export function SectionShell({
 }
 
 /** Below the fold: loaded lazily, at the lower quality, under a strong navy layer so white text reads on any photo. */
-function BackgroundPhoto({ image, imageMobile, sizes }: { image: { url: string; width: number | null; height: number | null }; imageMobile: typeof image | null; sizes: string }) {
+function BackgroundPhoto({
+  image,
+  imageMobile,
+  sizes,
+  strong,
+}: {
+  image: { url: string; width: number | null; height: number | null };
+  imageMobile: typeof image | null;
+  sizes: string;
+  strong: boolean;
+}) {
   const common = { alt: "", sizes, quality: 60 };
   const { props: desktop } = getImageProps({ ...common, src: image.url, width: image.width ?? 1920, height: image.height ?? 1080 });
   const mobile = imageMobile
@@ -85,13 +98,14 @@ function BackgroundPhoto({ image, imageMobile, sizes }: { image: { url: string; 
         {mobile ? <source media="(max-width: 767px)" srcSet={mobile.srcSet} sizes={mobile.sizes} /> : null}
         <img {...desktop} alt="" className="absolute inset-0 size-full object-cover" />
       </picture>
-      <div aria-hidden className="absolute inset-0 bg-blue-dark/75" />
+      <div aria-hidden className={`absolute inset-0 ${strong ? "bg-blue-dark/85" : "bg-blue-dark/75"}`} />
     </>
   );
 }
 
 /**
- * The optional heading of a section: badge, `<h2>` title and a short text.
+ * The optional heading of a section: badge, `<h2>` title and a short text;
+ * `children` under them (the Reviews section's score).
  * On a dark background the title is white and the text larger (20 px, bold:
  * large text in WCAG terms), so it passes even on green; the badge stays white with coloured text.
  */
@@ -102,6 +116,7 @@ export function SectionHeading({
   text,
   align,
   background,
+  children,
 }: {
   id: string;
   badge: string | null;
@@ -109,8 +124,9 @@ export function SectionHeading({
   text: string | null;
   align: "center" | "start";
   background: SectionBackground;
+  children?: ReactNode;
 }) {
-  if (!badge && !title && !text) {
+  if (!badge && !title && !text && !children) {
     return null;
   }
   const dark = isDarkBackground(background);
@@ -126,6 +142,7 @@ export function SectionHeading({
         </h2>
       ) : null}
       {text ? <p className={`text-pretty ${dark ? "text-xl font-bold text-white" : "text-lead text-blue-dark/80"}`}>{text}</p> : null}
+      {children}
     </div>
   );
 }

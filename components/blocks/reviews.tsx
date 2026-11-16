@@ -306,7 +306,7 @@ const EMOJI_FONTS = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", 
  * file, so the browser fetches 39 KB of font (at top priority, beside the
  * hero photo) for one invisible character.
  */
-function ReviewText({ text }: { text: string }) {
+export function ReviewText({ text }: { text: string }) {
   return text.split(EMOJI).map((part, index) =>
     index % 2 === 1 ? (
       <span key={index} style={{ fontFamily: EMOJI_FONTS }}>

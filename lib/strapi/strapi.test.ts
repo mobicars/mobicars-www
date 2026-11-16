@@ -10,6 +10,7 @@ import {
   DEFAULT_SECTION,
   faqGroups,
   latestPostQueries,
+  latestReviewQueries,
   nextAnnouncementChange,
   pageNeedsReviews,
   parseChrome,
@@ -1199,6 +1200,62 @@ describe("round 4 catalog fields", () => {
     assert.deepEqual(content.collapsible, { previewParagraphs: 2, label: null });
     assert.equal(cars.layout, "tabs");
     assert.equal(cars.defaultCategory, "delivery");
+  });
+});
+
+describe("reviews and image sections", () => {
+  const rating = (documentId: string, text: string, rate = 5) => ({ documentId, name: ` Klient ${documentId} `, rate, text });
+  const reviews = (overrides: Record<string, unknown>) => ({
+    __typename: "ComponentSectionsReviews",
+    id: "7",
+    badge: null,
+    reviewsTitle: "Opinie",
+    reviewsText: null,
+    reviewsHeaderAlign: "center",
+    reviewsSource: "latest",
+    reviewsLimit: 2,
+    ratings: [],
+    reviewsLayout: "carousel",
+    showScore: false,
+    score: 4.75,
+    scoreLabel: " na podstawie opinii ",
+    ctas: [],
+    background: null,
+    reviewsWidth: "full",
+    reviewsSpacing: "medium",
+    ...overrides,
+  });
+  const page = (sections: unknown[], latestReviews: Record<string, unknown[]> = {}) =>
+    parsePage({ documentId: "p", title: "Strona", seo: null, blocks: [], sections } as unknown as Parameters<typeof parsePage>[0], "pl", [], {}, [], new Date(), latestReviews as never).sections;
+
+  it("reads the newest reviews for a latest section, up to its limit, without leading star emoji", () => {
+    const raw = reviews({});
+    assert.deepEqual(latestReviewQueries({ documentId: "p", title: "Strona", seo: null, blocks: [], sections: [raw] } as never), [{ sectionId: "7", limit: 2 }]);
+    const [section] = page([raw], { "7": [rating("a", "⭐️⭐️⭐️⭐️⭐️\nŚwietna obsługa"), null, rating("b", "Polecam", 4), rating("c", "Trzecia")] });
+    assert.equal(section.type, "reviews");
+    assert.deepEqual(section.type === "reviews" ? section.reviews : null, [
+      { id: "a", author: "Klient a", rating: 5, text: "Świetna obsługa" },
+      { id: "b", author: "Klient b", rating: 4, text: "Polecam" },
+    ]);
+    assert.equal(section.type === "reviews" ? section.score : undefined, null);
+  });
+
+  it("shows the picked reviews and the typed score only when turned on", () => {
+    const [section] = page([reviews({ reviewsSource: "selected", ratings: [rating("x", "Super")], showScore: true, score: 7 })]);
+    assert.deepEqual(section.type === "reviews" ? [section.reviews.map((review) => review.id), section.score] : null, [["x"], { value: 5, label: "na podstawie opinii" }]);
+  });
+
+  it("drops a section with no reviews in the page's language", () => {
+    assert.deepEqual(page([reviews({}), reviews({ id: "8", reviewsSource: "selected", ratings: [] })], { "7": [] }), []);
+  });
+
+  it("reads the image section and drops one without an image", () => {
+    const media = { url: "/uploads/a.png", mime: "image/png", width: 1600, height: 900, alternativeText: " Opis " };
+    const image = (overrides: Record<string, unknown>) => ({ __typename: "ComponentSectionsImage", id: "3", picture: media, pictureMobile: null, imageSize: "narrow", caption: "  ", background: null, imageSpacing: "small", ...overrides });
+    const [section] = page([image({}), image({ id: "4", picture: null })]);
+    assert.equal(section.type, "image");
+    assert.deepEqual(section.type === "image" ? [section.size, section.caption, section.image.alt, section.imageMobile] : null, ["narrow", null, "Opis", null]);
+    assert.equal(page([image({ picture: null })]).length, 0);
   });
 });
 
