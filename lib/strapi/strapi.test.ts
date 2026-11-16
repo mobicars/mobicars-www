@@ -22,6 +22,7 @@ import { formatDays, formatOpeningHours, openingHoursSpecification } from "./int
 import { parseRichBlocks, richBlocksText } from "./internal/rich-blocks";
 import { buildRoutes, findRoute, pageHref, type RouteNode } from "./internal/routes";
 import { tagsForWebhook } from "./internal/tags";
+import { sectionEdgeTone } from "./internal/sections";
 
 const node = (documentId: string, slug: string, parentDocumentId: string | null = null): RouteNode => ({
   documentId,
@@ -1256,6 +1257,40 @@ describe("reviews and image sections", () => {
     assert.equal(section.type, "image");
     assert.deepEqual(section.type === "image" ? [section.size, section.caption, section.image.alt, section.imageMobile] : null, ["narrow", null, "Opis", null]);
     assert.equal(page([image({ picture: null })]).length, 0);
+  });
+});
+
+describe("blog listing", () => {
+  const blog = (blogSource: string) => ({ __typename: "ComponentSectionsBlog", id: "5", badge: null, blogTitle: "Blog", blogText: null, blogHeaderAlign: "center", blogSource, blogLayout: "featured", posts: [], ctas: [], background: null, blogWidth: "full", blogSpacing: "medium" });
+  const post = (n: number) => ({ documentId: `b${n}`, title: `Wpis ${n}`, slug: `wpis-${n}`, excerpt: null, publishedAt: null, createdAt: null, category: null, coverImage: null });
+  const raw = (section: unknown) => ({ documentId: "p", title: "Strona", seo: null, blocks: [], sections: [section] }) as never;
+
+  it("reads every post for an `all` section and keeps them all", () => {
+    assert.deepEqual(latestPostQueries(raw(blog("all"))), [{ blockId: "section-5", limit: 1000, categoryId: null }]);
+    const posts = Array.from({ length: 30 }, (_, n) => post(n));
+    const [section] = parsePage(raw(blog("all")), "pl", [], { "section-5": posts as never }, [], new Date()).sections;
+    assert.deepEqual(section.type === "blog" ? [section.listing, section.posts.length] : null, [true, 30]);
+    const [latest] = parsePage(raw(blog("latest")), "pl", [], { "section-5": posts as never }, [], new Date()).sections;
+    assert.deepEqual(latest.type === "blog" ? [latest.listing, latest.posts.length] : null, [false, 4]);
+  });
+});
+
+describe("divider section", () => {
+  const page = (sections: unknown[]) =>
+    parsePage({ documentId: "p", title: "Strona", seo: null, blocks: [], sections } as unknown as Parameters<typeof parsePage>[0], "pl", [], {}, [], new Date()).sections;
+  const text = (id: string, tone: string, width = "full") => ({ __typename: "ComponentSectionsText", id, textTitle: "T", body: "<p>Tekst</p>", textAlign: "center", textWidth: "narrow", collapsible: false, previewParagraphs: 2, ctas: [], background: { tone }, textFrameWidth: width, textSpacing: "small" });
+
+  it("reads the divider, a missing direction falling to the right", () => {
+    const [section] = page([{ __typename: "ComponentSectionsDivider", id: "9", dividerStyle: "slant", dividerSize: "large", dividerTone: "navy", dividerDirection: null }]);
+    assert.deepEqual(section, { type: "divider", id: "9", style: "slant", size: "large", tone: "navy", direction: "right" });
+  });
+
+  it("gives a slant the colours at its neighbours' edges", () => {
+    const [plain, fade, framed, photo] = page([text("1", "green"), text("2", "fade"), text("3", "navy", "boxed"), { ...text("4", "image"), background: { tone: "image", image: { url: "/uploads/a.jpg", mime: "image/jpeg", width: 10, height: 10 } } }]);
+    assert.deepEqual(
+      [sectionEdgeTone(plain, "top"), sectionEdgeTone(fade, "top"), sectionEdgeTone(fade, "bottom"), sectionEdgeTone(framed, "top"), sectionEdgeTone(photo, "bottom")],
+      ["green", "light", "white", "white", null],
+    );
   });
 });
 

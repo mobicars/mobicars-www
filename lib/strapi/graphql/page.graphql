@@ -55,6 +55,9 @@ query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
       ... on ComponentSectionsImage {
         ...ImageSection
       }
+      ... on ComponentSectionsDivider {
+        ...DividerSection
+      }
       ... on ComponentSectionsVariantLabel {
         id
         title
@@ -825,6 +828,15 @@ fragment ImageSection on ComponentSectionsImage {
     ...SectionBackground
   }
   imageSpacing: spacing
+}
+
+# `sections.divider`. Fields other sections have with other types are aliased.
+fragment DividerSection on ComponentSectionsDivider {
+  id
+  dividerStyle: style
+  dividerSize: size
+  dividerTone: tone
+  dividerDirection: direction
 }
 
 # `sections.split` (Two columns). Fields other sections have with other types are aliased.

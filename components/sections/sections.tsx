@@ -1,9 +1,10 @@
 import type { Lang } from "@/i18n/config";
-import type { Section } from "@/lib/strapi";
+import { sectionEdgeTone, type Section } from "@/lib/strapi";
 
 import { Blog } from "./blog";
 import { Cards } from "./cards";
 import { Cars } from "./cars";
+import { Divider } from "./divider";
 import { Faq } from "./faq";
 import { Features } from "./features";
 import { Hero } from "./hero";
@@ -22,6 +23,9 @@ import { VariantLabel } from "./variant-label";
  *
  * The first hero is the page's `<h1>` and its photo the LCP; a page without a
  * hero gets its title as a hidden `<h1>`.
+ *
+ * A divider is told the colours at its neighbours' edges, for a slant: the
+ * white header above the first section, the navy footer below the last.
  */
 export function Sections({ sections, lang, title, pickupId }: { sections: Section[]; lang: Lang; title: string; pickupId: number | null }) {
   const firstHero = sections.findIndex((section) => section.type === "hero");
@@ -56,6 +60,18 @@ export function Sections({ sections, lang, title, pickupId }: { sections: Sectio
             return <Reviews key={`reviews-${section.id}`} section={section} lang={lang} />;
           case "image":
             return <ImageBlock key={`image-${section.id}`} section={section} />;
+          case "divider": {
+            const previous = sections[index - 1];
+            const next = sections[index + 1];
+            return (
+              <Divider
+                key={`divider-${section.id}`}
+                section={section}
+                above={previous ? sectionEdgeTone(previous, "bottom") : "white"}
+                below={next ? sectionEdgeTone(next, "top") : "navy"}
+              />
+            );
+          }
           case "variantLabel":
             return <VariantLabel key={`variant-${section.id}`} section={section} />;
         }

@@ -144,8 +144,11 @@ export function MainNav({
         <SheetOverlay position="end" className="z-50 xl:hidden">
           <SheetBackdrop swipeAnimation="sheet-backdrop" className="bg-blue-dark/40 backdrop-blur-[4px]" />
           {/* `box-content`: with `overscrollPadding` the sheet pads itself past the screen edge,
-              and Tailwind's border-box would take that padding out of its width. */}
-          <Sheet overscrollPadding className="box-content h-full w-screen bg-white outline-none">
+              and Tailwind's border-box would take that padding out of its width.
+              1px narrower than the screen (the white shadow fills the gap): fully swiped out, a full-width
+              sheet would rest exactly against the screen edge, which IntersectionObserver still counts as
+              visible, so React Aria would never finish closing it and the page would stay locked. */}
+          <Sheet overscrollPadding className="box-content h-full w-[calc(100vw-1px)] bg-white shadow-[-1px_0_0_white] outline-none">
             <SheetContent className="flex h-full flex-col overflow-y-auto pb-[var(--sheet-scroll-padding-y)] outline-none">
               <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-line bg-white px-gutter">
                 <Heading slot="title" className="text-base font-bold text-blue-dark">

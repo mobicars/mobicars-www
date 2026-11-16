@@ -665,11 +665,16 @@ export function pageNeedsReviews(raw: RawPage): boolean {
   );
 }
 
+/** The most posts one request reads: the CMS's GraphQL `maxLimit`. */
+const ALL_POSTS = 1000;
+
 /** The `latest` blocks of a page: what to read for each before `parsePage`. */
 export function latestPostQueries(raw: RawPage): { blockId: string; limit: number; categoryId: string | null }[] {
-  // The new Blog sections, under their own key (`sectionPostsKey`): always the four newest.
+  // The new Blog sections, under their own key (`sectionPostsKey`): the four newest, or every post (`all`, the CMS's GraphQL maximum).
   const sections = (raw.sections ?? []).flatMap((section) =>
-    section?.__typename === "ComponentSectionsBlog" && section.blogSource === "latest" ? [{ blockId: sectionPostsKey(section.id), limit: 4, categoryId: null }] : [],
+    section?.__typename === "ComponentSectionsBlog" && (section.blogSource === "latest" || section.blogSource === "all")
+      ? [{ blockId: sectionPostsKey(section.id), limit: section.blogSource === "all" ? ALL_POSTS : 4, categoryId: null }]
+      : [],
   );
   return [...sections, ...latestBlockQueries(raw)];
 }

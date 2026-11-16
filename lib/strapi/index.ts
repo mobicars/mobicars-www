@@ -63,8 +63,8 @@ export type {
   Weekday,
 } from "./internal/entities";
 export { faqGroups } from "./internal/entities";
-export type { BlogSection, Card, CardsSection, CarsSection, ImageSection, MapSection, ReviewsSection, SectionReview, SplitSection, FormSection, SocialSection, FaqSection, FeaturesSection, HeroSection, Section, SectionBackground, TextSection, VariantLabelSection } from "./internal/sections";
-export { isDarkBackground } from "./internal/sections";
+export type { BlogSection, Card, CardsSection, CarsSection, DividerSection, DividerTone, ImageSection, MapSection, ReviewsSection, SectionReview, SplitSection, FormSection, SocialSection, FaqSection, FeaturesSection, HeroSection, Section, SectionBackground, TextSection, VariantLabelSection } from "./internal/sections";
+export { isDarkBackground, sectionEdgeTone } from "./internal/sections";
 export { formatDays, formatOpeningHours, openingHoursSpecification } from "./internal/opening-hours";
 
 export type {

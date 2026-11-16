@@ -15,16 +15,27 @@ import { buttonClass } from "@/components/ui/button";
 export function ShowMore({
   items,
   step,
+  initial = step,
+  before = 0,
   listClassName,
+  itemClassName,
+  listLabel,
   labels,
 }: {
   items: { key: string; node: ReactNode }[];
   step: number;
+  /** How many show before the first "Show more" (the blog listing's 8 under its 4 featured posts). */
+  initial?: number;
+  /** Items shown above this list that the count includes (those 4 featured posts). */
+  before?: number;
   listClassName: string;
+  /** For each item; a `display` here must leave `[hidden]` alone (`[&:not([hidden])]:flex`). */
+  itemClassName?: string;
+  listLabel?: string;
   /** `shownOf` holds `{shown}` and `{total}`. */
   labels: { more: string; shownOf: string };
 }) {
-  const [shown, setShown] = useState(step);
+  const [shown, setShown] = useState(initial);
   const list = useRef<HTMLUListElement>(null);
   const total = items.length;
   const more = () => {
@@ -35,9 +46,9 @@ export function ShowMore({
   };
   return (
     <>
-      <ul ref={list} className={listClassName}>
+      <ul ref={list} aria-label={listLabel} className={listClassName}>
         {items.map((item, index) => (
-          <li key={item.key} hidden={index >= shown}>
+          <li key={item.key} hidden={index >= shown} className={itemClassName}>
             {item.node}
           </li>
         ))}
@@ -46,7 +57,7 @@ export function ShowMore({
       {shown < total ? (
         <div className="mt-10 flex flex-col items-center gap-4">
           <p role="status" className="text-sm text-blue-dark/70">
-            {labels.shownOf.replace("{shown}", String(shown)).replace("{total}", String(total))}
+            {labels.shownOf.replace("{shown}", String(before + shown)).replace("{total}", String(before + total))}
           </p>
           <Button onPress={more} className={buttonClass("secondary", "lg")}>
             {labels.more}

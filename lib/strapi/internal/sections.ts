@@ -183,6 +183,8 @@ export type BlogSection = {
   text: string | null;
   headerAlign: "start" | "center";
   posts: BlogPostCard[];
+  /** `source: all`: every post, shown 12 at a time with "Show more"; otherwise the four newest or picked. */
+  listing: boolean;
   layout: "grid" | "featured";
   ctas: Cta[];
   background: SectionBackground;
@@ -358,10 +360,57 @@ export type ImageSection = {
   spacing: "small" | "medium" | "large";
 };
 
+/**
+ * A break between sections (`sections.divider`). `blank`: space in `tone`;
+ * `lined`: a faint line with the MobiCars mark; `slant`: a diagonal from the
+ * colour of the section above into the one below (`tone` unused), falling
+ * towards `direction`.
+ */
+export type DividerSection = {
+  type: "divider";
+  id: string;
+  style: "blank" | "lined" | "slant";
+  size: "small" | "medium" | "large";
+  tone: DividerTone;
+  direction: "left" | "right";
+};
+
+export type DividerTone = "white" | "light" | "blue" | "green" | "navy";
+
+/**
+ * The colour a section shows at its top or bottom edge, for a slant beside
+ * it; `null` for a photo or video. A framed section (`boxed`, `contained`)
+ * sits on the white page; `fade` runs from the tint at the top to white.
+ */
+export function sectionEdgeTone(section: Section, edge: "top" | "bottom"): DividerTone | null {
+  switch (section.type) {
+    case "variantLabel":
+      return null;
+    case "divider":
+      return section.style === "slant" ? null : section.tone;
+    case "hero":
+      if (section.width !== "full") {
+        return "white";
+      }
+      return section.image || section.video ? null : "navy";
+  }
+  if ("width" in section && section.width !== "full") {
+    return "white";
+  }
+  switch (section.background.tone) {
+    case "image":
+      return null;
+    case "fade":
+      return edge === "top" ? "light" : "white";
+    default:
+      return section.background.tone;
+  }
+}
+
 /** Test page only: the name and note of the variant shown under it. */
 export type VariantLabelSection = { type: "variantLabel"; id: string; title: string; note: string | null };
 
-export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | VariantLabelSection;
+export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
 
 type RawSection = NonNullable<NonNullable<PageQuery["page"]>["sections"]>[number];
 
@@ -418,6 +467,17 @@ export function parseSections(
         const image = parseImageSection(section);
         return image ? [image] : [];
       }
+      case "ComponentSectionsDivider":
+        return [
+          {
+            type: "divider",
+            id: section.id,
+            style: section.dividerStyle,
+            size: section.dividerSize,
+            tone: section.dividerTone,
+            direction: section.dividerDirection === "left" ? "left" : "right",
+          },
+        ];
       case "ComponentSectionsVariantLabel":
         return [{ type: "variantLabel", id: section.id, title: section.title, note: section.note || null }];
       default:
@@ -608,8 +668,10 @@ function parseCardsSection(raw: CardsSectionFragment, lang: Lang, routes: readon
 }
 
 function parseBlogSection(raw: BlogSectionFragment, lang: Lang, routes: readonly PageRoute[], latest: readonly (BlogCardFragment | null)[]): BlogSection | null {
+  const listing = raw.blogSource === "all";
   const source = raw.blogSource === "selected" ? (raw.posts ?? []) : latest;
-  const posts = source.flatMap((post) => (post?.slug ? [parseBlogCard(post, lang)] : [])).slice(0, 4);
+  const cards = source.flatMap((post) => (post?.slug ? [parseBlogCard(post, lang)] : []));
+  const posts = listing ? cards : cards.slice(0, 4);
   // No posts (none picked, or none published yet): nothing to show.
   if (posts.length === 0) {
     return null;
@@ -622,6 +684,7 @@ function parseBlogSection(raw: BlogSectionFragment, lang: Lang, routes: readonly
     text: raw.blogText || null,
     headerAlign: raw.blogHeaderAlign === "start" ? "start" : "center",
     posts,
+    listing,
     layout: raw.blogLayout === "featured" ? "featured" : "grid",
     ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
     background: parseBackground(raw.background),

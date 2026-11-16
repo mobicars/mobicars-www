@@ -3,6 +3,7 @@ import { getImageProps } from "next/image";
 
 import { CtaLink } from "@/components/blocks/cta-link";
 import { buttonClass } from "@/components/ui/button";
+import { ShowMore } from "@/components/ui/show-more";
 import { intlLocales, type Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { isDarkBackground, type BlogSection } from "@/lib/strapi";
@@ -25,6 +26,11 @@ type Heading = "h2" | "h3";
  * title), all four titles on one screen; tablets two by two. On desktops
  * `grid` is four in a row, `featured` the first post large, its title on the
  * photo, beside the other three in a list. Server markup only.
+ *
+ * `listing` (`source: all`, the blog page): every post, 12 at a time with
+ * "Show more" (`ShowMore`: all in the HTML, the rest hidden until shown, so
+ * the page stays static and search engines read every link). `featured`
+ * opens with its four, then the grid: 8 under them, 12 a step.
  */
 export function Blog({ section, lang }: { section: BlogSection; lang: Lang }) {
   const t = getMessages(lang).blocks;
@@ -34,32 +40,55 @@ export function Blog({ section, lang }: { section: BlogSection; lang: Lang }) {
   const label = section.title ?? undefined;
   const date = new Intl.DateTimeFormat(intlLocales[lang], { day: "2-digit", month: "2-digit", year: "numeric" });
   const common = { heading, dark, date, more: t.readArticle, width: section.width };
-  const [first, ...rest] = section.posts;
+  const lead = section.listing ? section.posts.slice(0, 4) : section.posts;
+  const [first, ...rest] = lead;
   const featured = section.layout === "featured" && rest.length > 0;
+  const gridPosts = section.listing ? (featured ? section.posts.slice(4) : section.posts) : featured ? [] : section.posts;
+  // The listing's count includes the featured posts above its cards.
+  const above = featured ? lead.length : 0;
 
   return (
     <SectionShell background={section.background} spacing={section.spacing} width={section.width} labelledBy={section.title ? headingId : undefined}>
       <SectionHeading id={headingId} badge={section.badge} title={section.title} text={section.text} align={section.headerAlign} background={section.background} />
-      {featured ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)] lg:gap-10">
-          <FeaturedPost post={first} {...common} />
-          <ul aria-label={label} className="flex flex-col gap-5 lg:justify-between">
-            {rest.map((post) => (
-              <li key={post.id}>
-                <ListPost post={post} {...common} />
+      {/* One grid for both parts, its row gap between them too: the featured post spans two columns, the list two, so their edges meet the cards' below. */}
+      <div className="flex flex-col gap-5 sm:gap-10">
+        {featured ? (
+          <div className={GRID}>
+            <div className="flex sm:col-span-2">
+              <FeaturedPost post={first} {...common} />
+            </div>
+            <ul aria-label={label} className="flex flex-col gap-5 sm:col-span-2 lg:justify-between">
+              {rest.map((post) => (
+                <li key={post.id}>
+                  <ListPost post={post} {...common} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+        {gridPosts.length === 0 ? null : section.listing ? (
+          <div>
+            <ShowMore
+              items={gridPosts.map((post) => ({ key: post.id, node: <GridPost post={post} {...common} /> }))}
+              step={LISTING_STEP}
+              initial={LISTING_STEP - above}
+              before={above}
+              listClassName={GRID}
+              itemClassName="[&:not([hidden])]:flex"
+              listLabel={label}
+              labels={{ more: t.showMore, shownOf: t.shownOf }}
+            />
+          </div>
+        ) : (
+          <ul aria-label={label} className={GRID}>
+            {gridPosts.map((post) => (
+              <li key={post.id} className="flex">
+                <GridPost post={post} {...common} />
               </li>
             ))}
           </ul>
-        </div>
-      ) : (
-        <ul aria-label={label} className="grid gap-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4">
-          {section.posts.map((post) => (
-            <li key={post.id} className="flex">
-              <GridPost post={post} {...common} />
-            </li>
-          ))}
-        </ul>
-      )}
+        )}
+      </div>
       {section.ctas.length > 0 ? (
         <div className={`mt-10 flex flex-col gap-3 sm:flex-row ${section.headerAlign === "center" ? "sm:justify-center" : ""}`}>
           {section.ctas.map((cta) => (
@@ -70,6 +99,12 @@ export function Blog({ section, lang }: { section: BlogSection; lang: Lang }) {
     </SectionShell>
   );
 }
+
+/** The cards' grid, which the `featured` layout shares: four columns on desktops, two on tablets, a list on phones. */
+const GRID = "grid gap-5 sm:grid-cols-2 sm:gap-x-6 sm:gap-y-10 lg:grid-cols-4";
+
+/** Posts a "Show more" adds to the listing: three rows of four on desktops. */
+const LISTING_STEP = 12;
 
 /** `width`: the section's frame, for the pictures' `sizes`. */
 type PostProps = { post: Post; heading: Heading; dark: boolean; date: Intl.DateTimeFormat; more: string; width: BlogSection["width"] };
@@ -134,7 +169,7 @@ function ListPost({ post, heading: Title, dark, date, more }: PostProps) {
 /** The `featured` layout's first post: the photo fills it (taller on desktops), the date and title on it under a navy fade, and the arrow. */
 function FeaturedPost({ post, heading: Title, date, width }: PostProps) {
   return (
-    <article className={`${ENTRY} flex aspect-[4/3] flex-col justify-end overflow-clip p-6 text-white sm:aspect-[16/9] sm:p-8 lg:aspect-auto lg:min-h-[28rem]`}>
+    <article className={`${ENTRY} flex aspect-[4/3] w-full flex-col justify-end overflow-clip p-6 text-white sm:aspect-[16/9] sm:p-8 lg:aspect-auto lg:min-h-[28rem]`}>
       {post.image ? (
         <img
           {...getImageProps({ src: post.image.url, alt: "", width: post.image.width ?? 1200, height: post.image.height ?? 800, sizes: leadPostSizes(width), quality: 70 }).props}
