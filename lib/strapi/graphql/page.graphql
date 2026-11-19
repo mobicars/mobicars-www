@@ -789,6 +789,16 @@ fragment CarClassesSection on ComponentSectionsCarClasses {
   carClassesTitle: title
   carClassesText: text
   carClassesHeaderAlign: headerAlign
+  carClassesSource: source
+  carClassesCategories: categories
+  collections {
+    collection {
+      ...CarCollection
+    }
+    link {
+      ...PartLink
+    }
+  }
   carClassesLayout: layout
   moreCard {
     ...PartCard

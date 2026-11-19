@@ -352,4 +352,12 @@ describe("car classes (menu panel, Car classes section)", () => {
       [["small", 3], ["compact", 4], ["eco", 4]],
     );
   });
+
+  it("keeps the classes picked in the CMS, in that order, and skips one without cars", () => {
+    const cars = [car(1, ["compact"], 129), car(3, ["small"], 89), car(4, ["eco"], 119)];
+    assert.deepEqual(
+      carClasses(cars, ["eco", "delivery", "small"]).map(({ id, cheapest }) => [id, cheapest.id]),
+      [["eco", 4], ["small", 3]],
+    );
+  });
 });

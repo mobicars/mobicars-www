@@ -728,6 +728,13 @@ export type CarClassesSection = {
   title: string | null;
   text: string | null;
   headerAlign: "start" | "center";
+  /**
+   * `classes`: RentCarSoft's classes, the `categories` picked (in that order)
+   * or all; `collections`: the car collections picked, each card with its link.
+   */
+  source: "classes" | "collections";
+  categories: CarCollection["categories"];
+  collections: { collection: CarCollection; href: string; newTab: boolean }[];
   layout: "grid" | "carousel";
   /** The same card as a Cards section's (`parts.card`), after the classes. */
   moreCard: Card | null;
@@ -851,6 +858,16 @@ function parseCarClassesSection(raw: CarClassesSectionFragment, lang: Lang, rout
     title: raw.carClassesTitle || null,
     text: raw.carClassesText || null,
     headerAlign: raw.carClassesHeaderAlign === "start" ? "start" : "center",
+    source: raw.carClassesSource === "collections" ? "collections" : "classes",
+    // In the order picked, unlike a collection's categories (a set).
+    categories: [...new Set(Array.isArray(raw.carClassesCategories) ? raw.carClassesCategories : [])].filter(
+      (category): category is CarCollection["categories"][number] => COLLECTION_CATEGORIES.includes(category),
+    ),
+    collections: (raw.collections ?? []).flatMap((item) => {
+      // A card without its collection or a working link is left out: it would lead nowhere.
+      const target = item?.collection && item.link ? resolveLink(item.link, lang, routes, item.collection.title) : null;
+      return item?.collection && target ? [{ collection: parseCarCollection(item.collection), href: target.href, newTab: target.newTab }] : [];
+    }),
     layout: raw.carClassesLayout === "carousel" ? "carousel" : "grid",
     moreCard: raw.moreCard ? parseCard(raw.moreCard, lang, routes) : null,
     ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
