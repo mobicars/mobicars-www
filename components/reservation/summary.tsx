@@ -3,7 +3,7 @@
 import { useId, useState } from "react";
 import Image from "next/image";
 import { Button, Dialog } from "react-aria-components";
-import { ArrowRight, CalendarDays, LoaderCircle, MapPin } from "lucide-react";
+import { ChevronRight, CalendarDays, LoaderCircle, MapPin } from "lucide-react";
 
 import { AnimatedMoney } from "@/components/reservation/animated-money";
 import { DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
@@ -97,7 +97,7 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQue
   const disabled = !car || !action || !actionable(action) || loading;
   return (
     <aside aria-label={t.title} aria-busy={loading} className="hidden lg:block">
-      <div className="sticky top-4 flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm">
+      <div className="sticky top-4 flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-blue-dark">{t.title}</h2>
           {car ? <ShareBooking car={car.name} variant="text" /> : null}
@@ -253,12 +253,12 @@ function PriceDetails({
     <WidgetModal
       open={open}
       onOpenChange={onOpenChange}
-      className="max-h-[min(44rem,calc(100dvh-1.5rem))] w-[min(32rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+      className="max-h-[min(44rem,calc(100dvh-1.5rem))] w-[min(32rem,calc(100%-1.5rem))] rounded-card shadow-float"
     >
       <Dialog aria-labelledby={titleId} className="flex max-h-[inherit] min-h-0 flex-col outline-none">
         <DialogHeader titleId={titleId} title={t.priceDetails} className="py-4" />
         <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overscroll-contain px-5 pb-5">
-          <div className="rounded-2xl border border-muted p-4">
+          <div className="rounded-card border border-muted p-4">
             <CarBlock car={car} />
           </div>
           <PriceLines prices={prices} />
@@ -438,7 +438,7 @@ function ActionButton({
         {action.busy ? (
           <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />
         ) : (
-          <ArrowRight className="size-4" aria-hidden />
+          <ChevronRight className="size-4" aria-hidden />
         )}
       </button>
       {/* Visible on every screen, so a phone shows why the button is grey too; narrow enough for the bottom bar. */}

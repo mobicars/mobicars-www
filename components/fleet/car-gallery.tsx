@@ -5,14 +5,16 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { EmblaCarouselType } from "embla-carousel";
 
+import { buttonClass } from "@/components/ui/button";
 import { fill } from "@/i18n/fill";
 
 type GalleryTexts = { photo: string; showPhoto: string; previousPhoto: string; nextPhoto: string; noPhoto: string };
 
 /**
  * The car's photos: a swipeable frame (arrows, a counter) and a thumbnail
- * row. The first photo is the studio shot on white (shown whole,
- * `object-contain`); the car's own photos fill the frame.
+ * row. The photos marked "cover" in RentCarSoft fill the frame; a car with
+ * none shows its studio shot on white, whole (`object-contain`). The arrows
+ * are the section carousels' (`components/ui/carousel.tsx`).
  *
  * The frame swipes natively (scroll-snap) from the first paint. Once the page
  * is idle, Embla (the site's carousel, ~7 KB, shared with `Carousel`) takes
@@ -25,7 +27,7 @@ export function CarGallery({
   name,
   t,
 }: {
-  images: { src: string; thumb: string; alt: string }[];
+  images: { src: string; thumb: string; alt: string; studio: boolean }[];
   name: string;
   t: GalleryTexts;
 }) {
@@ -155,7 +157,7 @@ export function CarGallery({
                     priority={photo === 0}
                     draggable={false}
                     sizes="(min-width: 1024px) 720px, 100vw"
-                    className={photo === 0 ? "object-contain p-4" : "object-cover"}
+                    className={image.studio ? "object-contain p-4" : "object-cover"}
                   />
                 ) : null}
               </li>
@@ -196,7 +198,7 @@ export function CarGallery({
                   alt=""
                   fill
                   sizes="112px"
-                  className={thumbIndex === 0 ? "object-contain p-1" : "object-cover"}
+                  className={image.studio ? "object-contain p-1" : "object-cover"}
                 />
               </button>
             </li>
@@ -214,7 +216,7 @@ function ArrowButton({ side, label, onClick }: { side: "left" | "right"; label: 
       type="button"
       aria-label={label}
       onClick={onClick}
-      className={`absolute top-1/2 ${side === "left" ? "left-3" : "right-3"} flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-white/95 text-blue-dark shadow-card outline-none transition-colors hover:bg-white focus-visible:ring-2 focus-visible:ring-blue-medium`}
+      className={buttonClass("primary", "icon", `absolute! top-1/2 -translate-y-1/2 shadow-float ${side === "left" ? "left-3" : "right-3"}`)}
     >
       <Icon className="size-5" aria-hidden />
     </button>

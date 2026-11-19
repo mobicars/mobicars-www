@@ -43,20 +43,16 @@ describe("legacy redirects", () => {
     assert.equal(legacyRedirect("/pl/wynajem-na-miesiace/dla-firm"), null);
   });
 
-  it("sends add-on pages to the add-ons page", () => {
-    assert.equal(target("/pl/dodatki-i-akcesoria/apteczka-155"), "/pl/dodatki-i-akcesoria");
-    assert.equal(target("/pl/dodatki-i-akcesoria/pelny-bak-na-start-(benzyna)-3758"), "/pl/dodatki-i-akcesoria");
-    assert.equal(
-      target("/pl/dodatki-i-akcesoria/przenosna-ladowarka-do-auta-elektrycznego-400v-+-230v-2663"),
-      "/pl/dodatki-i-akcesoria",
-    );
-    assert.equal(target("/pl/dodatki-i-akcesoria/demontaz-3.-rzedu-siedzen-2421"), "/pl/dodatki-i-akcesoria");
-    assert.equal(target("/en/addons-and-accessories/first-aid-kit-155"), "/en/addons-and-accessories");
+  it("keeps add-on pages, which have their own pages again", () => {
+    // `app/[lang]/extras/[slug]` reads the id at the end and redirects a stale name itself.
+    assert.equal(legacyRedirect("/pl/dodatki-i-akcesoria/apteczka-155"), null);
+    assert.equal(legacyRedirect("/pl/dodatki-i-akcesoria/pelny-bak-na-start-(benzyna)-3758"), null);
+    assert.equal(legacyRedirect("/en/addons-and-accessories/first-aid-kit-155"), null);
+    assert.equal(target("/pl/addons-and-accessories/apteczka-155"), "/pl/dodatki-i-akcesoria/apteczka-155");
     assert.equal(target("/en/fleet/i-park-my-own-car-2757"), "/en/addons-and-accessories");
   });
 
   it("matches encoded, upper-case and trailing-slash spellings", () => {
-    assert.equal(target("/pl/dodatki-i-akcesoria/pelny-bak-na-start-%28gaz%29-3760"), "/pl/dodatki-i-akcesoria");
     assert.equal(target("/PL/Cennik/"), "/pl/wynajem-na-dni");
     assert.equal(target("/blog/szukaj/tagi/ABS"), "/pl/blog/abs-co-to-takiego");
     assert.equal(target("/blog/szukaj/tagi/samoch%C3%B3d%20elektryczny"), "/pl/wynajem-samochodow-elektrycznych");
@@ -117,7 +113,7 @@ describe("legacy redirects", () => {
     const samples = [
       ...legacyExactPaths(),
       "/pl/wynajem-na-miesiace/nissan-x-trail-7-os.-4431",
-      "/pl/dodatki-i-akcesoria/apteczka-155",
+      "/pl/addons-and-accessories/apteczka-155",
       "/pl/kod-promocyjny/lato",
       "/blog/szukaj/tagi/x",
     ];

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { ArrowRight, ChevronDown } from "lucide-react";
+import { ChevronRight, ChevronDown } from "lucide-react";
 
 import { Blocks } from "@/components/blocks/blocks";
 import { cmsPageMetadata, type PageSource } from "@/components/blocks/cms-page";
@@ -194,7 +194,7 @@ function BookingCard({ lang }: { lang: Lang }) {
         </div>
         <Link href={reservationHref(lang, "short")} className={buttonClass("success", "md", "shrink-0")}>
           {t.blogCtaButton}
-          <ArrowRight className="size-4" aria-hidden />
+          <ChevronRight className="size-4" aria-hidden />
         </Link>
       </div>
     </aside>

@@ -292,8 +292,8 @@ export function CompactOfferCard({
   const price = rent === null ? null : withFees(rent, fees);
   return (
     <article
-      className={`flex flex-col gap-3 rounded-2xl border-2 bg-white p-3 transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
-        highlighted ? "border-green-medium shadow-lg" : "border-transparent shadow-sm"
+      className={`flex flex-col gap-3 rounded-card border-2 bg-white p-3 transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
+        highlighted ? "border-green-medium" : "border-line"
       }`}
     >
       <div className="flex gap-3">

@@ -1,14 +1,16 @@
-import { ArrowRight, Building2, MapPin, Plane, TrainFront } from "lucide-react";
+import { ChevronRight, Building2, MapPin, Plane, TrainFront } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import type { Lang } from "@/i18n/config";
 import { fill, getMessages } from "@/i18n/messages";
 import { fleetHref, reservationHref } from "@/i18n/routes";
+import { cacheEnabled } from "@/lib/cache";
+import { carClasses } from "@/lib/fleet/car-classes";
 import { listFleetCars } from "@/lib/fleet/cars";
 import { formatPrice } from "@/lib/fleet/format";
 import { listServicePoints } from "@/lib/rentcarsoft";
-import { OFFER_CATEGORIES } from "@/lib/reservation/offers";
 import { findPageRoute, listLatestPosts, pageHref, type NavLink } from "@/lib/strapi";
 
 /**
@@ -62,18 +64,18 @@ export function LinksPanel({ links }: { links: NavLink[] }) {
 export async function FleetPanel({ lang }: { lang: Lang }) {
   const messages = getMessages(lang);
   const t = messages.layout;
+  // Without the cache the prices use the clock (`Date.now()`): read per request, not in a prerender.
+  if (!cacheEnabled()) {
+    await connection();
+  }
   const cars = await orFallback("fleet", listFleetCars(lang), []);
-  const classes = OFFER_CATEGORIES.flatMap(({ id }) => {
-    const inClass = cars.filter((car) => car.categories.includes(id));
-    if (inClass.length === 0) {
-      return [];
-    }
-    const cheapest = inClass.reduce((best, car) =>
-      (car.dailyFrom ?? Infinity) < (best.dailyFrom ?? Infinity) ? car : best,
-    );
-    // The cheapest car's "from" price with its condition, as on its fleet card (`DailyNotes`).
-    return [{ id, label: messages.cars.categories[id], daily: cheapest.daily, image: cheapest.image }];
-  });
+  // The cheapest car's "from" price with its condition, as on its fleet card (`DailyNotes`).
+  const classes = carClasses(cars).map(({ id, cheapest }) => ({
+    id,
+    label: messages.cars.categories[id],
+    daily: cheapest.daily,
+    image: cheapest.image,
+  }));
   // Shortcuts to the filtered fleet, shown only when the fleet has such cars.
   const quickLinks = [
     { label: t.fleetVans, query: "category=delivery", show: cars.some((car) => car.categories.includes("delivery")) },
@@ -134,7 +136,7 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
         ) : null}
         <Link href={fleetHref(lang)} className={moreClass}>
           {t.allCars}
-          <ArrowRight className="size-4" aria-hidden />
+          <ChevronRight className="size-4" aria-hidden />
         </Link>
       </div>
     </div>
@@ -214,7 +216,7 @@ export async function BlogPanel({ lang }: { lang: Lang }) {
       {listing ? (
         <Link href={pageHref(lang, listing.segments)} className={moreClass}>
           {t.allPosts}
-          <ArrowRight className="size-4" aria-hidden />
+          <ChevronRight className="size-4" aria-hidden />
         </Link>
       ) : null}
     </div>

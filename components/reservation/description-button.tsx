@@ -42,7 +42,7 @@ export function DescriptionButton({
       <WidgetModal
         open={open}
         onOpenChange={setOpen}
-        className="max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(32rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+        className="max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(32rem,calc(100%-1.5rem))] rounded-card shadow-float"
       >
         <Dialog aria-labelledby={titleId} className="flex max-h-[inherit] min-h-0 flex-col outline-none">
           <DialogHeader titleId={titleId} title={title} className="py-4" />

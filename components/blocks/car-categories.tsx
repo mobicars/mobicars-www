@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -84,7 +84,7 @@ export function CarCategories({ cars, lang, headingLevel }: { cars: FleetCard[];
                 aria-hidden
                 className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-dark text-white transition-colors duration-150 ease-out-soft group-hover:bg-green-medium"
               >
-                <ArrowRight className="size-5" />
+                <ChevronRight className="size-5" />
               </span>
             </div>
           </Link>

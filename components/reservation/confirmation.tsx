@@ -45,7 +45,7 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
         <span className="flex size-16 items-center justify-center rounded-full bg-green-light text-green-medium">
           <CircleCheck className="size-9" strokeWidth={1.75} aria-hidden />
         </span>
-        <h1 className="text-3xl font-semibold text-blue-dark sm:text-4xl">{t.title}</h1>
+        <h1 className="text-title text-balance text-blue-dark">{t.title}</h1>
         <p className="max-w-xl text-blue-dark/80">
           {receipt.email ? (
             <>
@@ -58,7 +58,7 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
           )}
         </p>
         {receipt.id ? (
-          <p className="rounded-full bg-white px-4 py-1.5 text-sm text-blue-dark shadow-sm">
+          <p className="rounded-full bg-white px-4 py-1.5 text-sm text-blue-dark ring-1 ring-line">
             {t.orderNumber}: <span className="font-bold">{receipt.id}</span>
           </p>
         ) : null}
@@ -66,7 +66,7 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
 
       <section
         aria-labelledby="next-steps-title"
-        className="flex flex-col gap-4 rounded-2xl bg-white p-5 text-sm text-blue-dark/80 shadow-sm sm:p-6"
+        className="flex flex-col gap-4 rounded-card bg-white p-5 text-sm text-blue-dark/80 ring-1 ring-line sm:p-6"
       >
         <h2 id="next-steps-title" className="text-xl font-semibold text-blue-dark">
           {t.nextTitle}
@@ -84,7 +84,7 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
       </section>
 
       {(
-        <section aria-labelledby="receipt-title" className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm sm:p-6">
+        <section aria-labelledby="receipt-title" className="flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line sm:p-6">
           <h2 id="receipt-title" className="text-xl font-semibold text-blue-dark">
             {t.reservationTitle}
           </h2>

@@ -1,4 +1,4 @@
-import { ArrowRight, Check } from "lucide-react";
+import { ChevronRight, Check } from "lucide-react";
 import Image from "next/image";
 
 import { Container, Section, SectionHeader } from "@/components/ui/section";
@@ -71,7 +71,7 @@ function BigPanel({ item, first }: { item: Scenario; first: boolean }) {
         {item.cta ? (
           <SmartLink link={item.cta} className={buttonClass("inverse", "md", "mt-auto w-full sm:w-fit")}>
             {item.cta.label}
-            <ArrowRight className="size-4" aria-hidden />
+            <ChevronRight className="size-4" aria-hidden />
           </SmartLink>
         ) : null}
       </div>
@@ -113,7 +113,7 @@ function Panel({ item, dark }: { item: Scenario; dark: boolean }) {
             className={`mt-2 inline-flex w-fit items-center gap-2 font-semibold underline-offset-4 hover:underline focus-visible:rounded focus-visible:ring-2 focus-visible:outline-none ${dark ? "text-white focus-visible:ring-white" : "text-blue-medium focus-visible:ring-blue-medium"}`}
           >
             {item.cta.label}
-            <ArrowRight className="size-4" aria-hidden />
+            <ChevronRight className="size-4" aria-hidden />
           </SmartLink>
         ) : null}
       </div>

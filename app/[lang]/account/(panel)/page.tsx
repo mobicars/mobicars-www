@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, KeyRound, UserRound, Wallet } from "lucide-react";
+import { ChevronRight, CalendarDays, KeyRound, UserRound, Wallet } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -117,7 +117,7 @@ async function NextReservationCard({ lang }: { lang: Lang }) {
       className="flex items-center gap-1 text-sm font-medium text-blue-medium hover:underline"
     >
       {t.overview.allReservations}
-      <ArrowRight className="size-4" aria-hidden />
+      <ChevronRight className="size-4" aria-hidden />
     </Link>
   );
 
@@ -168,7 +168,7 @@ async function NextReservationCard({ lang }: { lang: Lang }) {
         className="inline-flex h-11 w-fit items-center gap-2 rounded-lg border border-blue-medium px-5 text-sm font-semibold text-blue-medium hover:bg-blue-light"
       >
         {t.reservations.details}
-        <ArrowRight className="size-4" aria-hidden />
+        <ChevronRight className="size-4" aria-hidden />
       </Link>
     </Card>
   );
@@ -233,7 +233,7 @@ async function DetailsCard({ lang }: { lang: Lang }) {
           className="flex items-center gap-1 text-sm font-medium text-blue-medium hover:underline"
         >
           {t.editDetails}
-          <ArrowRight className="size-4" aria-hidden />
+          <ChevronRight className="size-4" aria-hidden />
         </Link>
       }
     >

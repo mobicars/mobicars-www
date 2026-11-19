@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Banknote, Car, MailCheck, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
+import { ChevronLeft, Banknote, Car, MailCheck, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
 import { FieldError, Label, TextArea, TextField as AriaTextField } from "react-aria-components";
 import { toast } from "sonner";
 
@@ -200,13 +200,13 @@ export function CustomerStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <div className="@container flex min-w-0 flex-col gap-6">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 tabIndex={-1} data-step-heading className="text-2xl font-semibold text-blue-dark outline-none">{t.reviewTitle}</h2>
+          <h2 tabIndex={-1} data-step-heading className="text-title text-blue-dark outline-none">{t.reviewTitle}</h2>
           <button
             type="button"
             onClick={() => goTo("extras")}
             className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
-            <ArrowLeft className="size-4" aria-hidden />
+            <ChevronLeft className="size-4" aria-hidden />
             {t.backToExtras}
           </button>
         </div>
@@ -232,9 +232,9 @@ export function CustomerStep({
         {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
 
         {/* One card: heading, the sign-in box (its own form) and the booking form; forms cannot nest. */}
-        <section aria-labelledby="customer-title" className="flex flex-col gap-6 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
+        <section aria-labelledby="customer-title" className="flex flex-col gap-6 rounded-card bg-white p-5 ring-1 ring-line @xl:p-6">
           <div>
-            <h2 id="customer-title" className="text-2xl font-semibold text-blue-dark">
+            <h2 id="customer-title" className="text-subtitle text-blue-dark">
               {t.title}
             </h2>
             {signedIn ? null : <p className="mt-1 text-sm text-muted-dark">{t.description}</p>}
@@ -592,7 +592,7 @@ function Review({
   const t = useMessages().details;
   const lang = useLang();
   return (
-    <section aria-label={t.reviewLabel} className="flex flex-col gap-4 rounded-2xl bg-white p-5 shadow-sm @xl:p-6">
+    <section aria-label={t.reviewLabel} className="flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line @xl:p-6">
       <ReviewRow icon={MapPin} title={t.trip} onChange={onChangeTrip}>
         <dl className="grid gap-3 @xl:grid-cols-2">
           <div>

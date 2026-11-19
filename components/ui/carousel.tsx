@@ -287,7 +287,8 @@ export function Carousel({
 }
 
 /** The site's own button (blue circle, white chevron, the hover fill), with a shadow to lift it off the slides. */
-const ARROW = buttonClass("primary", "icon", "shadow-float");
+// The white ring keeps the blue button apart from any background: navy bands, green, photos.
+const ARROW = buttonClass("primary", "icon", "shadow-float ring-2 ring-white");
 const ARROW_HOLDER =
   "pointer-events-auto transition-[opacity,scale] duration-250 ease-out-soft has-[button:disabled]:scale-90 has-[button:disabled]:opacity-40 motion-reduce:transition-none";
 

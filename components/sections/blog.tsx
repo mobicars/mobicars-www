@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { getImageProps } from "next/image";
 
 import { CtaLink } from "@/components/blocks/cta-link";
@@ -185,7 +185,7 @@ function FeaturedPost({ post, heading: Title, date, width }: PostProps) {
           <TitleLink post={post} />
         </Title>
         <span aria-hidden className={buttonClass("primary", "icon", "mt-3 group-hover:before:scale-[20] group-hover:before:duration-600 group-hover:before:ease-in-out")}>
-          <ArrowRight className="size-5" />
+          <ChevronRight className="size-5" />
         </span>
       </div>
     </article>
@@ -211,7 +211,7 @@ function More({ text, dark, className }: { text: string; dark: boolean; classNam
   return (
     <span aria-hidden className={`items-center gap-2 text-sm font-semibold ${dark ? "text-white" : "text-blue-medium"} ${className}`}>
       {text}
-      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
+      <ChevronRight className="size-4 transition-transform group-hover:translate-x-0.5 motion-reduce:transition-none" />
     </span>
   );
 }

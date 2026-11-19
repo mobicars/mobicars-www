@@ -70,10 +70,10 @@ export function OptionList<T>({
               id={getKey(option)}
               textValue={format(option)}
               className={({ isSelected: chosen }) =>
-                `flex h-12 w-full cursor-pointer items-center justify-center rounded-xl border text-base outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+                `flex h-12 w-full cursor-pointer items-center justify-center rounded-control border text-base outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
                   chosen
                     ? "border-blue-medium bg-blue-medium font-bold text-white hover:bg-blue-dark"
-                    : "border-blue-dark/15 hover:border-blue-dark/25 hover:bg-blue-dark/[0.03]"
+                    : "border-line-strong hover:border-blue-medium/50 hover:bg-tint"
                 }`
               }
             >

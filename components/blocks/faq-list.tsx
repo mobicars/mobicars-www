@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { Button, Disclosure, DisclosureGroup, DisclosurePanel, Heading } from "react-aria-components";
 import { ChevronDown } from "lucide-react";
 
-import { buttonClass } from "@/components/ui/button";
+import { roundIconClass } from "@/components/ui/surface";
 
 /**
  * The questions of an FAQ block, on React Aria's disclosure (WAI-ARIA
@@ -20,7 +20,7 @@ export function FaqList({
 }: {
   items: { id?: string; question: string; answer: ReactNode }[];
   level?: 2 | 3 | 4;
-  /** The new sections' flat look: cards in this colour (no shadow, no outline) and the arrow as a round button, blue, green when open. */
+  /** The new sections' flat look: cards in this colour (no shadow, no outline); the round icon is the cards' one (`roundIconClass`). */
   flat?: { surface: string };
 }) {
   return (
@@ -45,21 +45,10 @@ export function FaqList({
                   {item.question}
                   <span
                     aria-hidden
-                    className={
-                      flat
-                        ? // The button look, its hover fill grown when the whole question is hovered.
-                          buttonClass(
-                            isExpanded ? "success" : "primary",
-                            "icon",
-                            "group-hover:before:scale-[20] group-hover:before:duration-600 group-hover:before:ease-in-out",
-                          )
-                        : `flex size-9 shrink-0 items-center justify-center rounded-full ring-1 transition-colors duration-150 ease-out-soft ${
-                            isExpanded ? "bg-blue-dark text-white ring-blue-dark" : "text-blue-dark ring-line-strong group-hover:bg-tint"
-                          }`
-                    }
+                    className={roundIconClass(isExpanded)}
                   >
                     <ChevronDown
-                      className={`${flat ? "size-5" : "size-4"} transition-transform duration-150 ease-out-soft motion-reduce:transition-none ${isExpanded ? "rotate-180" : ""}`}
+                      className={`size-4 transition-transform duration-150 ease-out-soft motion-reduce:transition-none ${isExpanded ? "rotate-180" : ""}`}
                     />
                   </span>
                 </Button>

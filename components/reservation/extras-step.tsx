@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState, type ReactNode, type SyntheticEvent } from "react";
+import { useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Button, GridList, GridListItem } from "react-aria-components";
-import { ArrowLeft, Ban, Globe, House, Minus, Package, Plus } from "lucide-react";
+import { ChevronLeft, Baby, Ban, Globe, House, Minus, Package, Plus, type LucideIcon } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
 import { formatMoney } from "@/components/reservation/format";
@@ -14,6 +14,7 @@ import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@
 import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/reservation/url";
 import { Slider } from "@/components/reservation/slider";
 import { Upsell } from "@/components/reservation/upsell";
+import { buttonClass } from "@/components/ui/button";
 import { useQuote } from "@/components/reservation/use-quote";
 import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
 import { fill } from "@/i18n/fill";
@@ -39,7 +40,8 @@ import { QUERY_KEYS } from "@/lib/reservation/search";
 /**
  * Third step: border trip first, then the other extras by group. Yes/no
  * extras switch on and off; accessories take a quantity. Every change goes
- * into the URL and asks RentCarSoft for a new quote.
+ * into the URL and asks RentCarSoft for a new quote. The border trip and the
+ * children's extras wait behind a yes question (`Revealed`).
  */
 export function ExtrasStep({
   lang,
@@ -130,7 +132,7 @@ export function ExtrasStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-labelledby="extras-title" className="@container flex min-w-0 flex-col gap-8">
         <div className="flex flex-wrap items-end justify-between gap-2">
-          <h2 id="extras-title" tabIndex={-1} data-step-heading className="text-2xl font-semibold text-blue-dark outline-none">
+          <h2 id="extras-title" tabIndex={-1} data-step-heading className="text-title text-blue-dark outline-none">
             {t.title}
           </h2>
           <button
@@ -138,7 +140,7 @@ export function ExtrasStep({
             onClick={backToProtection}
             className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
-            <ArrowLeft className="size-4" aria-hidden />
+            <ChevronLeft className="size-4" aria-hidden />
             {t.backToProtection}
           </button>
         </div>
@@ -153,15 +155,17 @@ export function ExtrasStep({
         {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
 
         {view.zones.length > 0 ? (
-          <BorderZones zones={view.zones} value={selection.zone} onChange={(zone) => update({ ...selection, zone })} />
+          <Revealed icon={Globe} question={t.borderAsk} action={t.borderShow} chosen={selection.zone !== null}>
+            <BorderZones zones={view.zones} value={selection.zone} onChange={(zone) => update({ ...selection, zone })} />
+          </Revealed>
         ) : null}
 
         {view.groups.map((group) => {
           const toggles = group.items.filter((item) => item.kind === "toggle").map((item) => item.id);
           const counted = group.items.filter((item) => item.kind === "quantity").map((item) => item.id);
-          return (
+          const section = (
             <section key={group.id} aria-labelledby={`extras-${group.id}`}>
-              <h3 id={`extras-${group.id}`} className="mb-3 text-lg font-semibold text-blue-dark">
+              <h3 id={`extras-${group.id}`} tabIndex={-1} className="mb-3 text-lg font-semibold text-blue-dark outline-none">
                 {t.groups[group.id]}
               </h3>
               {/*
@@ -211,10 +215,18 @@ export function ExtrasStep({
               </GridList>
             </section>
           );
+          const chosen = toggles.some((id) => selection.addons.includes(id)) || counted.some((id) => selection.accessories.has(id));
+          return group.id === "kids" ? (
+            <Revealed key={group.id} icon={Baby} question={t.kidsAsk} action={t.kidsShow} chosen={chosen}>
+              {section}
+            </Revealed>
+          ) : (
+            section
+          );
         })}
 
         {view.zones.length === 0 && view.groups.length === 0 ? (
-          <p className="rounded-2xl bg-white p-6 text-sm text-blue-dark shadow-sm">
+          <p className="rounded-card bg-white p-6 text-sm text-blue-dark ring-1 ring-line">
             {t.none}
           </p>
         ) : null}
@@ -224,6 +236,59 @@ export function ExtrasStep({
       <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} searchQuery={searchQuery} />
       <MobileSummaryBar trip={trip} car={car} prices={prices} action={action} />
     </div>
+  );
+}
+
+/**
+ * A section behind a yes question, so the step stays short on a phone:
+ * "Planujesz wyjazd za granicę?" with "Tak, pokaż strefy". Once shown it
+ * stays: the way back is in the section itself ("Bez wyjazdu", a count of 0),
+ * so a slip of the finger hides nothing that was chosen. It starts shown when
+ * something in it is chosen (a shared link, a step revisited). The section is
+ * in the HTML from the start, only hidden; its heading takes the focus when
+ * it appears.
+ */
+function Revealed({
+  icon: Icon,
+  question,
+  action,
+  chosen,
+  children,
+}: {
+  icon: LucideIcon;
+  question: string;
+  action: string;
+  chosen: boolean;
+  children: ReactNode;
+}) {
+  const [shown, setShown] = useState(chosen);
+  const content = useRef<HTMLDivElement>(null);
+  const open = shown || chosen;
+
+  function show() {
+    setShown(true);
+    requestAnimationFrame(() => content.current?.querySelector<HTMLElement>("h3")?.focus());
+  }
+
+  return (
+    <>
+      {open ? null : (
+        <div className="flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line @lg:flex-row @lg:items-center @lg:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-light text-blue-medium">
+              <Icon className="size-5" strokeWidth={1.75} aria-hidden />
+            </span>
+            <p className="text-base font-semibold text-blue-dark">{question}</p>
+          </div>
+          <button type="button" onClick={show} className={buttonClass("secondary", "md", "w-full @lg:w-auto")}>
+            {action}
+          </button>
+        </div>
+      )}
+      <div ref={content} hidden={!open}>
+        {children}
+      </div>
+    </>
   );
 }
 
@@ -252,13 +317,13 @@ function BorderZones({
   const lang = useLang();
   const selectedKey = value === null ? NO_TRIP : value;
   return (
-    <section aria-labelledby="extras-border" className="rounded-3xl bg-white p-5 shadow-sm">
+    <section aria-labelledby="extras-border" className="rounded-card bg-white p-5 ring-1 ring-line">
       <div className="mb-4 flex items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-blue-light text-blue-medium">
           <Globe className="size-5" strokeWidth={1.75} aria-hidden />
         </span>
         <div>
-          <h3 id="extras-border" className="text-lg font-semibold text-blue-dark">
+          <h3 id="extras-border" tabIndex={-1} className="text-lg font-semibold text-blue-dark outline-none">
             {t.borderTitle}
           </h3>
           <p className="text-sm text-muted-dark">{t.borderText}</p>
@@ -342,7 +407,7 @@ function ZoneCard({
       id={id}
       textValue={title}
       className={({ isSelected }) =>
-        `${className} relative cursor-pointer flex-col gap-2 overflow-hidden rounded-2xl border-2 bg-white p-4 pt-0 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+        `${className} relative cursor-pointer flex-col gap-2 overflow-hidden rounded-card border-2 bg-white p-4 pt-0 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
           isSelected ? "border-green-medium" : "border-muted-light hover:border-blue-medium/40"
         }`
       }
@@ -407,8 +472,8 @@ function ExtraTile({
       id={item.id}
       textValue={item.name}
       // Hover darkens the frame, like the zone and protection cards.
-      className={`flex min-w-0 cursor-pointer items-start gap-3 rounded-2xl border-2 bg-white p-4 shadow-sm outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
-        chosen ? "border-green-medium" : "border-transparent hover:border-blue-medium/40"
+      className={`flex min-w-0 cursor-pointer items-start gap-3 rounded-card border-2 bg-white p-4 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+        chosen ? "border-green-medium" : "border-line hover:border-blue-medium/40"
       }`}
     >
       <span className="relative flex size-9 shrink-0 items-center justify-center">

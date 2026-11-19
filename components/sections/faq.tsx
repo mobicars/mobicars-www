@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 
 import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
 import { RichBlocksView } from "@/components/blocks/rich-blocks";
@@ -99,7 +99,7 @@ function FaqMenu({ groups, label, side, surface }: { groups: FaqSection["groups"
             >
               {group.icon ? <CtaIcon name={group.icon} className="size-4 shrink-0 text-blue-medium" /> : null}
               <span className={side ? "lg:flex-1" : undefined}>{group.title}</span>
-              {side ? <ArrowRight aria-hidden className="hidden size-4 shrink-0 text-blue-medium transition-transform group-hover:translate-x-0.5 lg:block" /> : null}
+              {side ? <ChevronRight aria-hidden className="hidden size-4 shrink-0 text-blue-medium transition-transform group-hover:translate-x-0.5 lg:block" /> : null}
             </a>
           </li>
         ))}

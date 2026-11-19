@@ -1,5 +1,5 @@
 import {
-  ArrowLeft,
+  ChevronLeft,
   Car,
   Clock,
   Gauge,
@@ -74,7 +74,7 @@ async function ReservationDetails({ params }: { params: Props["params"] }) {
         href={accountHref(lang, "reservations")}
         className="flex w-fit items-center gap-1.5 text-sm font-medium text-blue-medium hover:underline"
       >
-        <ArrowLeft className="size-4" aria-hidden />
+        <ChevronLeft className="size-4" aria-hidden />
         {t.back}
       </Link>
 

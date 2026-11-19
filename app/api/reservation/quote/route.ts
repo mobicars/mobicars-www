@@ -1,12 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { earliestPickup } from "@/components/reservation/schedule";
 import { isLang } from "@/i18n/config";
 import { RentCarSoftError, listServicePoints } from "@/lib/rentcarsoft";
 import { normalizePromo, quoteFor, termOfQuery } from "@/lib/reservation/booking";
 import { toPickupPlace } from "@/lib/reservation/places";
 import { MAX_QUANTITY } from "@/lib/reservation/extras";
 import { MAX_QUOTE_ITEMS, QUOTE_KEYS, type QuoteAccessory } from "@/lib/reservation/quote";
-import { bookingInProgressStart, draftFromQuery, validateSearch } from "@/lib/reservation/search";
+import { draftFromQuery, validateSearch } from "@/lib/reservation/search";
 
 /**
  * Quote for the booking summary: `calculateReservation` for a daily search,
@@ -42,7 +43,7 @@ export async function GET(request: NextRequest) {
     const term = termOfQuery(params);
     const result = validateSearch(draftFromQuery(params, term), {
       places,
-      earliestStart: bookingInProgressStart(),
+      earliestStart: earliestPickup(),
     });
     if (!result.ok) {
       return NextResponse.json({ error: "invalid_search" }, { status: 400 });

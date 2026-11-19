@@ -2,19 +2,18 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, LoaderCircle, Search, SearchX } from "lucide-react";
+import { ChevronRight, LoaderCircle, Search, SearchX } from "lucide-react";
 
 import { EmptyState } from "@/components/reservation/empty-state";
 import { issueMessage } from "@/components/reservation/messages";
 import { prepareDraft } from "@/components/reservation/picker";
-import { formatTripDates } from "@/components/reservation/schedule";
+import { earliestPickup, formatTripDates } from "@/components/reservation/schedule";
 import { useClientOnlyValue } from "@/components/reservation/use-client-only-value";
 import type { Lang } from "@/i18n/config";
 import { useMessages } from "@/i18n/messages-context";
 import { reservationHref } from "@/i18n/routes";
 import type { PickupPlace } from "@/lib/reservation/places";
 import {
-  bookingInProgressStart,
   searchToQuery,
   validateSearch,
   type SearchDraft,
@@ -45,10 +44,7 @@ export function SearchProblem({
   const [pending, startTransition] = useTransition();
   // The fix depends on the clock, so it is worked out in the browser only.
   const prepared = useClientOnlyValue(() =>
-    validateSearch(prepareDraft(draft, places, bookingInProgressStart()), {
-      places,
-      earliestStart: bookingInProgressStart(),
-    }),
+    validateSearch(prepareDraft(draft, places, earliestPickup()), { places, earliestStart: earliestPickup() }),
   );
   const fixed = prepared?.ok ? prepared.search : null;
   // What is still missing once the widget has filled in its defaults (e.g. only the place).
@@ -88,7 +84,7 @@ export function SearchProblem({
           {pending ? (
             <LoaderCircle className="size-4 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden />
           ) : (
-            <ArrowRight className="size-4 shrink-0" aria-hidden />
+            <ChevronRight className="size-4 shrink-0" aria-hidden />
           )}
         </button>
       ) : incomplete ? null : (

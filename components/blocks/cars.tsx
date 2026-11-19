@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { connection } from "next/server";
 import { Suspense } from "react";
@@ -138,7 +138,7 @@ function NoPromotions({ lang }: { lang: Lang }) {
       {t.noPromotions}
       <Link href={fleetHref(lang)} className="inline-flex items-center gap-1 font-semibold text-blue-medium hover:underline">
         {t.noPromotionsLink}
-        <ArrowRight className="size-4" aria-hidden />
+        <ChevronRight className="size-4" aria-hidden />
       </Link>
     </p>
   );
@@ -207,7 +207,7 @@ async function CarsTabs({
                   href={href(tab)}
                   className={cardClass("light", true, "flex w-full flex-col items-center justify-center gap-3 p-6 text-center font-bold text-blue-dark")}
                 >
-                  <ArrowRight className="size-6 text-blue-medium" aria-hidden />
+                  <ChevronRight className="size-6 text-blue-medium" aria-hidden />
                   {fill(t.tabsSeeAll, { category: label(tab), count: String(matching.length) })}
                 </Link>
               </RailItem>
@@ -230,7 +230,7 @@ function FleetLink({ block, lang, dark }: { block: CarsBlock; lang: Lang; dark: 
       className={buttonClass(dark ? "outline-inverse" : "secondary")}
     >
       {link.label}
-      <ArrowRight className="size-4" aria-hidden />
+      <ChevronRight className="size-4" aria-hidden />
     </Link>
   );
 }

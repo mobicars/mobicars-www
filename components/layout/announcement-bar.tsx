@@ -1,4 +1,4 @@
-import { ArrowRight, BadgePercent, Info, TriangleAlert } from "lucide-react";
+import { ChevronRight, BadgePercent, Info, TriangleAlert } from "lucide-react";
 import Link from "next/link";
 
 import type { Announcement } from "@/lib/strapi";
@@ -53,12 +53,12 @@ export function AnnouncementBar({
               {link.newTab ? (
                 <a href={link.href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
                   {link.label}
-                  <ArrowRight className="size-3.5" aria-hidden />
+                  <ChevronRight className="size-3.5" aria-hidden />
                 </a>
               ) : (
                 <Link href={link.href} className={LINK_CLASS}>
                   {link.label}
-                  <ArrowRight className="size-3.5" aria-hidden />
+                  <ChevronRight className="size-3.5" aria-hidden />
                 </Link>
               )}
             </>

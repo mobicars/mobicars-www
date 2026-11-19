@@ -1,3 +1,4 @@
+import { ChevronRight } from "lucide-react";
 import { Children, type ReactNode } from "react";
 
 import { Carousel } from "./carousel";
@@ -117,6 +118,27 @@ export function Ornament({ kind, className = "text-white/15" }: { kind: Ornament
       <path vectorEffect="non-scaling-stroke" d="M-20 390 C 90 390, 140 270, 230 255 S 360 140, 420 135" />
       <path vectorEffect="non-scaling-stroke" strokeDasharray="10 14" d="M-20 360 C 85 360, 125 240, 215 228 S 345 110, 420 102" />
     </svg>
+  );
+}
+
+/**
+ * The round icon of a card or question that opens something: outlined, filled
+ * navy when it is open (`active`) or its card (`group`) is hovered. One look
+ * for the card arrows and the FAQ's questions. Decorative.
+ */
+export function roundIconClass(active = false): string {
+  const state = active
+    ? "bg-blue-dark text-white ring-blue-dark"
+    : "text-blue-dark ring-line-strong group-hover:bg-blue-dark group-hover:text-white group-hover:ring-blue-dark";
+  return `flex size-9 shrink-0 items-center justify-center rounded-full ring-1 transition-colors duration-150 ease-out-soft motion-reduce:transition-none ${state}`;
+}
+
+/** The arrow of a card that is a link (`roundIconClass`). */
+export function CardArrow({ className = "" }: { className?: string }) {
+  return (
+    <span aria-hidden className={`${roundIconClass()} ${className}`}>
+      <ChevronRight className="size-4" />
+    </span>
   );
 }
 

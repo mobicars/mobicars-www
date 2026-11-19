@@ -137,7 +137,7 @@ export function PlaceFields({
       <WidgetModal
         open={placeOpen}
         onOpenChange={setPlaceOpen}
-        className="h-dvh w-full max-w-none md:h-[calc(100dvh-2rem)] md:w-[48rem] md:max-w-[calc(100%-2rem)] md:rounded-2xl md:shadow-2xl"
+        className="h-dvh w-full max-w-none md:h-[calc(100dvh-2rem)] md:w-[48rem] md:max-w-[calc(100%-2rem)] md:rounded-card md:shadow-float"
       >
         <Suspense fallback={<DialogLoading />}>
         <PlaceDialogBody

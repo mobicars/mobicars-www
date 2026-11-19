@@ -4,7 +4,6 @@ import {
   parseDateTime,
   toCalendarDateTime,
   toZoned,
-  today,
   type ZonedDateTime,
 } from "@internationalized/date";
 
@@ -154,14 +153,15 @@ export function searchToQuery(search: ReservationSearch): URLSearchParams {
 
 /**
  * Checks a draft and returns the complete search, or every problem found.
- * `earliestStart` defaults to the current moment in the reservation time zone.
+ * `earliestStart` defaults to the current moment in the reservation time zone;
+ * `null` leaves the pickup time unchecked.
  */
 export function validateSearch(
   draft: SearchDraft,
-  options: { places: readonly PlaceRule[]; earliestStart?: ZonedDateTime },
+  options: { places: readonly PlaceRule[]; earliestStart?: ZonedDateTime | null },
 ): { ok: true; search: ReservationSearch } | { ok: false; issues: SearchIssue[] } {
   const issues: SearchIssue[] = [];
-  const earliest = options.earliestStart ?? now(reservationConfig.timeZone);
+  const earliest = options.earliestStart === undefined ? now(reservationConfig.timeZone) : options.earliestStart;
 
   const pickupIssue = placeIssue(draft.pickup, options.places);
   if (pickupIssue) {
@@ -178,7 +178,7 @@ export function validateSearch(
   const start = draft.start ? toZonedDateTime(draft.start) : null;
   if (!start) {
     issues.push({ field: "start", code: "missing" });
-  } else if (start.compare(earliest) < 0) {
+  } else if (earliest && start.compare(earliest) < 0) {
     issues.push({ field: "start", code: "past" });
   }
 
@@ -216,14 +216,25 @@ export function validateSearch(
 }
 
 /**
- * The earliest pickup a booking in progress may still have: the start of
- * today. The lead time (`pickupLeadMinutes`) applies when the customer picks a
- * time; once they are on the reservation page, the pickup minute passing must
- * not throw them out. A pickup on an earlier day (an old link, a return the
- * next day) is still rejected.
+ * The reservation page's verdict on the URL's search. `expired`: complete,
+ * but its pickup is earlier than `earliestStart` (an old or shared link, or
+ * the clock catching up). The page then asks for a new time instead of
+ * quoting the old one; the search is kept, so the new time can keep the car
+ * and everything chosen for it.
  */
-export function bookingInProgressStart(): ZonedDateTime {
-  return toZoned(today(reservationConfig.timeZone), reservationConfig.timeZone);
+export function bookingStatus(
+  draft: SearchDraft,
+  options: { places: readonly PlaceRule[]; earliestStart: ZonedDateTime },
+):
+  | { status: "ok"; search: ReservationSearch }
+  | { status: "expired"; search: ReservationSearch }
+  | { status: "invalid"; issues: SearchIssue[] } {
+  const result = validateSearch(draft, options);
+  if (result.ok) {
+    return { status: "ok", search: result.search };
+  }
+  const untimed = validateSearch(draft, { places: options.places, earliestStart: null });
+  return untimed.ok ? { status: "expired", search: untimed.search } : { status: "invalid", issues: result.issues };
 }
 
 /**

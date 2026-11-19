@@ -113,7 +113,7 @@ function UpsellCard({
   return (
     <article
       // Hover darkens the frame, like the extras, zone and protection cards.
-      className={`relative flex w-full rounded-2xl border-2 border-transparent bg-white p-4 shadow-sm transition-colors duration-200 ease-out hover:border-blue-medium/40 motion-reduce:transition-none ${
+      className={`relative flex w-full rounded-card border-2 border-line bg-white p-4 transition-colors duration-200 ease-out hover:border-blue-medium/40 motion-reduce:transition-none ${
         wide ? "flex-col gap-4 @xl:flex-row @xl:items-center @xl:p-6" : "flex-col"
       }`}
     >
@@ -160,7 +160,7 @@ function UpsellCard({
         <ChooseButton
           selected={false}
           onClick={onChoose}
-          className="mt-2 w-full after:absolute after:inset-0 after:rounded-2xl"
+          className="mt-2 w-full after:absolute after:inset-0 after:rounded-card"
         />
       </span>
       </div>

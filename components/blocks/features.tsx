@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -246,7 +246,7 @@ function OverlayCard({ item }: { item: FeatureItem }) {
         )}
         {item.link ? (
           <span aria-hidden className="grid size-12 place-items-center rounded-full bg-white/15 transition-colors duration-150 group-hover:bg-white group-hover:text-blue-dark">
-            <ArrowRight className="size-5" />
+            <ChevronRight className="size-5" />
           </span>
         ) : null}
       </div>
@@ -314,7 +314,7 @@ function ItemLink({ link }: { link: NavLink }) {
   const content = (
     <>
       {link.label}
-      <ArrowRight className="size-4" aria-hidden />
+      <ChevronRight className="size-4" aria-hidden />
     </>
   );
   if (link.newTab) {

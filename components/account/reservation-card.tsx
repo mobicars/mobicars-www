@@ -1,4 +1,4 @@
-import { ArrowRight, Car, MapPin } from "lucide-react";
+import { ChevronRight, Car, MapPin } from "lucide-react";
 import Link from "next/link";
 
 import { accountCopy } from "@/i18n/panel-copy";
@@ -65,7 +65,7 @@ export function ReservationCard({
       </div>
       <span className="hidden items-center gap-1 text-sm font-medium text-blue-medium sm:flex">
         {t.details}
-        <ArrowRight className="size-4" aria-hidden />
+        <ChevronRight className="size-4" aria-hidden />
       </span>
     </article>
   );

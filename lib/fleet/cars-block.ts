@@ -1,5 +1,6 @@
 import type { CarsBlock, CarsCategory, CarsSection } from "@/lib/strapi";
 
+import { collectionCars } from "./car-collection";
 import type { FleetCard } from "./cars";
 
 /**
@@ -68,9 +69,13 @@ const SECTION_CATEGORY: Record<CarsSection["category"], (car: FleetCard) => bool
 /**
  * The cars of a Cars section (`sections.cars`): in RentCarSoft's order, or
  * for picked cars in the editor's; picked cars RentCarSoft no longer lists are
- * left out. `classes` with none picked is every class. Then the limit.
+ * left out. `classes` with none picked is every class; `collection` the car
+ * collection's cars in its order, none without a collection. Then the limit.
  */
-export function selectSectionCars(section: Pick<CarsSection, "source" | "category" | "segmentIds" | "carIds" | "limit">, cars: FleetCard[]): FleetCard[] {
+export function selectSectionCars(
+  section: Pick<CarsSection, "source" | "category" | "segmentIds" | "carIds" | "collection" | "limit">,
+  cars: FleetCard[],
+): FleetCard[] {
   let selected = cars;
   if (section.source === "category") {
     selected = cars.filter(SECTION_CATEGORY[section.category]);
@@ -80,6 +85,8 @@ export function selectSectionCars(section: Pick<CarsSection, "source" | "categor
   } else if (section.source === "cars") {
     const byId = new Map(cars.map((car) => [car.id, car]));
     selected = section.carIds.flatMap((id) => byId.get(id) ?? []);
+  } else if (section.source === "collection") {
+    selected = section.collection ? collectionCars(section.collection, cars) : [];
   }
   return section.limit !== null ? selected.slice(0, section.limit) : selected;
 }

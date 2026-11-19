@@ -241,6 +241,52 @@ export function resolveFleetPath(
 }
 
 /**
+ * Public URLs of the add-ons: the list is the CMS page at the root
+ * (`/pl/dodatki-i-akcesoria`, a Extras section on it); each add-on has its own
+ * page, `/pl/dodatki-i-akcesoria/fotelik-9-36kg-147`, as on the old site. The
+ * app folder is `app/[lang]/extras/[slug]`; `proxy.ts` rewrites only paths with
+ * a slug, so the root stays the CMS page. The slug ends with the RentCarSoft id
+ * (`carSlug`); a stale name part redirects to the current one.
+ */
+const EXTRAS_ROOT: Record<Lang, string> = {
+  pl: "dodatki-i-akcesoria",
+  en: "addons-and-accessories",
+  de: "extras-und-zubehoer",
+  uk: "dodatky-i-aksesuary",
+};
+const EXTRAS_INTERNAL = "extras";
+
+/** Public URL of the add-on list (a CMS page), or of one add-on with its slug. */
+export function extrasHref(lang: Lang, slug?: string): string {
+  const path = `/${lang}/${EXTRAS_ROOT[lang]}`;
+  return slug ? `${path}/${encodeURIComponent(slug)}` : path;
+}
+
+/**
+ * Resolves an add-on page, like `resolveFleetPath`, but only below the root:
+ * the root itself is the CMS list page (the internal root redirects to it).
+ */
+export function resolveExtrasPath(
+  lang: Lang,
+  pathname: string,
+): { canonical: string; internal: string | null; slug: string | null } | null {
+  const [, pathLang, root, ...rest] = pathname.split("/");
+  if (pathLang !== lang || (root !== EXTRAS_ROOT[lang] && root !== EXTRAS_INTERNAL)) {
+    return null;
+  }
+  const tail = rest.filter(Boolean);
+  if (tail.length === 0) {
+    return root === EXTRAS_INTERNAL ? { canonical: extrasHref(lang), internal: null, slug: null } : null;
+  }
+  const suffix = `/${tail.join("/")}`;
+  return {
+    canonical: `/${lang}/${EXTRAS_ROOT[lang]}${suffix}`,
+    internal: `/${lang}/${EXTRAS_INTERNAL}${suffix}`,
+    slug: tail.length === 1 ? tail[0] : null,
+  };
+}
+
+/**
  * The same page in another language, for the language switcher: a reservation
  * page keeps its term and search, a panel page its page and id, a fleet page
  * its car, the thank-you page stays itself. Any other path keeps everything after the language.
@@ -267,6 +313,12 @@ export function switchLangHref(pathname: string, search: string, target: Lang): 
   if (fleet) {
     // The car slug does not depend on the language.
     return withQuery(fleetHref(target, fleet.slug ? decodeURIComponent(fleet.slug) : undefined));
+  }
+
+  const extras = resolveExtrasPath(lang, pathname);
+  if (extras) {
+    // The id at the end of the slug finds the add-on; its page redirects to the name in that language.
+    return withQuery(extrasHref(target, extras.slug ? decodeURIComponent(extras.slug) : undefined));
   }
 
   const account = resolveAccountPath(lang, pathname);

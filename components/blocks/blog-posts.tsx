@@ -1,4 +1,4 @@
-import { ArrowRight, Newspaper } from "lucide-react";
+import { ChevronRight, Newspaper } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -107,7 +107,7 @@ export function PostCard({ post, lang, readMore }: { post: BlogPostCard; lang: L
       {/* Visual cue only: the title's link already covers the card. */}
       <span aria-hidden className="mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-blue-dark">
         {readMore}
-        <ArrowRight className="size-4 transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none" />
+        <ChevronRight className="size-4 transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none" />
       </span>
     </article>
   );

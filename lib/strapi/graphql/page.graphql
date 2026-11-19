@@ -40,6 +40,12 @@ query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
       ... on ComponentSectionsCars {
         ...CarsSection
       }
+      ... on ComponentSectionsCarClasses {
+        ...CarClassesSection
+      }
+      ... on ComponentSectionsExtras {
+        ...ExtrasSection
+      }
       ... on ComponentSectionsMap {
         ...MapSection
       }
@@ -743,6 +749,9 @@ fragment CarsSection on ComponentSectionsCars {
   carsCategory: category
   segmentIds
   carIds
+  collection {
+    ...CarCollection
+  }
   carsLayout: layout
   limit
   moreCard {
@@ -756,6 +765,60 @@ fragment CarsSection on ComponentSectionsCars {
   }
   carsWidth: width
   carsSpacing: spacing
+}
+
+# `api::car-collection`: rules over RentCarSoft's cars (`lib/fleet/car-collection.ts`); the title is per language, the rules are shared.
+fragment CarCollection on CarCollection {
+  documentId
+  title
+  segmentIds
+  categories
+  fuels
+  bodies
+  gearboxes
+  minSeats
+  onlyPromotion
+  onlyPopular
+  sort
+}
+
+# `sections.car-classes`. The classes, photos and prices come from RentCarSoft (`lib/fleet`). Fields other sections have with other types are aliased.
+fragment CarClassesSection on ComponentSectionsCarClasses {
+  id
+  badge
+  carClassesTitle: title
+  carClassesText: text
+  carClassesHeaderAlign: headerAlign
+  carClassesLayout: layout
+  moreCard {
+    ...PartCard
+  }
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  carClassesWidth: width
+  carClassesSpacing: spacing
+}
+
+# `sections.extras`. The add-ons come from RentCarSoft (`lib/extras`). Fields other sections have with other types are aliased.
+fragment ExtrasSection on ComponentSectionsExtras {
+  id
+  badge
+  extrasTitle: title
+  extrasText: text
+  extrasHeaderAlign: headerAlign
+  extrasGroup: group
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  extrasWidth: width
+  extrasSpacing: spacing
 }
 
 # `sections.map`. The points come from RentCarSoft. Fields other sections have with other types are aliased.

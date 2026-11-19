@@ -53,14 +53,14 @@ The term is in the path, not in the query.
   - The calendar hides earlier slots.
   - "Szukaj" (on the homepage, or "Zacznij od wyboru auta" on the reservation page) checks it with `earliestPickup()`.
   - A search restored from the browser on the homepage gets the default dates if its pickup is earlier.
-- **Booking in progress:** the reservation page, the quote endpoint, a change without "Szukaj", and the widget's own copy of the URL search validate against `bookingInProgressStart()`, the start of today.
-  - The pickup minute passing while the customer picks a car, protection or extras throws nothing out.
-  - Only a pickup on an earlier day (an old link opened the next day) sends them back to choose a new date.
-- **Pickup too close or past** (`components/reservation/pickup-time-guard.tsx`): on the reservation page the browser checks the clock after loading and every 30 seconds. Once the pickup is less than `pickupLeadMinutes` away, or past, a popup says so ("Do odbioru zostało mniej niż 30 minut" / "Godzina odbioru już minęła").
-  - It offers the earliest open slot (`earliestPickupPoint()`), e.g. "Przesuń na 23:30".
-  - Moving keeps the return while it still follows the new pickup; otherwise the return moves by the same amount (`movePickup`, tested). It replaces `from` / `to` and keeps the car, protection and extras; the page then quotes again.
-  - "Zmienię termin sam" closes it and scrolls up to the dates. It does not come back for the same pickup time.
-  - The clock is read in the browser only, so the server render never differs.
+- **One rule for the whole booking:** the reservation page, the quote endpoint and a change without "Szukaj" check the pickup against `earliestPickup()`, the same as "Rezerwuj". Nothing is quoted for a pickup closer than the lead time or past.
+- **Expired search** (`bookingStatus` in `search.ts`): a search that is complete but whose pickup is too early (an old or shared link, a tab left open) is `expired`, not broken. The page renders no offers and no form, quotes nothing, and asks for a new time (below). The widget shows the URL's dates, never silently replaced. A search with anything else wrong gets "complete the search" (`SearchProblem`).
+- **New time** (`components/reservation/pickup-time-guard.tsx`), title "Ten termin już minął" or "Do odbioru zostało mniej niż 30 minut", three answers:
+  - **"Przesuń na najbliższy termin"** (main, the new dates on the button): the earliest open slot (`pickupTimeCheck` in `schedule.ts`). The return stays while it still follows the new pickup; otherwise it moves by the same amount (`movePickup`, tested). It replaces `from` / `to` and keeps the car, protection, extras and code; the page then quotes again.
+  - **"Wybierz inny termin"** (outlined): the widget's own calendar, opened on the proposed dates; the same choices kept.
+  - **"Zacznij od nowa"** (a red text link, like "Wyloguj"; "Usunie wybrane daty, auto i dodatki"): only the pickup and return places stay. The page then offers the widget's default dates (`SearchProblem`).
+  - **Expired search:** a card in place of the offers, like "Brak wyników", rendered complete on the server. The header, menu and widget stay usable, so an old link never traps anyone.
+  - **The clock catching up while booking** (checked after loading and every 30 seconds): the same answers in a dialog that cannot be closed (no ×, click outside or Escape), as it would come back at once and "Rezerwuj" refuses the time anyway. On phones it rises from the bottom. No answer reloads the page, so the details step keeps what was typed and ticked.
 - The final create step must check the time again before booking.
 
 ## Widget
@@ -277,6 +277,11 @@ Monthly rental has no protection step yet. The old site priced long-term insuran
 `listAddons` and `listAccessories` with the car's segment and the dates. Insurance is left out; it has its own step. As on the old site, an extra with no price for the day count is hidden. That covers the long-term zones and the GPS or fuel card offers, whose bands start at 30 or 90 days, and the free app pickup.
 
 **Order on the page:**
+
+- **Behind a question** (`Revealed` in `extras-step.tsx`, decided 18 November 2026, to keep the step short on a phone): the border trip and "Dla dzieci" start as one row each, "Planujesz wyjazd za granicę?" with "Tak, pokaż strefy" and "Podróżujesz z dziećmi?" with "Tak, pokaż dodatki dla dzieci". There is no "Nie": skipping the question is the answer.
+  - The section is in the HTML from the start, only `hidden`, so nothing loads or shifts until the customer asks; its images load lazily then. Its heading takes the focus.
+  - Once shown it stays shown. The way back is inside the section ("Bez wyjazdu", a count of 0), so a slip of the finger never hides something chosen.
+  - It starts shown when something in it is chosen (a zone or a child's extra in the URL: a shared link, a step revisited, a moved date).
 
 1. **Wyjazd za granicę.** Border trip addons (`type` 4) are a single choice: "Bez wyjazdu" (the default) or one zone.
    - The card shows the zone's map (the addon `image` from RentCarSoft: the zone's countries marked), the zone name ("Strefa 1"), the bracketed part of the API name as a note ("limit 400 km/ doba"), the price, and the description with the countries behind the "i" button.

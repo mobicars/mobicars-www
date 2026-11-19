@@ -67,7 +67,7 @@ export function StartDateDialogBody({ start, onOpenChange, onConfirm }: Omit<Sta
           </div>
         </div>
       </Calendar>
-      <div className="flex shrink-0 flex-col gap-3 border-t border-blue-dark/10 bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
+      <div className="flex shrink-0 flex-col gap-3 border-t border-line bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
         <div className="min-w-0 sm:flex-1">
           <TimeField
             label={texts.pickupTime}
@@ -107,7 +107,7 @@ function StartDay({ date }: { date: CalendarDate }) {
           "relative flex aspect-square w-full items-center justify-center rounded-full text-sm outline-none transition-colors duration-200 ease-out motion-reduce:transition-none",
           cell.isDisabled ? "cursor-default text-blue-dark/30" : "cursor-pointer text-blue-dark",
           cell.isSelected ? "bg-blue-medium font-semibold text-white" : "",
-          !cell.isSelected && !cell.isDisabled ? "hover:bg-blue-dark/[0.04]" : "",
+          !cell.isSelected && !cell.isDisabled ? "hover:bg-tint" : "",
           cell.isFocusVisible ? "z-10 ring-2 ring-blue-medium ring-offset-2" : "",
         ].join(" ");
       }}

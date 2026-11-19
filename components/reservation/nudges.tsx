@@ -217,7 +217,7 @@ function NudgeCard({
   children: ReactNode;
 }) {
   return (
-    <aside className="flex flex-col gap-4 rounded-2xl border-2 border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
+    <aside className="flex flex-col gap-4 rounded-card border-2 border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white text-green-medium">
         {icon}
       </span>

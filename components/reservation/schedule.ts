@@ -14,7 +14,7 @@ import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import type { Messages } from "@/i18n/messages";
 import { reservationConfig } from "@/lib/reservation/config";
-import { formatQueryDateTime } from "@/lib/reservation/search";
+import { formatQueryDateTime, movePickup, toZonedDateTime, type ReservationSearch } from "@/lib/reservation/search";
 import type { TripDates } from "@/lib/reservation/storage";
 
 /** Pickup and return slot math for the widget. No React here. */
@@ -138,6 +138,40 @@ export function earliestPickupPoint(): SchedulePoint | null {
     date = date.add({ days: 1 });
   }
   return null;
+}
+
+/** A pickup that is too close or past, with the time the booking can move to (`PickupTimeGuard`). */
+export type PickupTimeCheck = {
+  /** The pickup this check was made for, so a stale one never shows after a move. */
+  start: string;
+  /** The pickup time itself has passed, not only the lead time. */
+  passed: boolean;
+  /** The earliest open slot, with the return moved as `movePickup` does. */
+  moved: TripDates;
+};
+
+/**
+ * Null while the search's pickup is still far enough (unless `force`: the page
+ * already found it too early), or when no slot is open; otherwise whether it
+ * has passed and the earliest open slot with the return moved.
+ */
+export function pickupTimeCheck(search: ReservationSearch, force = false): PickupTimeCheck | null {
+  const point = pointFromValue(search.start);
+  const zoned = toZonedDateTime(search.start);
+  const next = earliestPickupPoint();
+  if (!point || !zoned || !next || !(force || isSlotPast(point.date, point.time))) {
+    return null;
+  }
+  const end = search.term === "short" ? search.end : null;
+  const moved = movePickup(search.start, end, valueFromPoint(next.date, next.time));
+  return {
+    start: search.start,
+    passed: zoned.compare(now(reservationConfig.timeZone)) <= 0,
+    moved:
+      search.term === "short"
+        ? { term: "short", start: moved.start, end: moved.end ?? search.end }
+        : { term: "long", start: moved.start, months: search.months },
+  };
 }
 
 export function defaultShortTermSchedule(): ReservationSchedule | null {

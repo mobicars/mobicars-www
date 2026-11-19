@@ -17,7 +17,7 @@ export function StartDateDialog({ open, ...props }: StartDateDialogProps) {
     <WidgetModal
       open={open}
       onOpenChange={props.onOpenChange}
-      className="h-dvh max-h-dvh w-full max-w-none sm:h-auto sm:max-h-[calc(100dvh-1.5rem)] sm:w-[min(24rem,calc(100%-1.5rem))] sm:rounded-2xl sm:shadow-2xl"
+      className="h-dvh max-h-dvh w-full max-w-none sm:h-auto sm:max-h-[calc(100dvh-1.5rem)] sm:w-[min(24rem,calc(100%-1.5rem))] sm:rounded-card sm:shadow-float"
     >
       <Suspense fallback={<DialogLoading />}>
         <StartDateDialogBody {...props} />

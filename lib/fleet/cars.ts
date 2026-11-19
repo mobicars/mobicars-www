@@ -50,6 +50,8 @@ export type FleetCard = {
   segmentId: string | null;
   image: FleetImage | null;
   body: string | null;
+  /** RentCarSoft value id of the body (key 2), for the car collections' rules. */
+  bodyId: number | null;
   seats: number | null;
   doors: number | null;
   /** Large and small suitcases. */
@@ -57,6 +59,8 @@ export type FleetCard = {
   transmission: string | null;
   /** `null` when the offer has no transmission key. */
   automatic: boolean | null;
+  /** RentCarSoft value id of the transmission (13 manual, 14 automatic), for the car collections' rules. */
+  gearboxId: number | null;
   fuel: { id: number | null; label: string } | null;
   categories: OfferCategory[];
   /**
@@ -120,7 +124,8 @@ export type FleetPriceBand = {
 };
 
 export type FleetCar = FleetCard & {
-  gallery: { src: string; thumb: string; alt: string }[];
+  /** `studio`: the default studio shot on white, shown whole; the car's own photos fill the frame. */
+  gallery: { src: string; thumb: string; alt: string; studio: boolean }[];
   specs: FleetSpec[];
   /** Equipment from select keys, e.g. cruise control "Tak", rear camera "360 °". */
   features: { key: FeatureKey; value: string }[];
@@ -247,7 +252,7 @@ async function loadPartialCar(lang: Lang, id: number): Promise<FleetCar | null> 
 export function partialFleetCar(card: FleetCard): FleetCar {
   return {
     ...card,
-    gallery: card.image ? [{ src: card.image.src, thumb: card.image.src, alt: card.image.alt }] : [],
+    gallery: card.image ? [{ src: card.image.src, thumb: card.image.src, alt: card.image.alt, studio: true }] : [],
     specs: [],
     features: [],
     equipment: [],
@@ -358,11 +363,13 @@ function toCard(offer: Offer, monthly: MonthlyFrom | null, now: number): FleetCa
     segmentId: offer.segmentId,
     image: src ? { src, alt: main?.alt || name } : null,
     body: text(offer, "body"),
+    bodyId: offer.attributes.body?.valueId ?? null,
     seats: count(offer, "seats"),
     doors: count(offer, "doors"),
     suitcases: { large: count(offer, "suitcasesXl"), small: count(offer, "suitcasesXs") },
     transmission: transmission?.value.trim() || null,
     automatic: transmission ? transmission.valueId === AUTOMATIC_TRANSMISSION : null,
+    gearboxId: transmission?.valueId ?? null,
     fuel: fuel?.value.trim() ? { id: fuel.valueId, label: fuel.value.trim() } : null,
     categories: OFFER_CATEGORIES.filter(
       (category) => offer.attributes[category.key]?.valueId === category.yes,
@@ -417,15 +424,17 @@ function toCar(offer: Offer, lang: Lang, polish: Offer | null, monthly: MonthlyF
   const html = translated("description") ?? (lang === "en" ? text(offer, "descriptionEn") : null);
   const description = html ? sanitizeDescription(html) : null;
 
-  // The main photo is a studio shot on white; the rest are the car's own photos.
-  const ordered = [...offer.gallery].sort((left, right) => Number(right.main) - Number(left.main));
-  const gallery = ordered.flatMap((image, index) => {
+  // As on the old site: the photos marked "cover" in RentCarSoft, without the default
+  // studio shot (the cards' photo) and the unmarked ones; the studio shot only for a car with none.
+  const photos = offer.gallery.filter((image) => image.cover && !image.main);
+  const chosen = photos.length > 0 ? photos : offer.gallery.filter((image) => image.main);
+  const gallery = chosen.flatMap((image, index) => {
     const thumb = imageUrl(image);
     const src = image.largeWebp ?? image.largeStandard ?? thumb;
     if (!src || !thumb) {
       return [];
     }
-    return [{ src, thumb, alt: image.alt || `${card.name} – ${index + 1}` }];
+    return [{ src, thumb, alt: image.alt || `${card.name} – ${index + 1}`, studio: image.main }];
   });
 
   return {

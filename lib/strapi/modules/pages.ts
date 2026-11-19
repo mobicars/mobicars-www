@@ -1,4 +1,5 @@
 import { cacheTag } from "next/cache";
+import { connection } from "next/server";
 
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
@@ -16,20 +17,28 @@ import { listPageRoutes } from "./routes";
  * has no version in that language (404).
  */
 export async function getPage(lang: Lang, documentId: string): Promise<Page | null> {
-  return cacheEnabled() ? loadCachedPage(lang, documentId) : loadPage(lang, documentId);
+  return cacheEnabled() ? loadCachedPage(lang, documentId) : loadLivePage(lang, documentId);
+}
+
+/** Uncached (local, preview): request-time, as the promotions' dates are compared with the clock. */
+async function loadLivePage(lang: Lang, documentId: string): Promise<Page | null> {
+  await connection();
+  return loadPage(lang, documentId);
 }
 
 async function loadCachedPage(lang: Lang, documentId: string): Promise<Page | null> {
   "use cache";
   // `page`: the page itself and the pages its links point to. `blog` and
   // `blog-category`: a blog block's cards, so a new post shows without a publish
-  // here; `rating` the same for a reviews block.
+  // here; `rating` the same for a reviews block; `car-collection` for a Cars section's rules.
   cacheTag(
     CACHE_TAGS.all,
     CACHE_TAGS.type("page"),
     CACHE_TAGS.type("blog"),
     CACHE_TAGS.type("blog-category"),
     CACHE_TAGS.type("rating"),
+    // A Cars section's car collection: its rules are read with the page.
+    CACHE_TAGS.type("car-collection"),
   );
   const page = await loadPage(lang, documentId);
   cacheUntil(page?.changesAt);

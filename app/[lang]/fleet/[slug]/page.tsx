@@ -1,11 +1,11 @@
-import { ArrowLeft, ArrowRight, Check, DoorOpen, Fuel, Info, Luggage, Settings2, Users, type LucideIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, DoorOpen, Fuel, Info, Luggage, Settings2, Users, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
+import { CarExtras } from "@/components/extras/car-extras";
 import { CarGallery } from "@/components/fleet/car-gallery";
-import { DailyNotes } from "@/components/fleet/daily-notes";
 import { FaqList } from "@/components/blocks/faq-list";
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
 import { PriceTable } from "@/components/fleet/price-table";
@@ -15,7 +15,8 @@ import { Container } from "@/components/ui/section";
 import { ReservationPicker } from "@/components/reservation/picker";
 import { isLang, type Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
-import { fleetHref, reservationHref } from "@/i18n/routes";
+import { extrasHref, fleetHref, reservationHref } from "@/i18n/routes";
+import { listCatalogExtras, segmentExtras } from "@/lib/extras/catalog";
 import { getFleetCar, listFleetCars, similarCars, type FleetCar, type SpecKey } from "@/lib/fleet/cars";
 import { fill } from "@/i18n/fill";
 import { countLabel, formatPrice } from "@/lib/fleet/format";
@@ -120,9 +121,20 @@ export default async function CarPage({ params }: Props) {
 }
 
 async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
-  const [cars, points] = await Promise.all([listFleetCars(lang), listServicePoints({ lang })]);
+  const [cars, points, catalog] = await Promise.all([
+    listFleetCars(lang),
+    listServicePoints({ lang }),
+    // Without the add-ons the car page still stands: the section is left out.
+    listCatalogExtras(lang).catch((error: unknown) => {
+      console.error(`[fleet] car ${car.id} add-ons unavailable, the section is left out`, error);
+      return [];
+    }),
+  ]);
 
-  const t = getMessages(lang).fleet;
+  const messages = getMessages(lang);
+  const t = messages.fleet;
+  // `GET /offer/{id}` has no `segmentId`; the car's card in the cached catalog list has it.
+  const extras = segmentExtras(catalog, car.segmentId ?? cars.find((each) => each.id === car.id)?.segmentId ?? null);
   const places = points.map(toPickupPlace);
   const similar = similarCars(car, cars);
   // A car rented only by the day or only by the month books on that term alone.
@@ -155,6 +167,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
               car.priceBands.length > 0 ? { href: "#prices", label: t.pricesTitle } : null,
               car.specs.length > 0 ? { href: "#specs", label: t.specsTitle } : null,
               car.features.length > 0 || (lang === "pl" && car.equipment.length > 0) ? { href: "#equipment", label: t.featuresTitle } : null,
+              extras.length > 0 ? { href: "#extras", label: t.extrasTitle } : null,
               { href: "#terms", label: t.termsTitle },
             ]}
           />
@@ -200,17 +213,12 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
               <p className="text-xl font-bold text-blue-dark">
                 {fill(t.monthlyFrom, { price: formatPrice(lang, car.monthlyFrom) })}
               </p>
-              {car.monthlyTerms ? (
-                <p className="-mt-2 text-sm text-muted-dark">
-                  {fill(t.monthlyFromNote, monthlyNote(car.monthlyTerms, lang))}
-                </p>
-              ) : null}
               <Link
                 href={reservationHref(lang, "long")}
                 className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
               >
                 {t.monthlyLink}
-                <ArrowRight className="size-4" aria-hidden />
+                <ChevronRight className="size-4" aria-hidden />
               </Link>
             </Section>
           ) : null}
@@ -242,6 +250,20 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
             </Section>
           ) : null}
 
+          {extras.length > 0 ? (
+            <Section title={t.extrasTitle} id="extras">
+              <p className="text-sm text-muted-dark">{t.extrasLead}</p>
+              <CarExtras extras={extras} lang={lang} groups={messages.extrasPage.groups} />
+              <Link
+                href={extrasHref(lang)}
+                className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
+              >
+                {t.extrasAll}
+                <ChevronRight className="size-4" aria-hidden />
+              </Link>
+            </Section>
+          ) : null}
+
           <Section title={t.termsTitle} id="terms">
             <FaqList items={t.terms.map((term) => ({ question: term.question, answer: <p>{term.answer}</p> }))} />
             <Link
@@ -249,7 +271,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
               className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
             >
               {t.termsMore}
-              <ArrowRight className="size-4" aria-hidden />
+              <ChevronRight className="size-4" aria-hidden />
             </Link>
           </Section>
 
@@ -275,7 +297,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
                 href={fleetHref(lang)}
                 className="inline-flex items-center gap-1 text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
               >
-                <ArrowLeft className="size-4" aria-hidden />
+                <ChevronLeft className="size-4" aria-hidden />
                 {t.backToFleet}
               </Link>
             </div>
@@ -363,50 +385,31 @@ function FromPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts 
           <span className="text-sm font-semibold">{t.perDay}</span>
         </p>
       ) : null}
-      {car.daily ? <DailyNotes daily={car.daily} lang={lang} t={t} className="text-sm text-muted-dark" /> : null}
       {car.monthlyFrom !== null ? (
         <p className="mt-2 text-sm text-blue-dark">
-          {t.from} <span className="font-bold">{formatPrice(lang, car.monthlyFrom)}</span> {t.perMonth}{" "}
-          {car.monthlyTerms ? (
-            <span className="text-xs text-muted-dark">{fill(t.monthlyFromNote, monthlyNote(car.monthlyTerms, lang))}</span>
-          ) : null}
+          {t.from} <span className="font-bold">{formatPrice(lang, car.monthlyFrom)}</span> {t.perMonth}
         </p>
       ) : null}
-      {/* Pickup and return fees depend on the place (airports, delivery to an address) and are not in the "from". */}
-      <p className="mt-2 text-xs text-muted-dark">{t.placeFeeNote}</p>
     </div>
   );
 }
 
-/** `{months}` and `{km}` of `fleet.monthlyFromNote`, the kilometres grouped by the locale. */
-function monthlyNote(terms: NonNullable<FleetCar["monthlyTerms"]>, lang: Lang) {
-  return { months: terms.months, km: new Intl.NumberFormat(lang).format(terms.kmPerMonth) };
-}
-
-/** The "from" price in the phone bar with its condition: the daily price first, else the monthly one. */
+/** The "from" price in the phone bar: the daily price first, else the monthly one. */
 function BarPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
   if (car.daily) {
     return (
-      <>
-        <p className={`whitespace-nowrap text-sm ${car.daily.promotional ? "text-green-dark" : "text-blue-dark"}`}>
-          {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.daily.price)}</span>{" "}
-          <span className="text-xs font-semibold">{t.perDay}</span>
-        </p>
-        <DailyNotes daily={car.daily} lang={lang} t={t} oneDay={false} className="truncate text-xs text-muted-dark" />
-      </>
+      <p className={`whitespace-nowrap text-sm ${car.daily.promotional ? "text-green-dark" : "text-blue-dark"}`}>
+        {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.daily.price)}</span>{" "}
+        <span className="text-xs font-semibold">{t.perDay}</span>
+      </p>
     );
   }
   if (car.monthlyFrom !== null) {
     return (
-      <>
-        <p className="whitespace-nowrap text-sm text-blue-dark">
-          {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.monthlyFrom)}</span>{" "}
-          <span className="text-xs font-semibold">{t.perMonth}</span>
-        </p>
-        {car.monthlyTerms ? (
-          <p className="truncate text-xs text-muted-dark">{fill(t.monthlyFromNote, monthlyNote(car.monthlyTerms, lang))}</p>
-        ) : null}
-      </>
+      <p className="whitespace-nowrap text-sm text-blue-dark">
+        {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.monthlyFrom)}</span>{" "}
+        <span className="text-xs font-semibold">{t.perMonth}</span>
+      </p>
     );
   }
   return <p className="truncate text-sm font-semibold text-blue-dark">{car.name}</p>;

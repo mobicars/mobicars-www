@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { Suspense, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, CalendarRange, CarFront } from "lucide-react";
+import { ChevronRight, CalendarRange, CarFront } from "lucide-react";
 
 import { CompactSearch } from "@/components/reservation/compact-search";
 import { CustomerStep, type AccountPrefill } from "@/components/reservation/customer-step";
@@ -15,6 +15,7 @@ import { ProtectionStep } from "@/components/reservation/protection-step";
 import { RememberBooking } from "@/components/reservation/remember-booking";
 import { RememberSearch } from "@/components/reservation/remember-search";
 import { SearchProblem } from "@/components/reservation/search-problem";
+import { earliestPickup, pickupTimeCheck } from "@/components/reservation/schedule";
 import { ReservationSteps } from "@/components/reservation/steps";
 import type { TripSummary } from "@/components/reservation/summary";
 import { compactTrip, tripSummary, type CompactTrip } from "@/components/reservation/trip";
@@ -51,10 +52,9 @@ import {
 } from "@/lib/reservation/extras";
 import {
   QUERY_KEYS,
-  bookingInProgressStart,
+  bookingStatus,
   draftFromQuery,
   searchToQuery,
-  validateSearch,
   type ReservationSearch,
   type ReservationTerm,
 } from "@/lib/reservation/search";
@@ -158,9 +158,9 @@ async function SearchSection({
   // Validation compares the dates with the current time, so it runs per request.
   await connection();
   const draft = draftFromQuery(query, term);
-  // In progress: only a pickup day already over sends the customer back to the widget.
-  const result = validateSearch(draft, { places, earliestStart: bookingInProgressStart() });
-  const canonical = result.ok ? searchToQuery(result.search).toString() : "";
+  // The rule "Rezerwuj" checks too: a pickup closer than the lead time is not quoted but asked about.
+  const result = bookingStatus(draft, { places, earliestStart: earliestPickup() });
+  const canonical = result.status === "invalid" ? "" : searchToQuery(result.search).toString();
   const offerParam = query[QUERY_KEYS.offer];
   const selected = Number(Array.isArray(offerParam) ? offerParam[0] : offerParam) || null;
   const view = query[QUERY_KEYS.view] === "cars" ? "cars" : "classes";
@@ -183,7 +183,11 @@ async function SearchSection({
 
   return (
     <>
-      <SearchBand lang={lang} term={term} compact={result.ok ? compactTrip(lang, result.search, places) : undefined}>
+      <SearchBand
+        lang={lang}
+        term={term}
+        compact={result.status === "ok" ? compactTrip(lang, result.search, places) : undefined}
+      >
         {/* A new search replaces the URL; the key resets the widget to it. */}
         <ReservationPicker
           key={canonical}
@@ -196,14 +200,10 @@ async function SearchSection({
         />
       </SearchBand>
       <section className="mx-auto w-full max-w-7xl px-3 py-8 sm:px-6">
-        {!result.ok ? <CarStepHeading lang={lang} term={term} /> : null}
-        {result.ok ? (
+        {result.status === "ok" ? (
           <>
             <RememberSearch term={term} query={canonical} />
-            <PickupTimeGuard
-              start={result.search.start}
-              end={result.search.term === "short" ? result.search.end : null}
-            />
+            <PickupTimeGuard search={result.search} hasCar={selected !== null} />
             <Suspense fallback={<OffersSkeleton />}>
               <Offers
                 lang={lang}
@@ -219,8 +219,19 @@ async function SearchSection({
               />
             </Suspense>
           </>
+        ) : result.status === "expired" ? (
+          // Nothing is quoted for the old time; the guard asks for a new one, keeping the choices.
+          <PickupTimeGuard
+            search={result.search}
+            hasCar={selected !== null}
+            expired
+            initial={pickupTimeCheck(result.search, true)}
+          />
         ) : (
-          <SearchProblem lang={lang} draft={draft} places={places} issues={result.issues} />
+          <>
+            <CarStepHeading lang={lang} term={term} />
+            <SearchProblem lang={lang} draft={draft} places={places} issues={result.issues} />
+          </>
         )}
       </section>
     </>
@@ -521,7 +532,7 @@ function MonthlyHint({ lang, search }: { lang: Lang; search: ReservationSearch }
   }
   const t = getMessages(lang).booking.monthlyHint;
   return (
-    <aside className="mb-6 flex flex-col gap-4 rounded-2xl border-2 border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
+    <aside className="mb-6 flex flex-col gap-4 rounded-card border-2 border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white text-green-medium">
         <CalendarRange className="size-6" strokeWidth={1.75} aria-hidden />
       </span>
@@ -531,7 +542,7 @@ function MonthlyHint({ lang, search }: { lang: Lang; search: ReservationSearch }
       </div>
       <Link href={reservationHref(lang, "long", hint.query)} className={buttonClass("success", "md", "w-full sm:w-auto")}>
         {fill(t.button, { months: formatMonths(lang, hint.months) })}
-        <ArrowRight className="size-4" aria-hidden />
+        <ChevronRight className="size-4" aria-hidden />
       </Link>
     </aside>
   );
@@ -541,7 +552,7 @@ function CarStepHeading({ lang, term }: { lang: Lang; term: ReservationTerm }) {
   const t = getMessages(lang).booking;
   return (
     <>
-      <h2 className="text-center text-3xl font-semibold text-blue-dark">{t.chooseCar}</h2>
+      <h2 className="text-title text-center text-balance text-blue-dark">{t.chooseCar}</h2>
       {term === "short" ? (
         <p className="mx-auto mt-2 mb-6 max-w-2xl text-center text-sm text-muted-dark">{t.chooseCarIntro}</p>
       ) : (
@@ -555,7 +566,7 @@ function OffersSkeleton() {
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: 6 }, (_, index) => (
-        <div key={index} className="h-96 animate-pulse rounded-2xl bg-white" />
+        <div key={index} className="h-96 animate-pulse rounded-card bg-white" />
       ))}
     </div>
   );

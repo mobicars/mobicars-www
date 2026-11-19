@@ -129,7 +129,7 @@ export function DatesDialogBody({ schedule, onOpenChange, onConfirm }: Omit<Rese
           </div>
         </div>
       </RangeCalendar>
-      <div className="flex shrink-0 flex-col gap-3 border-t border-blue-dark/10 bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
+      <div className="flex shrink-0 flex-col gap-3 border-t border-line bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
         <div className="grid flex-1 grid-cols-2 gap-3">
           <TimeField
             label={texts.pickupTime}
@@ -170,7 +170,7 @@ export function DatesDialogBody({ schedule, onOpenChange, onConfirm }: Omit<Rese
         </div>
         {/* Over more than one day, a return later in the day than the pickup is billed as one more day. */}
         {range && pickup && dropoff && range.end.compare(range.start) > 0 && minutesOf(dropoff) > minutesOf(pickup) ? (
-          <p role="status" className="flex items-start gap-2 rounded-control bg-blue-light/60 px-3 py-2 text-xs text-blue-dark">
+          <p role="status" className="flex items-start gap-2 rounded-control bg-tint px-3 py-2 text-xs text-blue-dark">
             <Info className="mt-px size-4 shrink-0 text-blue-medium" aria-hidden />
             {messages.dates.laterReturnExtraDay}
           </p>
@@ -212,7 +212,7 @@ function RangeDay({ date }: { date: CalendarDate }) {
           cell.isSelected ? "bg-blue-medium font-semibold text-white" : "",
           cell.isSelected && !continuesLeft ? "rounded-l-full" : "",
           cell.isSelected && !continuesRight ? "rounded-r-full" : "",
-          !cell.isSelected && !cell.isDisabled ? "rounded-full hover:bg-blue-dark/[0.04]" : "",
+          !cell.isSelected && !cell.isDisabled ? "rounded-full hover:bg-tint" : "",
           cell.isFocusVisible ? "z-10 ring-2 ring-blue-medium ring-offset-2" : "",
           hollow ? "z-[1]" : "",
         ].join(" ");
@@ -290,7 +290,7 @@ export function TimeField({
         type="button"
         disabled={!date}
         onClick={() => setOpen(true)}
-        className="flex w-full cursor-pointer items-center gap-2.5 rounded-xl border border-blue-dark/15 bg-white px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-offset-2 transition-[border-color,background-color] duration-200 ease-out hover:border-blue-dark/25 hover:bg-blue-dark/[0.03] disabled:cursor-default disabled:opacity-40 disabled:hover:border-blue-dark/15 disabled:hover:bg-white motion-reduce:transition-none"
+        className="flex w-full cursor-pointer items-center gap-2.5 rounded-control border border-line-strong bg-white px-3 py-2 text-left outline-none focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-offset-2 transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-blue-medium/50 hover:bg-tint disabled:cursor-default disabled:opacity-40 disabled:hover:border-line-strong disabled:hover:bg-white motion-reduce:transition-none"
       >
         <Icon className="size-5 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
         <span className="min-w-0">
@@ -302,7 +302,7 @@ export function TimeField({
         open={open}
         onOpenChange={setOpen}
         layer="nested"
-        className="max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(24rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+        className="max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(24rem,calc(100%-1.5rem))] rounded-card shadow-float"
       >
         <Dialog
           aria-labelledby={titleId}

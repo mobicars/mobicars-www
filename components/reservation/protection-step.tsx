@@ -4,7 +4,7 @@ import { useEffect, useId, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Dialog, GridList, GridListItem, type Selection } from "react-aria-components";
-import { ArrowLeft, Check, ShieldCheck } from "lucide-react";
+import { ChevronLeft, Check, ShieldCheck } from "lucide-react";
 
 import { DescriptionButton } from "@/components/reservation/description-button";
 import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
@@ -120,7 +120,7 @@ export function ProtectionStep({
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <section aria-labelledby="protection-title" className="min-w-0">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
-          <h2 id="protection-title" tabIndex={-1} data-step-heading className="text-2xl font-semibold text-blue-dark outline-none">
+          <h2 id="protection-title" tabIndex={-1} data-step-heading className="text-title text-blue-dark outline-none">
             {t.title}
           </h2>
           <button
@@ -128,7 +128,7 @@ export function ProtectionStep({
             onClick={backToCarList}
             className="flex cursor-pointer items-center gap-1 text-sm font-semibold text-blue-medium underline-offset-2 hover:underline"
           >
-            <ArrowLeft className="size-4" aria-hidden />
+            <ChevronLeft className="size-4" aria-hidden />
             {t.backToCar}
           </button>
         </div>
@@ -139,7 +139,7 @@ export function ProtectionStep({
         ) : null}
         {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} className="mb-4" /> : null}
         {options.length === 0 ? (
-          <p className="rounded-2xl bg-white p-6 text-sm text-blue-dark shadow-sm">
+          <p className="rounded-card bg-white p-6 text-sm text-blue-dark ring-1 ring-line">
             {t.none}
           </p>
         ) : (
@@ -218,7 +218,7 @@ function DowngradeDialog({
     <WidgetModal
       open={to !== null}
       onOpenChange={(open) => (open ? undefined : onCancel())}
-      className="w-[min(28rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+      className="w-[min(28rem,calc(100%-1.5rem))] rounded-card shadow-float"
     >
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
         <DialogHeader titleId={titleId} title={t.downgradeTitle} className="pt-4 pb-1" />
@@ -263,7 +263,7 @@ function ProtectionTable({
       className="hidden gap-3 pt-8 md:grid"
       style={{ gridTemplateColumns: `minmax(8rem,1.1fr) minmax(0,${options.length}fr)` }}
     >
-      <div aria-hidden className="rounded-3xl bg-white shadow-sm">
+      <div aria-hidden className="rounded-card bg-white ring-1 ring-line">
         <div className={head} />
         {keys.map((key) => (
           <div key={key} className={`${cell} px-5 text-blue-dark/80`}>
@@ -286,8 +286,8 @@ function ProtectionTable({
             id={option.id}
             textValue={option.name}
             className={({ isSelected }) =>
-              `relative cursor-pointer rounded-3xl bg-white outline-none transition-shadow duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-4 motion-reduce:transition-none ${
-                isSelected ? "shadow-lg" : "shadow-sm hover:shadow-md"
+              `relative cursor-pointer rounded-card bg-white outline-none transition-shadow duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-4 motion-reduce:transition-none ${
+                isSelected ? "" : "ring-1 ring-line hover:ring-blue-medium/40"
               }`
             }
           >
@@ -308,11 +308,11 @@ function ProtectionTable({
                 {/* The frame is its own top layer, so the chosen column's border runs over the green tab. */}
                 <span
                   aria-hidden
-                  className={`pointer-events-none absolute inset-0 z-20 rounded-3xl border-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                  className={`pointer-events-none absolute inset-0 z-20 rounded-card border-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
                     isSelected ? "border-green-medium" : option.recommended ? "border-blue-medium" : "border-transparent"
                   }`}
                 />
-                <div className={`${head} relative z-10 rounded-t-3xl bg-white`}>
+                <div className={`${head} relative z-10 rounded-t-card bg-white`}>
                   <Shield option={option} size="small" />
                   <h3 className="flex items-center gap-1 text-sm font-semibold text-blue-dark">
                     {option.name}
@@ -416,8 +416,8 @@ function ProtectionCard({ option, className }: { option: ProtectionOption; class
       id={option.id}
       textValue={option.name}
       className={({ isSelected }) =>
-        `${className} relative cursor-pointer flex-col rounded-2xl border-2 bg-white shadow-sm outline-none transition-[border-color,box-shadow] duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
-          isSelected ? "border-green-medium shadow-lg" : option.recommended ? "border-blue-medium" : "border-transparent"
+        `${className} relative cursor-pointer flex-col rounded-card border-2 bg-white outline-none transition-[border-color,box-shadow] duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+          isSelected ? "border-green-medium" : option.recommended ? "border-blue-medium" : "border-line"
         }`
       }
     >

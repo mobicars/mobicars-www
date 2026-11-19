@@ -19,6 +19,7 @@ export function WidgetModal({
   onOpenChange,
   className,
   layer = "base",
+  dismissable = true,
   children,
 }: {
   open: boolean;
@@ -26,13 +27,16 @@ export function WidgetModal({
   className: string;
   /** `nested` stacks above another widget dialog, e.g. the hour list over the calendar. */
   layer?: "base" | "nested";
+  /** False for a question that must be answered: a click outside and Escape do nothing. */
+  dismissable?: boolean;
   children: ReactNode;
 }) {
   return (
     <ModalOverlay
       isOpen={open}
       onOpenChange={onOpenChange}
-      isDismissable
+      isDismissable={dismissable}
+      isKeyboardDismissDisabled={!dismissable}
       className={`pickup-overlay fixed inset-0 flex bg-blue-dark/40 backdrop-blur-[4px] ${layer === "nested" ? "z-[70]" : "z-50"}`}
     >
       <Modal className={`pickup-modal m-auto flex flex-col overflow-hidden bg-white text-blue-dark outline-none ${className}`}>
@@ -54,7 +58,7 @@ export function DialogHeader({
   const texts = useMessages().search;
   return (
     <div className={`relative shrink-0 px-12 ${className}`}>
-      <h2 id={titleId} className="text-center text-lg font-semibold">
+      <h2 id={titleId} className="text-center text-lg font-bold">
         {title}
       </h2>
       <Button
@@ -136,7 +140,7 @@ export function ConfirmQuestion({
     <WidgetModal
       open={open}
       onOpenChange={(next) => (next ? undefined : onCancel())}
-      className="w-[min(30rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+      className="w-[min(30rem,calc(100%-1.5rem))] rounded-card shadow-float"
     >
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
         <DialogHeader titleId={titleId} title={title} className="pt-4 pb-4" />

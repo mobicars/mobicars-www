@@ -262,7 +262,7 @@ export function OfferList({
         {filterRows}
       </FilterSheet>
 
-      <div className="mb-4 hidden flex-col gap-3 rounded-2xl bg-white p-4 shadow-sm lg:flex">
+      <div className="mb-4 hidden flex-col gap-3 rounded-card bg-white p-4 ring-1 ring-line lg:flex">
         {filterRows}
         {activeFilters > 0 ? (
           <div className="flex justify-end border-t border-muted-light pt-3">
@@ -282,7 +282,7 @@ export function OfferList({
         </div>
       </div>
       {visible.length === 0 ? (
-        <div className="rounded-2xl bg-white p-6 text-center text-sm text-blue-dark shadow-sm">
+        <div className="rounded-card bg-white p-6 text-center text-sm text-blue-dark ring-1 ring-line">
           <p>{cars.noMatch}</p>
           <button
             type="button"
@@ -375,7 +375,7 @@ function Segmented<T extends string>({
           onChange(next as T);
         }
       }}
-      className="flex gap-1 rounded-full bg-white p-1 shadow-sm"
+      className="flex gap-1 rounded-full bg-white p-1 ring-1 ring-line"
     >
       {options.map(({ id, label: optionLabel, icon: Icon }) => (
         <ToggleButton
@@ -491,8 +491,8 @@ function OfferTile({
   const { cars } = useMessages();
   return (
     <article
-      className={`flex h-full flex-col overflow-hidden rounded-2xl border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
-        selected ? "border-green-medium shadow-lg" : "border-transparent shadow-sm hover:shadow-md"
+      className={`flex h-full flex-col overflow-hidden rounded-card border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
+        selected ? "border-green-medium" : "border-line hover:border-blue-medium/40"
       }`}
     >
       <div className="relative aspect-[16/10] bg-white">

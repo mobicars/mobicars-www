@@ -1,4 +1,4 @@
-import { ArrowRight, BadgePercent, CarFront, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
+import { ChevronRight, BadgePercent, CarFront, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -51,7 +51,7 @@ export function FleetCard({
 
   return (
     <article
-      className={`group relative flex h-full overflow-hidden rounded-card border border-line bg-white focus-within:ring-2 focus-within:ring-blue-medium focus-within:ring-offset-2 ${
+      className={`group relative flex h-full w-full overflow-hidden rounded-card border border-line bg-white focus-within:ring-2 focus-within:ring-blue-medium focus-within:ring-offset-2 ${
         compact ? "flex-col max-sm:flex-row" : "flex-col"
       }`}
     >
@@ -116,7 +116,7 @@ export function FleetCard({
             className={`${compact ? "max-sm:hidden" : ""} inline-flex shrink-0 items-center gap-1 text-sm font-bold text-blue-medium transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none`}
           >
             {t.details}
-            <ArrowRight className="size-4" strokeWidth={2} />
+            <ChevronRight className="size-4" strokeWidth={2} />
           </span>
         </div>
       </div>
@@ -124,7 +124,11 @@ export function FleetCard({
   );
 }
 
-/** The compact phone card keeps one price: the monthly one only when there is no daily one. */
+/**
+ * One price: "od X zł / doba" with the rental length it takes ("przy najmie
+ * od 30 dni"), never a bare number. No 1-day or monthly price beside it; the
+ * monthly one only for a car without a daily one. The car page has them all.
+ */
 function CardPrice({ car, lang, t, compact = false }: { car: FleetCardData; lang: Lang; t: FleetTexts; compact?: boolean }) {
   if (car.dailyFrom === null && car.monthlyFrom === null) {
     return <p className="text-xs text-muted-dark">{t.priceOnRequest}</p>;
@@ -139,11 +143,11 @@ function CardPrice({ car, lang, t, compact = false }: { car: FleetCardData; lang
       ) : null}
       {car.daily ? (
         <div className={compact ? "max-sm:hidden" : undefined}>
-          <DailyNotes daily={car.daily} lang={lang} t={t} />
+          <DailyNotes daily={car.daily} lang={lang} t={t} oneDay={false} />
         </div>
       ) : null}
-      {car.monthlyFrom !== null ? (
-        <p className={`text-xs text-muted-dark ${compact && car.dailyFrom !== null ? "max-sm:hidden" : ""}`}>
+      {car.dailyFrom === null && car.monthlyFrom !== null ? (
+        <p className="text-xs text-muted-dark">
           {t.from} {formatPrice(lang, car.monthlyFrom)} {t.perMonth}
         </p>
       ) : null}

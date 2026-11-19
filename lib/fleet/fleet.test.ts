@@ -3,6 +3,7 @@ import { describe, it } from "node:test";
 
 import { RentCarSoftError } from "@/lib/rentcarsoft";
 
+import { carClasses } from "./car-classes";
 import { partialFleetCar, withCatalogFallback, type FleetCard, type FleetCar } from "./cars";
 import { sanitizeDescription } from "./sanitize";
 import { carSlug, offerIdFromSlug } from "./slug";
@@ -112,7 +113,7 @@ describe("cars block selection", () => {
   it("selects a Cars section's cars: category, classes, picked cars in the editor's order", async () => {
     const { selectSectionCars } = await import("./cars-block");
     type Selection = Parameters<typeof selectSectionCars>[0];
-    const section: Selection = { source: "all", category: "passenger", segmentIds: [], carIds: [], limit: null };
+    const section: Selection = { source: "all", category: "passenger", segmentIds: [], carIds: [], collection: null, limit: null };
     const ids = (overrides: Partial<Selection>, list = cars) => selectSectionCars({ ...section, ...overrides }, list).map((each) => each.id);
     assert.deepEqual(ids({}), [1, 2, 3, 4]);
     assert.deepEqual(ids({ limit: 2 }), [1, 2]);
@@ -123,6 +124,38 @@ describe("cars block selection", () => {
     assert.deepEqual(ids({ source: "classes", segmentIds: [] }), [1, 2, 3, 4]);
     // Picked cars keep the editor's order; one RentCarSoft no longer lists is left out.
     assert.deepEqual(ids({ source: "cars", carIds: [4, 99, 1] }), [4, 1]);
+    // A collection without a linked entry shows nothing rather than the whole fleet.
+    assert.deepEqual(ids({ source: "collection", collection: null }), []);
+  });
+
+  it("selects a car collection: empty rules do not filter, any value within a rule, every rule together", async () => {
+    const { collectionCars } = await import("./car-collection");
+    type Rules = Parameters<typeof collectionCars>[0];
+    const none: Rules = { segmentIds: [], categories: [], fuels: [], bodies: [], gearboxes: [], minSeats: null, onlyPromotion: false, onlyPopular: false, sort: "default" };
+    const ids = (rules: Partial<Rules>, list = cars) => collectionCars({ ...none, ...rules }, list).map((each) => each.id);
+    const priced = [car(1, { dailyFrom: 129, gearboxId: 13, popular: false }), car(2, { dailyFrom: 89, gearboxId: 14, popular: true }), car(3, { dailyFrom: null, gearboxId: 14, popular: false }), car(4, { dailyFrom: 99, gearboxId: 14, bodyId: 2, popular: false })];
+    assert.deepEqual(ids({}), [1, 2, 3, 4]);
+    // Segment A or B, and automatic.
+    assert.deepEqual(ids({ segmentIds: [1462, 6328], gearboxes: [14] }, [car(1, { gearboxId: 13 }), car(2, { segmentId: "6328", gearboxId: 14 }), car(3, { gearboxId: 14 })]), [2, 3]);
+    assert.deepEqual(ids({ fuels: [110] }), [2]);
+    assert.deepEqual(ids({ categories: ["delivery", "eco"] }), [3]);
+    assert.deepEqual(ids({ minSeats: 7 }), [3, 4]);
+    assert.deepEqual(ids({ bodies: [2] }, priced), [4]);
+    assert.deepEqual(ids({ sort: "price" }, priced), [2, 4, 1, 3]);
+    assert.deepEqual(ids({ sort: "popular" }, priced), [2, 1, 3, 4]);
+    assert.deepEqual(ids({ onlyPopular: true }, priced), [2]);
+  });
+
+  it("lists the collection pickers' values with their car counts", async () => {
+    const { collectionValues } = await import("./car-collection");
+    const values = collectionValues(
+      [car(1, { bodyId: 2, body: "Kombi", gearboxId: 13, transmission: "Manualna" }), car(2, { bodyId: 2, body: "Kombi", gearboxId: 14, transmission: "Automatyczna", fuel: { id: 110, label: "Elektryczny" } })],
+      { small: "Małe", compact: "Kompaktowe", large: "Duże", eco: "Eko", delivery: "Dostawcze" },
+    );
+    assert.deepEqual(values.bodies, [{ id: 2, label: "Kombi", cars: 2 }]);
+    assert.deepEqual(values.gearboxes.map((value) => value.label), ["Automatyczna", "Manualna"]);
+    assert.deepEqual(values.fuels, [{ id: 15, label: "Benzyna", cars: 1 }, { id: 110, label: "Elektryczny", cars: 1 }]);
+    assert.equal(values.categories.length, 5);
   });
 
   it("keeps the catalog order and the limit", async () => {
@@ -236,11 +269,13 @@ describe("car page when RentCarSoft fails", () => {
     segmentId: "1",
     image: { src: "https://example.test/aygo.webp", alt: "Toyota Aygo" },
     body: null,
+    bodyId: null,
     seats: 4,
     doors: 5,
     suitcases: { large: 1, small: 1 },
     transmission: "Manualna",
     automatic: false,
+    gearboxId: 13,
     fuel: null,
     categories: [],
     daily: null,
@@ -262,7 +297,7 @@ describe("car page when RentCarSoft fails", () => {
     const car = partialFleetCar(card);
     assert.equal(car.partial, true);
     assert.equal(car.dailyFrom, 89);
-    assert.deepEqual(car.gallery, [{ src: card.image!.src, thumb: card.image!.src, alt: "Toyota Aygo" }]);
+    assert.deepEqual(car.gallery, [{ src: card.image!.src, thumb: card.image!.src, alt: "Toyota Aygo", studio: true }]);
     assert.deepEqual([car.specs, car.features, car.equipment, car.priceBands], [[], [], [], []]);
     assert.equal(car.description, null);
     assert.equal(partialFleetCar({ ...card, image: null }).gallery.length, 0);
@@ -297,6 +332,24 @@ describe("car page when RentCarSoft fails", () => {
     await assert.rejects(
       withCatalogFallback(1218, () => Promise.reject(new TypeError("bug")), async () => partialFleetCar(card)),
       TypeError,
+    );
+  });
+});
+
+describe("car classes (menu panel, Car classes section)", () => {
+  const car = (id: number, categories: FleetCard["categories"], dailyFrom: number | null) =>
+    ({ id, categories, dailyFrom }) as FleetCard;
+
+  it("lists the classes with cars in the fixed order, each with its cheapest priced car", () => {
+    const classes = carClasses([
+      car(1, ["compact"], 129),
+      car(2, ["small"], null),
+      car(3, ["small"], 89),
+      car(4, ["compact", "eco"], 119),
+    ]);
+    assert.deepEqual(
+      classes.map(({ id, cheapest }) => [id, cheapest.id]),
+      [["small", 3], ["compact", 4], ["eco", 4]],
     );
   });
 });

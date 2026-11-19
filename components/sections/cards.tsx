@@ -1,4 +1,4 @@
-import { ArrowRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { getImageProps } from "next/image";
 
 import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
@@ -116,11 +116,24 @@ export function Cards({ section }: { section: CardsSection }) {
  * the bottom. The link is on the title, stretched over the whole card, so the
  * card reads as one link named by its title.
  */
-export function CardItem({ card, heading: Title, sizes, banner }: { card: Card; heading: Heading; sizes: string; banner: boolean }) {
+export function CardItem({
+  card,
+  heading: Title,
+  sizes,
+  banner,
+  fill = false,
+}: {
+  card: Card;
+  heading: Heading;
+  sizes: string;
+  banner: boolean;
+  /** No height of its own: as tall as the cards beside it in the row (the Car classes section's last card). */
+  fill?: boolean;
+}) {
   const tone = card.background.tone;
   return (
     <div
-      className={`group relative isolate flex w-full flex-col overflow-clip rounded-card p-6 text-white sm:p-8 ${banner ? "min-h-80" : "min-h-[24rem] lg:min-h-[26rem]"} ${TONES[tone]} ${
+      className={`group relative isolate flex w-full flex-col overflow-clip rounded-card text-white ${fill ? "p-5" : `p-6 sm:p-8 ${banner ? "min-h-80" : "min-h-[24rem] lg:min-h-[26rem]"}`} ${TONES[tone]} ${
         card.link ? "has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-blue-medium has-[a:focus-visible]:ring-offset-2" : ""
       }`}
     >
@@ -131,7 +144,7 @@ export function CardItem({ card, heading: Title, sizes, banner }: { card: Card; 
       ) : null}
 
       <div className="relative flex flex-col gap-3">
-        <Title className="text-2xl leading-tight font-bold text-balance sm:text-[1.75rem]">
+        <Title className={`leading-tight font-bold text-balance ${fill ? "text-xl" : "text-2xl sm:text-[1.75rem]"}`}>
           {card.link ? (
             <a
               href={card.link.href}
@@ -145,13 +158,13 @@ export function CardItem({ card, heading: Title, sizes, banner }: { card: Card; 
             card.title
           )}
         </Title>
-        {card.text ? <p className="text-sm leading-relaxed text-pretty text-white sm:text-base">{card.text}</p> : null}
+        {card.text ? <p className={`text-sm leading-relaxed text-pretty text-white ${fill ? "" : "sm:text-base"}`}>{card.text}</p> : null}
       </div>
 
       {/* Click-through: the stretched link underneath takes the click. */}
-      <div className="pointer-events-none relative mt-auto flex items-end justify-between gap-4 pt-8">
+      <div className={`pointer-events-none relative mt-auto flex items-end justify-between gap-4 ${fill ? "pt-4" : "pt-8"}`}>
         {card.icon ? (
-          <span aria-hidden className={`grid size-14 place-items-center rounded-full bg-white text-[1.75rem] ${ICON[tone]}`}>
+          <span aria-hidden className={`grid place-items-center rounded-full bg-white ${fill ? "size-11 text-[1.375rem]" : "size-14 text-[1.75rem]"} ${ICON[tone]}`}>
             <CtaIcon name={card.icon} className="size-[1em]" />
           </span>
         ) : (
@@ -160,9 +173,10 @@ export function CardItem({ card, heading: Title, sizes, banner }: { card: Card; 
         {card.link ? (
           <span
             aria-hidden
-            className={buttonClass("outline-inverse", "icon", "group-hover:border-white group-hover:before:scale-[20] group-hover:before:duration-600 group-hover:before:ease-in-out")}
+            // Filled white like the icon on the left: an outline alone was lost on a photo (under 3:1 against light frames).
+            className={buttonClass("inverse", "icon", "group-hover:before:scale-[20] group-hover:before:duration-600 group-hover:before:ease-in-out")}
           >
-            <ArrowRight className="size-5" />
+            <ChevronRight className="size-5" />
           </span>
         ) : null}
       </div>

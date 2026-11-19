@@ -3,14 +3,18 @@ import { describe, it } from "node:test";
 
 import { parseZonedDateTime } from "@internationalized/date";
 
+import { pickupTimeCheck } from "@/components/reservation/schedule";
+
 import { withPagePickup, type PickupPlace } from "./places";
 import {
+  bookingStatus,
   draftFromQuery,
   emptyDraft,
   movePickup,
   rentalPeriod,
   searchToQuery,
   toRentCarSoftDateTime,
+  toZonedDateTime,
   validateSearch,
   type SearchDraft,
 } from "./search";
@@ -88,16 +92,30 @@ describe("reservation search", () => {
     ]);
   });
 
-  it("lets a booking in progress keep a pickup earlier today, but not yesterday", () => {
-    const startOfToday = parseZonedDateTime("2026-11-11T00:00[Europe/Warsaw]");
-    const booking = (start: string) =>
-      validateSearch(
-        draft({ pickup: { id: 1, address: null }, start, end: "2026-11-14T10:00" }),
-        { places, earliestStart: startOfToday },
-      );
-    assert.equal(booking("2026-11-11T08:30").ok, true);
-    const yesterday = booking("2026-11-10T22:00");
-    assert.deepEqual(yesterday.ok ? [] : yesterday.issues, [{ field: "start", code: "past" }]);
+  it("tells an expired search (only the time too early) from a broken one", () => {
+    const options = { places, earliestStart };
+    const booking = (overrides: Partial<SearchDraft>) =>
+      bookingStatus(draft({ pickup: { id: 1, address: null }, end: "2026-11-14T10:00", ...overrides }), options);
+    assert.equal(booking({ start: "2026-11-11T12:30" }).status, "ok");
+    // Earlier today or days ago: complete, so the page asks for a new time and keeps the search.
+    const earlier = booking({ start: "2026-11-11T11:30" });
+    assert.equal(earlier.status, "expired");
+    assert.equal(earlier.status === "expired" ? earlier.search.start : null, "2026-11-11T11:30");
+    assert.equal(booking({ start: "2026-11-10T22:00" }).status, "expired");
+    // Anything else wrong as well: the usual "complete the search".
+    const broken = booking({ start: "2026-11-10T22:00", pickup: { id: 9, address: null } });
+    assert.deepEqual(broken.status === "invalid" ? broken.issues : [], [
+      { field: "pickup", code: "unknown" },
+      { field: "start", code: "past" },
+    ]);
+  });
+
+  it("leaves the time unchecked with a null earliest start", () => {
+    const result = validateSearch(
+      draft({ pickup: { id: 1, address: null }, start: "2020-01-01T10:00", end: "2020-01-03T10:00" }),
+      { places, earliestStart: null },
+    );
+    assert.equal(result.ok, true);
   });
 
   it("moves a pickup and keeps the return while it still follows", () => {
@@ -162,5 +180,26 @@ describe("page pickup point (city and local pages)", () => {
     assert.equal(withPagePickup(saved, null, places), saved);
     assert.equal(withPagePickup(saved, 999, places), saved);
     assert.equal(withPagePickup(saved, 480, []), saved);
+  });
+});
+
+describe("pickup time check (PickupTimeGuard)", () => {
+  const search = (start: string, end: string) =>
+    ({ term: "short", pickup: { id: 1, address: null }, dropoff: null, start, end }) as const;
+
+  it("leaves a pickup far ahead alone, unless the page already found it too early", () => {
+    assert.equal(pickupTimeCheck(search("2099-01-10T10:00", "2099-01-14T10:00")), null);
+    assert.notEqual(pickupTimeCheck(search("2099-01-10T10:00", "2099-01-14T10:00"), true), null);
+  });
+
+  it("moves a passed pickup to an open slot and keeps the rental length", () => {
+    const check = pickupTimeCheck(search("2020-01-10T10:00", "2020-01-14T10:00"));
+    assert.ok(check);
+    assert.equal(check.passed, true);
+    assert.equal(check.start, "2020-01-10T10:00");
+    assert.ok(check.moved.start > "2020-01-10T10:00");
+    const moved = toZonedDateTime(check.moved.start)!;
+    const end = toZonedDateTime(check.moved.term === "short" ? check.moved.end : "")!;
+    assert.equal(end.toDate().getTime() - moved.toDate().getTime(), 4 * 24 * 60 * 60 * 1000);
   });
 });

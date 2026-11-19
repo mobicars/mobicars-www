@@ -3,7 +3,7 @@ import type { ReservationTerm } from "@/lib/reservation/search";
 
 import { slugWords } from "@/lib/fleet/slug";
 
-import type { BlogCardFragment, BlogSectionFragment, CarsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
+import type { BlogCardFragment, BlogSectionFragment, CarClassesSectionFragment, CarCollectionFragment, ExtrasSectionFragment, CarsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
 import { parseBlogCard, parseCtas, parseMedia, resolveLink, sectionPostsKey, type BlogPostCard, type Cta, type Media } from "./entities";
 import { parseRichBlocks, richBlocksText, type RichBlocks } from "./rich-blocks";
 import type { PageRoute } from "./routes";
@@ -224,10 +224,12 @@ export type CarsSection = {
   title: string | null;
   text: string | null;
   headerAlign: "start" | "center";
-  source: "all" | "category" | "classes" | "cars";
+  source: "all" | "category" | "classes" | "cars" | "collection";
   category: "passenger" | "delivery" | "popular";
   segmentIds: number[];
   carIds: number[];
+  /** `collection`: the car collection's rules; `null` when none is linked (the section is then left out). */
+  collection: CarCollection | null;
   layout: "full" | "grid" | "carousel";
   /** `null`: no limit (0 in the CMS, and always in `full`). */
   limit: number | null;
@@ -410,7 +412,7 @@ export function sectionEdgeTone(section: Section, edge: "top" | "bottom"): Divid
 /** Test page only: the name and note of the variant shown under it. */
 export type VariantLabelSection = { type: "variantLabel"; id: string; title: string; note: string | null };
 
-export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
+export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | CarClassesSection | ExtrasSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
 
 type RawSection = NonNullable<NonNullable<PageQuery["page"]>["sections"]>[number];
 
@@ -451,6 +453,10 @@ export function parseSections(
         return [parseSocialSection(section)];
       case "ComponentSectionsCars":
         return [parseCarsSection(section, lang, routes)];
+      case "ComponentSectionsCarClasses":
+        return [parseCarClassesSection(section, lang, routes)];
+      case "ComponentSectionsExtras":
+        return [parseExtrasSection(section, lang, routes)];
       case "ComponentSectionsMap":
         return [parseMapSection(section, lang, routes)];
       case "ComponentSectionsForm":
@@ -708,6 +714,106 @@ function parseSocialSection(raw: SocialSectionFragment): SocialSection {
   };
 }
 
+/**
+ * Car classes (`sections.car-classes`): one card per RentCarSoft class with
+ * cars (small, compact, large, eco, delivery), the photo and "from" daily
+ * price of its cheapest car, linking to the fleet filtered to it. `grid`: as
+ * many in a row as fit; `carousel`: to swipe. Both end with the optional last
+ * card, as tall as the class cards.
+ */
+export type CarClassesSection = {
+  type: "car-classes";
+  id: string;
+  badge: string | null;
+  title: string | null;
+  text: string | null;
+  headerAlign: "start" | "center";
+  layout: "grid" | "carousel";
+  /** The same card as a Cards section's (`parts.card`), after the classes. */
+  moreCard: Card | null;
+  ctas: Cta[];
+  background: SectionBackground;
+  width: "full" | "boxed" | "contained";
+  spacing: "small" | "medium" | "large";
+};
+
+/**
+ * Extras (`sections.extras`): RentCarSoft's add-ons and accessories as cards
+ * linking to their pages (`lib/extras/catalog.ts`): every group under its
+ * heading (`all`), or one group.
+ */
+export type ExtrasSection = {
+  type: "extras";
+  id: string;
+  badge: string | null;
+  title: string | null;
+  text: string | null;
+  headerAlign: "start" | "center";
+  group: "all" | "protection" | "border" | "kids" | "multimedia" | "other";
+  ctas: Cta[];
+  background: SectionBackground;
+  width: "full" | "boxed" | "contained";
+  spacing: "small" | "medium" | "large";
+};
+
+const EXTRAS_GROUPS: readonly ExtrasSection["group"][] = ["all", "protection", "border", "kids", "multimedia", "other"];
+
+function parseExtrasSection(raw: ExtrasSectionFragment, lang: Lang, routes: readonly PageRoute[]): ExtrasSection {
+  return {
+    type: "extras",
+    id: raw.id,
+    badge: raw.badge || null,
+    title: raw.extrasTitle || null,
+    text: raw.extrasText || null,
+    headerAlign: raw.extrasHeaderAlign === "start" ? "start" : "center",
+    group: EXTRAS_GROUPS.find((group) => group === raw.extrasGroup) ?? "all",
+    ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
+    background: parseBackground(raw.background),
+    width: raw.extrasWidth,
+    spacing: raw.extrasSpacing,
+  };
+}
+
+/**
+ * A car collection (`api::car-collection`): a translated title and rules over
+ * RentCarSoft's cars, shared by every language. An empty rule does not filter;
+ * within one rule any value matches, and every filled rule must match
+ * (`collectionCars` in `lib/fleet/car-collection.ts`).
+ */
+export type CarCollection = {
+  documentId: string;
+  title: string;
+  /** Price segments (RentCarSoft price lists). */
+  segmentIds: number[];
+  categories: ("small" | "compact" | "large" | "eco" | "delivery")[];
+  fuels: number[];
+  bodies: number[];
+  gearboxes: number[];
+  minSeats: number | null;
+  onlyPromotion: boolean;
+  onlyPopular: boolean;
+  sort: "default" | "price" | "popular";
+};
+
+const COLLECTION_CATEGORIES: readonly CarCollection["categories"][number][] = ["small", "compact", "large", "eco", "delivery"];
+
+export function parseCarCollection(raw: CarCollectionFragment): CarCollection {
+  const categories = Array.isArray(raw.categories) ? raw.categories : [];
+  return {
+    documentId: raw.documentId,
+    title: raw.title,
+    segmentIds: idList(raw.segmentIds),
+    categories: COLLECTION_CATEGORIES.filter((category) => categories.includes(category)),
+    fuels: idList(raw.fuels),
+    bodies: idList(raw.bodies),
+    gearboxes: idList(raw.gearboxes),
+    minSeats: raw.minSeats && raw.minSeats > 0 ? raw.minSeats : null,
+    onlyPromotion: raw.onlyPromotion === true,
+    onlyPopular: raw.onlyPopular === true,
+    sort: raw.sort === "price" || raw.sort === "popular" ? raw.sort : "default",
+  };
+}
+
 /** Ids from a JSON custom field (`rcs-segments`, `rcs-cars`): positive integers only, in order, without repeats. */
 function idList(value: unknown): number[] {
   return Array.isArray(value) ? [...new Set(value.filter((id): id is number => Number.isInteger(id) && id > 0))] : [];
@@ -726,6 +832,7 @@ function parseCarsSection(raw: CarsSectionFragment, lang: Lang, routes: readonly
     category: raw.carsCategory === "delivery" || raw.carsCategory === "popular" ? raw.carsCategory : "passenger",
     segmentIds: idList(raw.segmentIds),
     carIds: idList(raw.carIds),
+    collection: raw.collection ? parseCarCollection(raw.collection) : null,
     layout,
     limit: layout === "full" || !raw.limit || raw.limit <= 0 ? null : raw.limit,
     moreCard: raw.moreCard && layout !== "full" ? parseCard(raw.moreCard, lang, routes) : null,
@@ -733,6 +840,23 @@ function parseCarsSection(raw: CarsSectionFragment, lang: Lang, routes: readonly
     background: parseBackground(raw.background),
     width: raw.carsWidth,
     spacing: raw.carsSpacing,
+  };
+}
+
+function parseCarClassesSection(raw: CarClassesSectionFragment, lang: Lang, routes: readonly PageRoute[]): CarClassesSection {
+  return {
+    type: "car-classes",
+    id: raw.id,
+    badge: raw.badge || null,
+    title: raw.carClassesTitle || null,
+    text: raw.carClassesText || null,
+    headerAlign: raw.carClassesHeaderAlign === "start" ? "start" : "center",
+    layout: raw.carClassesLayout === "carousel" ? "carousel" : "grid",
+    moreCard: raw.moreCard ? parseCard(raw.moreCard, lang, routes) : null,
+    ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
+    background: parseBackground(raw.background),
+    width: raw.carClassesWidth,
+    spacing: raw.carClassesSpacing,
   };
 }
 

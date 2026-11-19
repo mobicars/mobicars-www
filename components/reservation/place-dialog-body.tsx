@@ -33,6 +33,7 @@ import {
 
 import { DialogHeader } from "@/components/reservation/dialog-parts";
 import { useMyLocation } from "@/components/reservation/use-my-location";
+import { buttonClass } from "@/components/ui/button";
 import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
@@ -182,7 +183,7 @@ export function PlaceDialogBody({
                   value={query}
                   onChange={(event) => setQuery(event.target.value)}
                   placeholder={texts.placeSearch[kind]}
-                  className="h-12 w-full rounded-xl border border-blue-dark/15 bg-white pr-3 pl-11 text-base outline-none transition-[border-color,background-color] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:bg-blue-medium/5 motion-reduce:transition-none"
+                  className="h-12 w-full rounded-control border border-line-strong bg-white pr-3 pl-11 text-base outline-none transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:ring-2 focus:ring-blue-light motion-reduce:transition-none"
                 />
               </label>
             </div>
@@ -209,7 +210,7 @@ export function PlaceDialogBody({
                         key={city}
                         type="button"
                         onClick={() => setQuery(city)}
-                        className="rounded-xl bg-blue-medium/10 px-3 py-1.5 text-sm font-medium text-blue-dark transition-colors duration-200 ease-out hover:bg-blue-medium/15 motion-reduce:transition-none"
+                        className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-blue-dark ring-1 ring-line transition-colors duration-200 ease-out hover:bg-tint motion-reduce:transition-none"
                       >
                         {city}
                       </button>
@@ -247,10 +248,10 @@ export function PlaceDialogBody({
                         id={item.id}
                         textValue={item.name}
                         className={({ isSelected }) =>
-                          `flex w-full cursor-pointer items-center gap-3 rounded-xl border px-3 py-3 text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+                          `flex w-full cursor-pointer items-center gap-3 rounded-control border px-3 py-3 text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
                             isSelected
                               ? "border-blue-medium bg-blue-medium text-white hover:border-blue-dark hover:bg-blue-dark"
-                              : "border-blue-light bg-white hover:border-blue-medium/40 hover:bg-[color-mix(in_srgb,var(--color-blue-dark)_4%,white)]"
+                              : "border-line-strong bg-white hover:border-blue-medium/50 hover:bg-tint"
                           }`
                         }
                       >
@@ -290,7 +291,7 @@ export function PlaceDialogBody({
             <button
               type="button"
               onClick={() => setView("search")}
-              className="-ml-2 mb-6 flex w-fit items-center gap-1 rounded-xl px-2 py-1.5 text-base font-semibold transition-colors duration-200 ease-out hover:bg-[color-mix(in_srgb,var(--color-blue-dark)_4%,white)] motion-reduce:transition-none"
+              className="-ml-2 mb-6 flex w-fit items-center gap-1 rounded-control px-2 py-1.5 text-base font-semibold transition-colors duration-200 ease-out hover:bg-tint motion-reduce:transition-none"
             >
               <ChevronLeft className="size-5" aria-hidden />
               {texts.back}
@@ -309,7 +310,7 @@ export function PlaceDialogBody({
                 value={ownAddress}
                 onChange={(event) => setOwnAddress(event.target.value)}
                 placeholder={texts.addressPlaceholder}
-                className="h-12 w-full rounded-xl border border-blue-dark/15 bg-white pr-4 pl-11 text-base outline-none transition-[border-color,background-color] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:bg-blue-medium/5 motion-reduce:transition-none"
+                className="h-12 w-full rounded-control border border-line-strong bg-white pr-4 pl-11 text-base outline-none transition-[border-color,background-color,box-shadow] duration-200 ease-out hover:border-blue-medium/50 focus:border-blue-medium focus:ring-2 focus:ring-blue-light motion-reduce:transition-none"
               />
             </label>
             {location.supported ? (
@@ -333,11 +334,11 @@ export function PlaceDialogBody({
               type="button"
               disabled={ownAddress.trim() === ""}
               onClick={saveAddress}
-              className="mt-4 h-12 w-full rounded-xl bg-blue-medium text-base font-bold text-white transition-colors duration-200 ease-out hover:bg-blue-dark disabled:opacity-40 disabled:hover:bg-blue-medium motion-reduce:transition-none"
+              className={buttonClass("primary", "md", "mt-4 w-full")}
             >
               {texts.saveAddress}
             </button>
-            <div className="mt-8 rounded-2xl bg-blue-medium/5 p-5">
+            <div className="mt-8 rounded-card bg-tint p-5">
               <h3 className="text-lg font-semibold">{texts.howItWorks}</h3>
               <ol className="mt-4 flex flex-col gap-3 text-sm">
                 <li className="flex items-center gap-3">
@@ -432,7 +433,7 @@ function LocateButton({
       type="button"
       disabled={locating}
       onClick={onClick}
-      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-blue-medium/40 text-sm font-semibold text-blue-medium transition-colors duration-200 ease-out hover:bg-blue-medium/5 disabled:opacity-60 motion-reduce:transition-none"
+      className={buttonClass("secondary", "sm", "w-full")}
     >
       {locating ? (
         <LoaderCircle className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />

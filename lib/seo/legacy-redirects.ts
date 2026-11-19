@@ -132,15 +132,11 @@ const RULES: readonly Rule[] = [
     to: (match) => carTarget(match[1] as "pl" | "en", match[2]),
   },
   {
-    // Add-on pages: the new site lists add-ons in the booking, not on pages.
+    // Add-on pages live on (`app/[lang]/extras/[slug]`, the id at the end of the slug finds
+    // the add-on); only the English root under Polish moves to the Polish root.
     id: "addon-page",
-    pattern: /^\/pl\/(?:dodatki-i-akcesoria|addons-and-accessories)\/[^/]+$/,
-    to: () => "/pl/dodatki-i-akcesoria",
-  },
-  {
-    id: "addon-page",
-    pattern: /^\/en\/addons-and-accessories\/[^/]+$/,
-    to: () => "/en/addons-and-accessories",
+    pattern: /^\/pl\/addons-and-accessories\/([^/]+)$/,
+    to: (match) => `/pl/dodatki-i-akcesoria/${match[1]}`,
   },
   {
     // Promo links (`/pl/kod-promocyjny/LATO`) open the booking with the code.

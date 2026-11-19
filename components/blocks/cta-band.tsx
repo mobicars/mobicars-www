@@ -1,4 +1,4 @@
-import { Apple, ArrowRight, Play, Smartphone } from "lucide-react";
+import { Apple, ChevronRight, Play, Smartphone } from "lucide-react";
 import Image from "next/image";
 import type { ReactNode } from "react";
 
@@ -61,7 +61,7 @@ export async function CtaBand({ block, first, lang }: { block: CtaBandBlock; fir
           <div className="flex flex-col gap-3 sm:flex-row md:shrink-0">
             <SmartLink link={block.primary} className={buttonClass(dark ? "inverse" : "primary", "lg", "w-full sm:w-auto")}>
               {block.primary.label}
-              <ArrowRight className="size-5" aria-hidden />
+              <ChevronRight className="size-5" aria-hidden />
             </SmartLink>
             {block.secondary ? (
               <SmartLink
@@ -142,7 +142,7 @@ function PhotoCard({ block, first, lang, stores }: { block: CtaBandBlock & Photo
             <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:flex-wrap">
               <SmartLink link={block.primary} className={buttonClass("inverse", "lg", "w-full sm:w-auto")}>
                 {block.primary.label}
-                <ArrowRight className="size-5" aria-hidden />
+                <ChevronRight className="size-5" aria-hidden />
               </SmartLink>
               {block.secondary ? <SmartLink link={block.secondary} className={buttonClass("outline-inverse", "lg", "w-full sm:w-auto")} /> : null}
             </div>

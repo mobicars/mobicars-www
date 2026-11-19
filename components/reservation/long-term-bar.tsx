@@ -124,7 +124,7 @@ function OptionField({
       <WidgetModal
         open={open}
         onOpenChange={setOpen}
-        className="max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(24rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+        className="max-h-[min(36rem,calc(100dvh-1.5rem))] w-[min(24rem,calc(100%-1.5rem))] rounded-card shadow-float"
       >
         <Dialog
           aria-labelledby={titleId}

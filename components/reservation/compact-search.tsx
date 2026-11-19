@@ -23,7 +23,7 @@ export function CompactSearch({ trip, children }: { trip: CompactTrip; children:
           type="button"
           onClick={() => setOpen(true)}
           aria-expanded={false}
-          className="flex w-full cursor-pointer items-center gap-3 rounded-2xl bg-white px-4 py-3 text-left text-blue-dark shadow-lg transition-shadow duration-200 ease-out active:shadow-md motion-reduce:transition-none lg:hidden"
+          className="flex w-full cursor-pointer items-center gap-3 rounded-card bg-white px-4 py-3 text-left text-blue-dark shadow-lg transition-shadow duration-200 ease-out active:shadow-md motion-reduce:transition-none lg:hidden"
         >
           <span className="flex min-w-0 flex-1 flex-col gap-1">
             <span className="flex min-w-0 items-center gap-2 text-sm font-semibold">

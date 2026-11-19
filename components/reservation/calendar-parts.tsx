@@ -25,7 +25,7 @@ import { useMessages } from "@/i18n/messages-context";
 import { reservationConfig } from "@/lib/reservation/config";
 
 const navButton =
-  "flex size-9 cursor-pointer items-center justify-center rounded-full border border-blue-dark/15 transition-colors duration-200 ease-out hover:bg-blue-dark/[0.04] disabled:opacity-30 motion-reduce:transition-none";
+  "flex size-9 cursor-pointer items-center justify-center rounded-full border border-line-strong transition-colors duration-200 ease-out hover:bg-tint disabled:opacity-30 motion-reduce:transition-none";
 
 /** Previous and next month. Must sit inside a `Calendar` or `RangeCalendar`. */
 export function CalendarNav() {

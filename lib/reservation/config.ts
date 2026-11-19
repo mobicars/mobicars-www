@@ -8,8 +8,8 @@ export const reservationConfig = {
    * How many minutes after the current moment the earliest pickup slot may appear.
    * 0 means the first slot later than the current minute. With 30-minute slots,
    * 30 puts the first pickup 30 to 60 minutes ahead.
-   * Enforced when a time is chosen (calendar, "Szukaj", restored search); a booking
-   * already in progress is not cut off by it, see `bookingInProgressStart`.
+   * Enforced everywhere: calendar, "Szukaj", the reservation page, quotes and "Rezerwuj".
+   * A booking whose pickup gets this close asks for a new time (`PickupTimeGuard`).
    */
   pickupLeadMinutes: 30,
   /** Hour list step. 15 yields 00:00, 00:15, 00:30. 30 yields 00:00, 00:30. */

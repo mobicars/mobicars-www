@@ -29,7 +29,6 @@ import { reservationConfig } from "@/lib/reservation/config";
 import { withPagePickup, type PickupPlace } from "@/lib/reservation/places";
 import {
   QUERY_KEYS,
-  bookingInProgressStart,
   emptyDraft,
   searchToQuery,
   toZonedDateTime,
@@ -128,8 +127,9 @@ export function ReservationPicker({
     prepareDraft(
       withPagePickup(initial ?? loadSearchDraft() ?? emptyDraft(firstTerm), defaultPickupId, places),
       places,
-      // On the reservation page the URL's booking is in progress: keep its dates.
-      live ? bookingInProgressStart() : earliestPickup(),
+      // On the reservation page the dates are the URL's, also a pickup that has
+      // passed: the page asks for a new time (`PickupTimeGuard`), never silently.
+      live ? null : earliestPickup(),
     ),
   );
   const draft: SearchDraft = {
@@ -143,9 +143,9 @@ export function ReservationPicker({
     setEdits((current) => ({ ...current, ...patch }));
     if (live) {
       // Half-done edits (e.g. "Inne miejsce zwrotu" before the place) wait for the rest.
-      // A change without "Szukaj" keeps the booking going: the pickup minute may have
-      // passed meanwhile. A newly picked time already respects the lead time in the dialog.
-      const result = validateSearch({ ...draft, ...patch }, { places, earliestStart: bookingInProgressStart() });
+      // So does any change while the pickup is too close or past: the page asks for a
+      // new time first (`PickupTimeGuard`). A time picked in the dialog respects the lead time.
+      const result = validateSearch({ ...draft, ...patch }, { places, earliestStart: earliestPickup() });
       if (result.ok) {
         startUpdate(() => router.replace(searchHref(result.search, KEPT_ON_CHANGE), { scroll: false }));
       }
@@ -304,7 +304,7 @@ function RestartDialog({
     <WidgetModal
       open={open}
       onOpenChange={onOpenChange}
-      className="w-[min(28rem,calc(100%-1.5rem))] rounded-2xl shadow-2xl"
+      className="w-[min(28rem,calc(100%-1.5rem))] rounded-card shadow-float"
     >
       <Dialog aria-labelledby={titleId} className="flex flex-col outline-none">
         <DialogHeader titleId={titleId} title={texts.restartTitle} className="pt-4 pb-1" />
@@ -385,18 +385,18 @@ function touchedFields(patch: Partial<SearchDraft>): SearchField[] {
 
 /**
  * Makes a restored draft usable now: unknown places are dropped, a pickup
- * before `earliest` is replaced by the default schedule, and a missing return
- * date follows the pickup by `defaultRentalDays`. The results page offers the
- * same dates for a search that went stale (`SearchProblem`), so the page and
- * the widget never disagree.
+ * before `earliest` (unless it is `null`) is replaced by the default schedule,
+ * and a missing return date follows the pickup by `defaultRentalDays`. The
+ * results page offers the same dates for a search it cannot show
+ * (`SearchProblem`), so the page and the widget never disagree.
  */
-export function prepareDraft(draft: SearchDraft, places: PickupPlace[], earliest: ZonedDateTime): SearchDraft {
+export function prepareDraft(draft: SearchDraft, places: PickupPlace[], earliest: ZonedDateTime | null): SearchDraft {
   const known = (ref: SearchDraft["pickup"]) =>
     ref && places.some((place) => place.id === ref.id) ? ref : null;
   const next: SearchDraft = { ...draft, pickup: known(draft.pickup), dropoff: known(draft.dropoff) };
 
   const start = next.start ? toZonedDateTime(next.start) : null;
-  if (!start || start.compare(earliest) < 0) {
+  if (!start || (earliest && start.compare(earliest) < 0)) {
     const schedule = defaultShortTermSchedule();
     next.start = schedule ? valueFromPoint(schedule.start, schedule.pickup) : null;
     next.end = schedule ? valueFromPoint(schedule.end, schedule.dropoff) : null;

@@ -119,8 +119,8 @@ export function SegmentRow({
     </div>
     <article
       aria-labelledby={titleId}
-      className={`hidden grid-cols-1 overflow-hidden @xl:grid rounded-2xl border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none @xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] @3xl:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)] ${
-        chosenHere ? "border-green-medium shadow-lg" : "border-transparent shadow-sm hover:shadow-md"
+      className={`hidden grid-cols-1 overflow-hidden @xl:grid rounded-card border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none @xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] @3xl:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)] ${
+        chosenHere ? "border-green-medium" : "border-line hover:border-blue-medium/40"
       }`}
     >
       <div className="relative aspect-[16/10] bg-white @xl:aspect-auto @xl:min-h-56">
