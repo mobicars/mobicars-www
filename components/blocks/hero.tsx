@@ -152,7 +152,7 @@ export function Hero({
               >
                 <HeroPicker lang={lang} reservation={reservation} pickupId={pickupId} />
               </Suspense>
-              {/* Rating and claims right under "Pokaż auta": inside the first screen on phones (catalog C4, C5). */}
+              {/* Rating and claims right under "Rezerwuj": inside the first screen on phones (catalog C4, C5). */}
               {block.trust ? (
                 <div className={`mt-4 ${vertical ? "" : "flex justify-center"}`}>
                   <TrustBar block={{ ...block.trust, variant: "inline" }} lang={lang} dark />

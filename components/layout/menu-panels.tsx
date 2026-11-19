@@ -69,7 +69,7 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
     await connection();
   }
   const cars = await orFallback("fleet", listFleetCars(lang), []);
-  // The cheapest car's "from" price with its condition, as on its fleet card (`DailyNotes`).
+  // The cheapest car's "from" price with its condition, as the car page reads it.
   const classes = carClasses(cars).map(({ id, cheapest }) => ({
     id,
     label: messages.cars.categories[id],

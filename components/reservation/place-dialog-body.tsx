@@ -18,6 +18,7 @@ import {
 } from "react";
 import { Dialog, ListBox, ListBoxItem, Tab, TabList, TabListStateContext, TabPanel, Tabs, type Key } from "react-aria-components";
 import {
+  BuildingComplex,
   CarFront,
   ChevronLeft,
   House,
@@ -28,12 +29,14 @@ import {
   Search,
   SquareCheck,
   TrainFront,
+  X,
   type LucideIcon,
 } from "lucide-react";
 
 import { DialogHeader } from "@/components/reservation/dialog-parts";
 import { useMyLocation } from "@/components/reservation/use-my-location";
 import { buttonClass } from "@/components/ui/button";
+import { ChoiceChips } from "@/components/ui/choice-chips";
 import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
@@ -87,6 +90,8 @@ export function PlaceDialogBody({
   const [streetMissing, setStreetMissing] = useState(false);
   const trimmedQuery = query.trim();
   const cities = useMemo(() => uniqueCities(lang, places), [lang, places]);
+  const pickedCity = cities.find((city) => sameText(lang, city, trimmedQuery)) ?? null;
+  const citiesTitleId = useId();
   const visiblePlaces = useMemo(
     () => places.filter((item) => matchesPlace(lang, item, trimmedQuery)),
     [lang, places, trimmedQuery],
@@ -201,21 +206,25 @@ export function PlaceDialogBody({
                   />
                 </div>
               ) : null}
-              {trimmedQuery === "" ? (
+              {trimmedQuery === "" || pickedCity ? (
                 <div className="mb-5">
-                  <h3 className="mb-3 text-sm font-semibold text-blue-medium">{texts.popularCities}</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {cities.map((city) => (
-                      <button
-                        key={city}
-                        type="button"
-                        onClick={() => setQuery(city)}
-                        className="rounded-full bg-white px-3 py-1.5 text-sm font-medium text-blue-dark ring-1 ring-line transition-colors duration-200 ease-out hover:bg-tint motion-reduce:transition-none"
-                      >
-                        {city}
-                      </button>
-                    ))}
-                  </div>
+                  <h3 id={citiesTitleId} className="mb-3 text-sm font-semibold text-blue-medium">{texts.nearestCity}</h3>
+                  {/* The chosen city stays among the chips; pressing it again clears it and brings back every point. */}
+                  <ChoiceChips
+                    labelledBy={citiesTitleId}
+                    options={cities.map((city) => ({
+                      value: city,
+                      label: (
+                        <span className="inline-flex items-center gap-1.5">
+                          <BuildingComplex className="size-4 shrink-0" strokeWidth={1.75} aria-hidden />
+                          {city}
+                          {city === pickedCity ? <X className="size-4" aria-hidden /> : null}
+                        </span>
+                      ),
+                    }))}
+                    value={pickedCity}
+                    onChange={(city) => setQuery(city ?? "")}
+                  />
                 </div>
               ) : null}
               {visiblePlaces.length === 0 ? (

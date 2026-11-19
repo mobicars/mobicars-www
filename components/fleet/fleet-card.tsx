@@ -1,8 +1,8 @@
-import { ChevronRight, BadgePercent, CarFront, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight, BadgePercent, CarFront, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { DailyNotes } from "@/components/fleet/daily-notes";
+import { BookCarButton } from "@/components/fleet/book-car-button";
 import type { Lang } from "@/i18n/config";
 import type { Messages } from "@/i18n/messages";
 import { fleetHref } from "@/i18n/routes";
@@ -14,10 +14,11 @@ export type FleetTexts = Messages["fleet"];
 
 /**
  * The one car card of the site: the fleet list, "Podobne samochody" and the
- * CMS cars block (`components/blocks/cars.tsx`). Server-safe markup, no state.
- * The whole card is one link to the car page (the name is the link; the rest
- * is stretched over it), so it is one tab stop. Prices are the base "from"
- * prices of `lib/fleet/cars.ts`.
+ * CMS cars block (`components/blocks/cars.tsx`). Server-safe markup; the one
+ * client part is "Rezerwuj". The card is a link to the car page (the name is
+ * the link, stretched over the card; "Szczegóły" at the bottom is part of it),
+ * and "Rezerwuj" above it opens the short-term search for this car
+ * (`BookCarButton`). Prices are the base "from" prices of `lib/fleet/cars.ts`.
  */
 export function FleetCard({
   car,
@@ -50,84 +51,90 @@ export function FleetCard({
   const promotionEnd = showPromotionEnd && car.promotionEndsAt ? formatApiDate(lang, car.promotionEndsAt) : null;
 
   return (
-    <article
-      className={`group relative flex h-full w-full overflow-hidden rounded-card border border-line bg-white focus-within:ring-2 focus-within:ring-blue-medium focus-within:ring-offset-2 ${
-        compact ? "flex-col max-sm:flex-row" : "flex-col"
-      }`}
-    >
-      {/* Flat, like the new sections: no shadow or lift; on hover the photo zooms in a little. */}
-      <div className={`relative aspect-[16/10] overflow-hidden bg-surface ${compact ? "max-sm:aspect-auto max-sm:w-[40%] max-sm:shrink-0" : ""}`}>
-        {car.image ? (
-          <Image
-            src={car.image.src}
-            alt={car.image.alt}
-            fill
-            priority={priority}
-            sizes={sizes}
-            className={`object-contain p-4 transition-transform duration-500 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${compact ? "max-sm:p-2" : ""}`}
-          />
-        ) : (
-          <div className="flex size-full items-center justify-center text-muted-dark">
-            <CarFront className="size-12" strokeWidth={1.25} aria-hidden />
-            <span className="sr-only">{t.noPhoto}</span>
+    <article className="group relative flex h-full w-full flex-col overflow-hidden rounded-card border border-line bg-white has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-blue-medium has-[a:focus-visible]:ring-offset-2">
+      <div className={`flex min-h-0 flex-1 ${compact ? "flex-col max-sm:flex-row" : "flex-col"}`}>
+        {/* Flat, like the new sections: no shadow or lift; on hover the photo zooms in a little. */}
+        <div className={`relative aspect-[16/10] overflow-hidden bg-surface ${compact ? "max-sm:aspect-auto max-sm:w-[40%] max-sm:shrink-0" : ""}`}>
+          {car.image ? (
+            <Image
+              src={car.image.src}
+              alt={car.image.alt}
+              fill
+              priority={priority}
+              sizes={sizes}
+              className={`object-contain p-4 transition-transform duration-500 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 ${compact ? "max-sm:p-2" : ""}`}
+            />
+          ) : (
+            <div className="flex size-full items-center justify-center text-muted-dark">
+              <CarFront className="size-12" strokeWidth={1.25} aria-hidden />
+              <span className="sr-only">{t.noPhoto}</span>
+            </div>
+          )}
+          <div className={`absolute top-3 left-3 flex flex-wrap gap-1.5 ${compact ? "max-sm:top-2 max-sm:left-2 max-sm:[&>span:nth-child(n+2)]:hidden" : ""}`}>
+            {car.promotion ? (
+              <Badge icon={BadgePercent} className="bg-go-strong text-white">
+                {t.promotion}
+              </Badge>
+            ) : null}
+            {car.popular ? (
+              <Badge icon={Star} className="bg-white text-blue-dark">
+                {t.popular}
+              </Badge>
+            ) : null}
           </div>
-        )}
-        <div className={`absolute top-3 left-3 flex flex-wrap gap-1.5 ${compact ? "max-sm:top-2 max-sm:left-2 max-sm:[&>span:nth-child(n+2)]:hidden" : ""}`}>
-          {car.promotion ? (
-            <Badge icon={BadgePercent} className="bg-go-strong text-white">
-              {t.promotion}
-            </Badge>
-          ) : null}
-          {car.popular ? (
-            <Badge icon={Star} className="bg-white text-blue-dark">
-              {t.popular}
-            </Badge>
-          ) : null}
+        </div>
+
+        <div className={`flex min-w-0 flex-1 flex-col p-4 sm:gap-3 ${compact ? "gap-2 max-sm:p-3" : "gap-3"}`}>
+          <div className="flex flex-col">
+            <p className="mb-0.5 text-xs font-semibold text-blue-medium">{car.segment}</p>
+            <Heading className={`leading-snug font-bold text-blue-dark text-balance ${compact ? "text-base sm:text-lg" : "text-lg"}`}>
+              <Link
+                href={fleetHref(lang, car.slug)}
+                className="outline-none after:absolute after:inset-0 after:content-['']"
+              >
+                {car.name}
+              </Link>
+            </Heading>
+            <p className={`text-xxs text-muted-dark ${compact ? "max-sm:hidden" : ""}`}>{t.orSimilar}</p>
+            {promotionEnd ? (
+              <p className="mt-1 text-xs font-semibold text-green-dark">{fill(t.promotionUntilGeneric, { date: promotionEnd })}</p>
+            ) : null}
+          </div>
+
+          <ul className="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-blue-dark/80">
+            <Spec icon={Users} label={car.seats ? countLabel(lang, car.seats, t.seatCount) : null} short={car.seats} />
+            <Spec icon={Settings2} label={car.transmission} />
+            <Spec icon={Fuel} label={car.fuel?.label ?? null} />
+          </ul>
+
+          <div className={`mt-auto border-t border-line pt-3 ${compact ? "max-sm:border-0 max-sm:pt-0" : ""}`}>
+            <CardPrice car={car} lang={lang} t={t} compact={compact} />
+          </div>
         </div>
       </div>
 
-      <div className={`flex min-w-0 flex-1 flex-col p-4 sm:gap-4 sm:p-5 ${compact ? "gap-2 max-sm:p-3" : "gap-4"}`}>
-        <div className="flex flex-col gap-1">
-          <p className="text-xs font-semibold text-blue-medium">{car.segment}</p>
-          <Heading className={`leading-snug font-bold text-blue-dark text-balance ${compact ? "text-base sm:text-lg" : "text-lg"}`}>
-            <Link
-              href={fleetHref(lang, car.slug)}
-              className="outline-none after:absolute after:inset-0 after:content-['']"
-            >
-              {car.name}
-            </Link>
-          </Heading>
-            <p className={`text-xs text-muted-dark ${compact ? "max-sm:hidden" : ""}`}>{t.orSimilar}</p>
-          {promotionEnd ? (
-            <p className="text-xs font-semibold text-green-dark">{fill(t.promotionUntilGeneric, { date: promotionEnd })}</p>
-          ) : null}
-        </div>
-
-        <ul className={`flex flex-wrap gap-x-4 gap-y-2 text-blue-dark/80 ${compact ? "gap-x-3 text-xs sm:gap-x-4 sm:text-sm" : "text-sm"}`}>
-          <Spec icon={Users} label={car.seats ? countLabel(lang, car.seats, t.seatCount) : null} short={car.seats} />
-          <Spec icon={Settings2} label={car.transmission} />
-          <Spec icon={Fuel} label={car.fuel?.label ?? null} />
-        </ul>
-
-        <div className={`mt-auto flex items-end justify-between gap-3 border-t border-line pt-4 ${compact ? "max-sm:border-0 max-sm:pt-0" : ""}`}>
-          <CardPrice car={car} lang={lang} t={t} compact={compact} />
-          <span
-            aria-hidden
-            className={`${compact ? "max-sm:hidden" : ""} inline-flex shrink-0 items-center gap-1 text-sm font-bold text-blue-medium transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none`}
-          >
-            {t.details}
-            <ChevronRight className="size-4" strokeWidth={2} />
-          </span>
-        </div>
+      {/* "Szczegóły" belongs to the card's link (no second link to the same page); "Rezerwuj" sits above it. */}
+      <div className="grid h-12 shrink-0 grid-cols-2 border-t border-line text-sm font-bold">
+        <span aria-hidden className="flex items-center justify-center gap-2 text-blue-medium transition-colors duration-150 ease-out-soft group-hover:bg-tint motion-reduce:transition-none">
+          {t.details}
+          <ArrowRight className="size-4 transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none" strokeWidth={2} />
+        </span>
+        <BookCarButton
+          offerId={car.id}
+          name={car.name}
+          title={t.bookTitle}
+          lead={t.bookLead}
+          className="relative z-10 flex cursor-pointer items-center justify-center gap-2 bg-go-strong text-white outline-none transition-colors duration-150 ease-out-soft hover:bg-green-dark focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-inset motion-reduce:transition-none"
+        />
       </div>
     </article>
   );
 }
 
 /**
- * One price: "od X zł / doba" with the rental length it takes ("przy najmie
- * od 30 dni"), never a bare number. No 1-day or monthly price beside it; the
- * monthly one only for a car without a daily one. The car page has them all.
+ * One price: "od X zł / doba", without its rental length (decided 19 November
+ * 2026, to keep the card short) or a 1-day price; the monthly one only for a
+ * car without a daily one. The car page has them all.
  */
 function CardPrice({ car, lang, t, compact = false }: { car: FleetCardData; lang: Lang; t: FleetTexts; compact?: boolean }) {
   if (car.dailyFrom === null && car.monthlyFrom === null) {
@@ -140,11 +147,6 @@ function CardPrice({ car, lang, t, compact = false }: { car: FleetCardData; lang
           {t.from} <span className={`font-bold tracking-tight tabular-nums ${compact ? "text-xl sm:text-2xl" : "text-2xl"}`}>{formatPrice(lang, car.dailyFrom)}</span>{" "}
           <span className="text-xs font-semibold">{t.perDay}</span>
         </p>
-      ) : null}
-      {car.daily ? (
-        <div className={compact ? "max-sm:hidden" : undefined}>
-          <DailyNotes daily={car.daily} lang={lang} t={t} oneDay={false} />
-        </div>
       ) : null}
       {car.dailyFrom === null && car.monthlyFrom !== null ? (
         <p className="text-xs text-muted-dark">

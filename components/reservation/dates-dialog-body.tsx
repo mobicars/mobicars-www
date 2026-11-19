@@ -129,64 +129,65 @@ export function DatesDialogBody({ schedule, onOpenChange, onConfirm }: Omit<Rese
           </div>
         </div>
       </RangeCalendar>
-      <div className="flex shrink-0 flex-col gap-3 border-t border-line bg-white px-5 pt-3 pb-4 sm:flex-row sm:items-end">
-        <div className="grid flex-1 grid-cols-2 gap-3">
-          <TimeField
-            label={texts.pickupTime}
-            icon={Timer}
-            date={range?.start ?? null}
-            value={pickup}
-            onChange={(slot) => {
-              setPickup(slot);
-              if (!range) {
-                return;
-              }
-              if (!dropoff) {
-                setDropoff(suggestedDropoff(range.start, range.end, slot));
-                return;
-              }
-              if (isDropoffTooEarly(range.start, range.end, slot, dropoff)) {
-                setDropoff(nextSlotAfter(range.end, slot, range.start));
-              }
-            }}
-            isBlocked={(slot) => (range ? isSlotPast(range.start, slot) : false)}
-          />
-          <TimeField
-            label={texts.returnTime}
-            icon={TimerReset}
-            date={range?.end ?? null}
-            value={dropoff}
-            onChange={setDropoff}
-            isBlocked={(slot) => {
-              if (!range) {
-                return false;
-              }
-              if (!pickup) {
-                return isSlotPast(range.end, slot);
-              }
-              return isDropoffTooEarly(range.start, range.end, pickup, slot);
-            }}
-          />
-        </div>
-        {/* Over more than one day, a return later in the day than the pickup is billed as one more day. */}
+      <div className="flex shrink-0 flex-col gap-3 border-t border-line bg-white px-5 pt-3 pb-4">
+        {/* Over more than one day, a return later in the day than the pickup is billed as one more day. Its own row, over the hours. */}
         {range && pickup && dropoff && range.end.compare(range.start) > 0 && minutesOf(dropoff) > minutesOf(pickup) ? (
           <p role="status" className="flex items-start gap-2 rounded-control bg-tint px-3 py-2 text-xs text-blue-dark">
             <Info className="mt-px size-4 shrink-0 text-blue-medium" aria-hidden />
             {messages.dates.laterReturnExtraDay}
           </p>
         ) : null}
-        <ConfirmButton
-          disabled={!canAccept}
-          onClick={() => {
-            if (!range || !pickup || !dropoff) {
-              return;
-            }
-            onConfirm({ start: range.start, end: range.end, pickup, dropoff });
-            onOpenChange(false);
-          }}
-        >
-          {texts.confirmChoice}
-        </ConfirmButton>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="grid flex-1 grid-cols-2 gap-3">
+            <TimeField
+              label={texts.pickupTime}
+              icon={Timer}
+              date={range?.start ?? null}
+              value={pickup}
+              onChange={(slot) => {
+                setPickup(slot);
+                if (!range) {
+                  return;
+                }
+                // Over more than one day the return moves with the pickup (same hour, no extra day); on one day it stays if still later.
+                const follow =
+                  range.end.compare(range.start) > 0 ? suggestedDropoff(range.start, range.end, slot) : (dropoff ?? suggestedDropoff(range.start, range.end, slot));
+                setDropoff(
+                  follow && !isDropoffTooEarly(range.start, range.end, slot, follow) ? follow : nextSlotAfter(range.end, slot, range.start),
+                );
+              }}
+              isBlocked={(slot) => (range ? isSlotPast(range.start, slot) : false)}
+            />
+            <TimeField
+              label={texts.returnTime}
+              icon={TimerReset}
+              date={range?.end ?? null}
+              value={dropoff}
+              onChange={setDropoff}
+              isBlocked={(slot) => {
+                if (!range) {
+                  return false;
+                }
+                if (!pickup) {
+                  return isSlotPast(range.end, slot);
+                }
+                return isDropoffTooEarly(range.start, range.end, pickup, slot);
+              }}
+            />
+          </div>
+          <ConfirmButton
+            disabled={!canAccept}
+            onClick={() => {
+              if (!range || !pickup || !dropoff) {
+                return;
+              }
+              onConfirm({ start: range.start, end: range.end, pickup, dropoff });
+              onOpenChange(false);
+            }}
+          >
+            {texts.confirmChoice}
+          </ConfirmButton>
+        </div>
       </div>
     </Dialog>
   );

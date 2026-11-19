@@ -16,7 +16,7 @@ import { clearBookingDraft, loadBookingDraft, type BookingDraft } from "@/lib/re
 
 /** Once a session: a closed bar stays closed on the next page of the visit. */
 const SEEN_KEY = "mc_resume_seen";
-/** Shown once the visitor has scrolled this share of the screen: the hero's search ("Pokaż auta") is then out of the way. */
+/** Shown once the visitor has scrolled this share of the screen: the hero's search ("Rezerwuj") is then out of the way. */
 const SCROLL_SHARE = 0.6;
 
 /**

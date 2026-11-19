@@ -65,7 +65,7 @@ type ReservationPickerProps = {
    * e.g. from a car's page. Ignored with `live`, where the URL's own choice is kept.
    */
   offerId?: number;
-  /** Hero search: on phones, a pinned bar with the place, dates and "Pokaż auta" once the form scrolls away. */
+  /** Hero search: on phones, a pinned bar with the place, dates and "Rezerwuj" once the form scrolls away. */
   sticky?: boolean;
   /** RentCarSoft point a city or local page starts from (`withPagePickup`). */
   defaultPickupId?: number | null;

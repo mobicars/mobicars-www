@@ -12,7 +12,7 @@
  * Sizes: `md` 48px, the default everywhere; `sm` 40px only inside dense rows;
  * `lg` 56px for the one call to action of a section (hero, closing band);
  * `icon` a 40px circle for a button that is only an icon (carousel and FAQ arrows).
- * Every button is a full pill, like the booking search's tabs and "Pokaż auta",
+ * Every button is a full pill, like the booking search's tabs and "Rezerwuj",
  * and sinks slightly while pressed, for touch feedback. On hover (and keyboard
  * focus) a circle grows from its centre and leaves a gentle, slightly deeper
  * shade of its own colour: CSS only, on the button's `::before`, so every
