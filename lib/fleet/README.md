@@ -25,13 +25,13 @@ The fleet list and one page per car, generated from the RentCarSoft catalog. The
 
 ## Data (`cars.ts`)
 
-Server-only. `listFleetCars(lang)` reads the daily catalog (`listAllOffers`, term `short`, no dates); `getFleetCar(lang, id)` reads one offer (`getOffer`). Both are cached by the bridge (`rcs:catalog`, `hours`) when `CACHE_ENABLED` is on (production) and read live when it is off (local, preview); see `lib/cache.ts` and `lib/rentcarsoft/docs/caching.md`.
+Server-only. `listFleetCars(lang)` reads the daily catalog (`listAllOffers`, term `short`); `getFleetCar(lang, id)` reads one offer (`getOffer`). Both ask with a pickup date of now and no return date (`catalogPickup`): RentCarSoft sends a running promotion only with a pickup date (none of 35 cars undated, 25 dated, 19 November 2026); the other fields are the same. The bridge keeps such a dated request two minutes (a search); `cars.ts` caches the fleet built from it (`rcs:catalog`, `hours`, `setPriceLife`) when `CACHE_ENABLED` is on (production) and read live when it is off (local, preview); see `lib/cache.ts` and `lib/rentcarsoft/docs/caching.md`.
 
 What the undated catalog carries (checked on the live API on 12 November 2026, 34 offers):
 
 | Field | Used for |
 | --- | --- |
-| `cennik[segmentId].czasy` | The price table: base price per day for 1 / 2–3 / 4–7 / 8–14 / 15–29 / 30+ days, with `promocja` when a promotion runs. Parsed as `Offer.priceList.bands`. |
+| `cennik[segmentId].czasy` | The price table: base price per day for 1 / 2–3 / 4–7 / 8–14 / 15–29 / 30+ days, with `promocja` when a promotion runs (only on a dated request). Parsed as `Offer.priceList.bands`. |
 | `cennik[segmentId].monthly_price` | Not shown. It is not a bookable price (1500 against a quoted 1900 for the Aygo on 13 November 2026); the monthly "from" comes from the calculator, see below. |
 | `cennik[segmentId].kaucja`, `deposit` | Shown only when above 0 (0 for every car on that date), like the reservation cards. |
 | `minPrice`, `maxPrice` | Fallback for "od X zł / doba" when there are no bands. |

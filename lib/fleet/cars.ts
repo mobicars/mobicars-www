@@ -1,12 +1,15 @@
 import "server-only";
 
+import { fromAbsolute, toCalendarDateTime } from "@internationalized/date";
 import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
 import { CACHE_TAGS, getOffer, listAllOffers, RentCarSoftError, type Offer, type OfferImage } from "@/lib/rentcarsoft";
+import { reservationConfig } from "@/lib/reservation/config";
 import { OFFER_CATEGORIES, type OfferCategory } from "@/lib/reservation/offers";
+import { toRentCarSoftDateTime } from "@/lib/reservation/search";
 
 import { bandsAt, dailyFrom, nextPriceChange, type DailyFrom } from "./daily-price";
 import { monthlyPricesFrom, type MonthlyFrom } from "./price-from";
@@ -15,8 +18,8 @@ import { carSlug } from "./slug";
 
 /**
  * Data for the fleet pages, built on the server from the RentCarSoft catalog
- * (undated short-term list and `getOffer`), so the client gets only what it
- * shows. Prices are the segment's base price list; a quote for real dates
+ * (short-term list and `getOffer`, both from now: `catalogPickup`), so the
+ * client gets only what it shows. Prices are the segment's base price list; a quote for real dates
  * comes from the reservation flow. See `lib/fleet/README.md`.
  */
 
@@ -173,15 +176,25 @@ async function loadFleetCars(lang: Lang): Promise<FleetCard[]> {
 }
 
 async function buildFleetCars(lang: Lang): Promise<{ cars: FleetCard[]; changesAt: number | null }> {
+  const now = Date.now();
   const [offers, monthly] = await Promise.all([
-    listAllOffers({ lang, term: "short", offerKeyIds: LIST_KEYS }),
+    listAllOffers({ lang, term: "short", offerKeyIds: LIST_KEYS, pickUpDate: catalogPickup(now) }),
     monthlyPricesFrom(lang),
   ]);
-  const now = Date.now();
   return {
     cars: offers.map((offer) => toCard(offer, monthly.get(offer.id) ?? null, now)),
     changesAt: nextPriceChange(offers.map((offer) => offer.promotion), now),
   };
+}
+
+/**
+ * RentCarSoft sends a class's promotion (`promocja`, `promocja_od`, `promocja_do`)
+ * only with a pickup date: the catalog asks as of now, Warsaw time, as the old
+ * site did. Without a return date the list's `days` and totals mean nothing;
+ * the fleet pages read only the price bands and the promotion window.
+ */
+function catalogPickup(now: number): string {
+  return toRentCarSoftDateTime(toCalendarDateTime(fromAbsolute(now, reservationConfig.timeZone)));
 }
 
 /** The `hours` profile, shortened to end when a promotion starts or ends. */
@@ -279,12 +292,12 @@ async function loadFleetCar(lang: Lang, id: number): Promise<FleetCar> {
 }
 
 async function buildFleetCar(lang: Lang, id: number): Promise<{ car: FleetCar; changesAt: number | null }> {
+  const now = Date.now();
   const [offer, polish, monthly] = await Promise.all([
-    getOffer(id, { lang, offerKeyIds: DETAIL_KEYS }),
+    getOffer(id, { lang, offerKeyIds: DETAIL_KEYS, pickUpDate: catalogPickup(now) }),
     lang === "pl" ? null : getOffer(id, { lang: "pl", offerKeyIds: [10, 79, 80] }),
     monthlyPricesFrom(lang),
   ]);
-  const now = Date.now();
   return {
     car: toCar(offer, lang, polish, monthly.get(offer.id) ?? null, now),
     changesAt: nextPriceChange([offer.promotion], now),
