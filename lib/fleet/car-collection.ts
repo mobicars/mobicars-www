@@ -1,4 +1,4 @@
-import type { CarCollection } from "@/lib/strapi";
+import type { CarCollection, FleetCollection } from "@/lib/strapi";
 
 import type { FleetCard } from "./cars";
 
@@ -62,4 +62,21 @@ export function collectionValues(
     bodies: tally((car) => ({ id: car.bodyId, label: car.body })),
     gearboxes: tally((car) => ({ id: car.gearboxId, label: car.transmission })),
   };
+}
+
+/** A fleet collection as the fleet list needs it in the browser: the rules, title and slug, not the icon or landing page. */
+export function fleetFilterCollections(collections: readonly FleetCollection[]): Omit<FleetCollection, "documentId" | "icon" | "landing">[] {
+  return collections.map((collection) => ({
+    slug: collection.slug,
+    title: collection.title,
+    segmentIds: collection.segmentIds,
+    categories: collection.categories,
+    fuels: collection.fuels,
+    bodies: collection.bodies,
+    gearboxes: collection.gearboxes,
+    minSeats: collection.minSeats,
+    onlyPromotion: collection.onlyPromotion,
+    onlyPopular: collection.onlyPopular,
+    sort: collection.sort,
+  }));
 }

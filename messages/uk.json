@@ -12,8 +12,6 @@
     "placeLinks": "Оренда авто поруч із вами",
     "hoursClosed": "зачинено",
     "fleetQuickLinks": "Швидкий вибір",
-    "fleetVans": "Фургони",
-    "fleetElectric": "Електромобілі",
     "airport": "Аеропорт",
     "trainStation": "Вокзал",
     "office": "Офіс",
@@ -354,6 +352,7 @@
     "sortPriceAsc": "Ціна: від найнижчої",
     "sortPriceDesc": "Ціна: від найвищої",
     "clear": "Скинути фільтри",
+    "collectionRemove": "Прибрати фільтр «{title}»",
     "showResults": "Показати результати ({count})",
     "close": "Закрити",
     "results": {
@@ -834,7 +833,7 @@
       "orSimilar": "або подібне · {segment}",
       "pickup": "Місце",
       "dates": "Термін",
-      "back": "Повернутися",
+      "back": "Продовжити",
       "decline": "Ні, дякую"
     }
   },

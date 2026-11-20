@@ -6,8 +6,9 @@ import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { cacheEnabled } from "@/lib/cache";
 import { listFleetCarIdsAt, listFleetCars, type FleetCard as FleetCardData } from "@/lib/fleet/cars";
+import { fleetFilterCollections } from "@/lib/fleet/car-collection";
 import { selectSectionCars } from "@/lib/fleet/cars-block";
-import { isDarkBackground, type CarsSection } from "@/lib/strapi";
+import { isDarkBackground, listFleetCollections, type CarsSection } from "@/lib/strapi";
 
 import { CardItem } from "./cards";
 import { LazyCarousel as Carousel, LazyFleetBrowser as FleetBrowser } from "./lazy";
@@ -53,8 +54,17 @@ export async function Cars({ section, lang, pickupId }: { section: CarsSection; 
 
   let list;
   if (section.layout === "full") {
-    // The fleet page's list: its filters (in the URL, run in the browser) over the section's cars, 12 at a time.
-    list = <FleetBrowser cars={cars} lang={lang} t={t.fleet} more={{ step: STEP, labels: { more: t.blocks.showMore, shownOf: t.blocks.shownOf } }} />;
+    // The fleet page's list: its filters (in the URL, run in the browser) over the section's cars, 12 at a time;
+    // `?collection=` from the menu narrows it to a CMS collection.
+    list = (
+      <FleetBrowser
+        cars={cars}
+        lang={lang}
+        t={t.fleet}
+        collections={fleetFilterCollections(await listFleetCollections(lang))}
+        more={{ step: STEP, labels: { more: t.blocks.showMore, shownOf: t.blocks.shownOf } }}
+      />
+    );
   } else if (section.layout === "carousel") {
     list = (
       <Carousel

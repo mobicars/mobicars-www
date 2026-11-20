@@ -12,6 +12,7 @@ export { getPage } from "./modules/pages";
 export { findPlaceRoute, getPlacePage, listPlaceRoutes, LOCAL_ROOT, placeSegments, type PlaceKind } from "./modules/places";
 export { findBlogRoute, getBlogPost, listBlogRoutes, type BlogPost } from "./modules/blog";
 export { listPlaceLinks, type PlaceLink, type PlaceLinks } from "./modules/place-links";
+export { fleetCollectionHref, listFleetCollections, parseFleetCollections, type FleetCollection } from "./modules/fleet-collections";
 export type {
   Announcement,
   Block,

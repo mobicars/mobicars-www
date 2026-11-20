@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, use, useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 import type { DraftLabels } from "@/lib/reservation/draft-labels";
 import type { ReservationSearch } from "@/lib/reservation/search";
@@ -15,8 +16,13 @@ type Props = Omit<BookingDraft, "href" | "dates" | "segmentNames" | "placeNames"
 /**
  * On the protection, extras and details steps: keeps the current booking URL
  * for the homepage's "finish your booking" banner. The URL changes as choices
- * are made, so it is saved again whenever the page is left or hidden. It
- * starts saving once the names in every language are there.
+ * are made, so it is saved again with each change and whenever the page is
+ * left or hidden. It starts saving once the names in every language are there.
+ *
+ * The URL comes from the router, not `window.location`: when the visitor
+ * leaves the booking inside the app (the menu's "Samochody"), the window
+ * already shows the next page by the time this unmounts, and the banner's
+ * button then led to `/flota` instead of the booking.
  */
 export function RememberBooking(props: Props) {
   return (
@@ -32,11 +38,14 @@ function Remember({ car, segment, image, place, search, labels }: Props) {
   const { term, start } = search;
   const end = search.term === "short" ? search.end : null;
   const months = search.term === "long" ? search.months : null;
+  const pathname = usePathname();
+  const query = useSearchParams().toString();
+  const href = query ? `${pathname}?${query}` : pathname;
   useEffect(() => {
     const dates: TripDates = term === "short" ? { term, start, end: end ?? "" } : { term, start, months: months ?? 1 };
     const save = () =>
       saveBookingDraft({
-        href: window.location.pathname + window.location.search,
+        href,
         car,
         segment,
         image,
@@ -59,6 +68,6 @@ function Remember({ car, segment, image, place, search, labels }: Props) {
       window.removeEventListener("pagehide", save);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [car, segment, image, place, term, start, end, months, segmentNames, placeNames]);
+  }, [href, car, segment, image, place, term, start, end, months, segmentNames, placeNames]);
   return null;
 }

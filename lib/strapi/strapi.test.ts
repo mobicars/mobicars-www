@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import type { FeaturesBlockFragment } from "./generated/graphql";
+import { fleetCollectionHref, parseFleetCollections } from "./modules/fleet-collections";
 import { placeKindOf, placeSegments } from "./modules/places";
 import { relatedCards } from "./modules/blog";
 import { StrapiError } from "./internal/errors";
@@ -1363,5 +1364,42 @@ describe("strapi request retries", () => {
     assert.equal(isTransient(new StrapiError("timeout"), false), false);
     assert.equal(isTransient(new StrapiError("timeout"), true), true);
     assert.equal(isTransient(new StrapiError("api", 429), false), true);
+  });
+});
+
+describe("fleet collections", () => {
+  const raw = (overrides: Record<string, unknown> = {}) => ({
+    documentId: "c1",
+    title: " Dla rodzin ",
+    slug: "dla-rodzin",
+    icon: "users",
+    segmentIds: [],
+    categories: [],
+    fuels: [],
+    bodies: [],
+    gearboxes: [],
+    minSeats: 7,
+    onlyPromotion: false,
+    onlyPopular: false,
+    sort: "price",
+    landingPage: { documentId: "p1" },
+    ...overrides,
+  });
+
+  it("keeps the slug, icon and landing next to the rules; drops one without a slug or title", () => {
+    const parsed = parseFleetCollections({ carCollections: [raw(), raw({ slug: null }), raw({ title: "  " }), null] } as never);
+    assert.equal(parsed.length, 1);
+    assert.deepEqual(
+      { title: parsed[0].title, slug: parsed[0].slug, icon: parsed[0].icon, landing: parsed[0].landing, minSeats: parsed[0].minSeats, sort: parsed[0].sort },
+      { title: "Dla rodzin", slug: "dla-rodzin", icon: "users", landing: "p1", minSeats: 7, sort: "price" },
+    );
+  });
+
+  it("links to the landing page in this language, else to the fleet filtered to the collection", () => {
+    const routes = [{ documentId: "p1", segments: ["auta-dla-rodzin"] }];
+    assert.equal(fleetCollectionHref("pl", { slug: "dla-rodzin", landing: "p1" }, routes), "/pl/auta-dla-rodzin");
+    // The landing page has no version in this language: no route, so the fleet.
+    assert.equal(fleetCollectionHref("uk", { slug: "dlia-simei", landing: "p1" }, []), "/uk/avtopark?collection=dlia-simei");
+    assert.equal(fleetCollectionHref("pl", { slug: "dla-rodzin", landing: null }, routes), "/pl/flota?collection=dla-rodzin");
   });
 });

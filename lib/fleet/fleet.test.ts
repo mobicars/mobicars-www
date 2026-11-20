@@ -75,8 +75,16 @@ describe("fleet filters", () => {
   it("reads and writes the query string", async () => {
     const { fleetFiltersToQuery, parseFleetFilters } = await import("./filters");
     const filters = parseFleetFilters(new URLSearchParams("category=eco&gearbox=automatic&fuel=18&seats=7&sort=price_asc"));
-    assert.deepEqual(filters, { category: "eco", gearbox: "automatic", fuel: 18, seats: 7, sort: "price_asc" });
+    assert.deepEqual(filters, { category: "eco", gearbox: "automatic", fuel: 18, seats: 7, collection: null, sort: "price_asc" });
     assert.equal(fleetFiltersToQuery(filters).toString(), "category=eco&gearbox=automatic&fuel=18&seats=7&sort=price_asc");
+  });
+
+  it("reads a collection slug next to the other filters", async () => {
+    const { fleetFiltersToQuery, parseFleetFilters } = await import("./filters");
+    const filters = parseFleetFilters(new URLSearchParams("collection=dla-rodzin&fuel=18"));
+    assert.equal(filters.collection, "dla-rodzin");
+    assert.equal(fleetFiltersToQuery(filters).toString(), "fuel=18&collection=dla-rodzin");
+    assert.equal(parseFleetFilters(new URLSearchParams("collection=<script>")).collection, null);
   });
 
   it("ignores unknown values", async () => {
@@ -86,6 +94,7 @@ describe("fleet filters", () => {
       gearbox: null,
       fuel: null,
       seats: null,
+      collection: null,
       sort: "default",
     });
   });

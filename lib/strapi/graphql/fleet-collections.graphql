@@ -1,0 +1,18 @@
+# Car collections marked "Show in fleet", of one language: shortcuts in the
+# header's Samochody menu and the fleet list's `?collection=` (`modules/fleet-collections.ts`).
+# The collection type has no drafts; its landing page is matched against the routes.
+query FleetCollections($locale: I18NLocaleCode!) {
+  carCollections(
+    locale: $locale
+    filters: { showInFleet: { eq: true } }
+    sort: ["fleetOrder:asc", "title:asc"]
+    pagination: { limit: 50 }
+  ) {
+    ...CarCollection
+    slug
+    icon
+    landingPage {
+      documentId
+    }
+  }
+}

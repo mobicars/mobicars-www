@@ -24,7 +24,7 @@ const SCROLL_SHARE = 0.6;
  * `ResumeBooking` only when a draft is saved. Not a modal: it does not cover
  * the hero, take the focus or block the page. It slides in at the bottom once
  * the visitor scrolls past the hero's search (never over the LCP or "Pokaż
- * auta"), once a session. "Wróć" opens the booking where it
+ * auta"), once a session. "Kontynuuj" opens the booking where it
  * was left; "Nie, dziękuję" forgets it; × only hides it.
  */
 export function ResumeBookingBar() {

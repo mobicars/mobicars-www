@@ -42,6 +42,7 @@ type Blog {
   localizations(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Blog]!
   localizations_connection(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogRelationResponseCollection
   publishedAt: DateTime
+  sections: [BlogSectionsDynamicZone]
   seo: ComponentSharedSeo
   slug: String!
   title: String!
@@ -133,6 +134,7 @@ input BlogInput {
   coverImage: ID
   excerpt: String
   publishedAt: DateTime
+  sections: [BlogSectionsDynamicZoneInput!]
   seo: ComponentSharedSeoInput
   slug: String
   title: String
@@ -141,6 +143,10 @@ input BlogInput {
 type BlogRelationResponseCollection {
   nodes: [Blog!]!
 }
+
+union BlogSectionsDynamicZone = ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsImage | ComponentSectionsSplit | ComponentSectionsText | Error
+
+scalar BlogSectionsDynamicZoneInput
 
 input BooleanFilterInput {
   and: [Boolean]
@@ -172,8 +178,11 @@ type CarCollection {
   categories: JSON
   createdAt: DateTime
   documentId: ID!
+  fleetOrder: Int
   fuels: JSON
   gearboxes: JSON
+  icon: String
+  landingPage: Page
   locale: String
   localizations(filters: CarCollectionFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [CarCollection]!
   localizations_connection(filters: CarCollectionFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): CarCollectionRelationResponseCollection
@@ -182,6 +191,8 @@ type CarCollection {
   onlyPromotion: Boolean
   publishedAt: DateTime
   segmentIds: JSON
+  showInFleet: Boolean
+  slug: String
   sort: ENUM_CARCOLLECTION_SORT!
   title: String!
   updatedAt: DateTime
@@ -198,8 +209,11 @@ input CarCollectionFiltersInput {
   categories: JSONFilterInput
   createdAt: DateTimeFilterInput
   documentId: IDFilterInput
+  fleetOrder: IntFilterInput
   fuels: JSONFilterInput
   gearboxes: JSONFilterInput
+  icon: StringFilterInput
+  landingPage: PageFiltersInput
   locale: StringFilterInput
   localizations: CarCollectionFiltersInput
   minSeats: IntFilterInput
@@ -209,6 +223,8 @@ input CarCollectionFiltersInput {
   or: [CarCollectionFiltersInput]
   publishedAt: DateTimeFilterInput
   segmentIds: JSONFilterInput
+  showInFleet: BooleanFilterInput
+  slug: StringFilterInput
   sort: StringFilterInput
   title: StringFilterInput
   updatedAt: DateTimeFilterInput
@@ -217,13 +233,18 @@ input CarCollectionFiltersInput {
 input CarCollectionInput {
   bodies: JSON
   categories: JSON
+  fleetOrder: Int
   fuels: JSON
   gearboxes: JSON
+  icon: String
+  landingPage: ID
   minSeats: Int
   onlyPopular: Boolean
   onlyPromotion: Boolean
   publishedAt: DateTime
   segmentIds: JSON
+  showInFleet: Boolean
+  slug: String
   sort: ENUM_CARCOLLECTION_SORT
   title: String
 }
@@ -244,6 +265,7 @@ type City {
   localizations_connection(filters: CityFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): CityRelationResponseCollection
   pickupPoint: Int
   publishedAt: DateTime
+  sections: [CitySectionsDynamicZone]
   seo: ComponentSharedSeo
   shortName: String
   slug: String!
@@ -290,6 +312,7 @@ input CityInput {
   kind: ENUM_CITY_KIND
   pickupPoint: Int
   publishedAt: DateTime
+  sections: [CitySectionsDynamicZoneInput!]
   seo: ComponentSharedSeoInput
   shortName: String
   slug: String
@@ -299,6 +322,10 @@ input CityInput {
 type CityRelationResponseCollection {
   nodes: [City!]!
 }
+
+union CitySectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSplit | ComponentSectionsText | Error
+
+scalar CitySectionsDynamicZoneInput
 
 type ComponentBlocksBlogPosts {
   badge: String
@@ -2848,6 +2875,7 @@ type LocalPage {
   localizations_connection(filters: LocalPageFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): LocalPageRelationResponseCollection
   pickupPoint: Int
   publishedAt: DateTime
+  sections: [LocalPageSectionsDynamicZone]
   seo: ComponentSharedSeo
   shortName: String
   slug: String
@@ -2890,6 +2918,7 @@ input LocalPageInput {
   components: [LocalPageComponentsDynamicZoneInput!]
   pickupPoint: Int
   publishedAt: DateTime
+  sections: [LocalPageSectionsDynamicZoneInput!]
   seo: ComponentSharedSeoInput
   shortName: String
   slug: String
@@ -2898,6 +2927,10 @@ input LocalPageInput {
 type LocalPageRelationResponseCollection {
   nodes: [LocalPage!]!
 }
+
+union LocalPageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSplit | ComponentSectionsText | Error
+
+scalar LocalPageSectionsDynamicZoneInput
 
 type Mutation {
   """Change user password. Confirm with the current password."""

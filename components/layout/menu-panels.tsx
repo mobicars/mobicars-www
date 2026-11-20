@@ -3,15 +3,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 
+import { CtaIcon } from "@/components/blocks/cta-link";
 import type { Lang } from "@/i18n/config";
 import { fill, getMessages } from "@/i18n/messages";
 import { fleetHref, reservationHref } from "@/i18n/routes";
 import { cacheEnabled } from "@/lib/cache";
 import { carClasses } from "@/lib/fleet/car-classes";
+import { collectionCars } from "@/lib/fleet/car-collection";
 import { listFleetCars } from "@/lib/fleet/cars";
 import { formatPrice } from "@/lib/fleet/format";
 import { listServicePoints } from "@/lib/rentcarsoft";
-import { findPageRoute, listLatestPosts, pageHref, type NavLink } from "@/lib/strapi";
+import { findPageRoute, fleetCollectionHref, listFleetCollections, listLatestPosts, listPageRoutes, pageHref, type NavLink } from "@/lib/strapi";
 
 /**
  * Submenu panels of the header (`MainNav`). Rendered on the server, so the
@@ -35,7 +37,7 @@ const linkClass =
   "rounded-lg text-sm font-semibold text-blue-dark outline-none underline-offset-4 hover:text-blue-medium hover:underline focus-visible:ring-2 focus-visible:ring-blue-medium";
 
 const chipClass =
-  "inline-flex h-9 items-center rounded-full border border-muted px-4 text-sm font-semibold text-blue-dark outline-none transition-colors duration-200 ease-out hover:border-blue-medium hover:bg-blue-light focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
+  "inline-flex h-9 items-center gap-1.5 rounded-full border border-muted px-4 text-sm font-semibold text-blue-dark outline-none transition-colors duration-200 ease-out hover:border-blue-medium hover:bg-blue-light focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
 
 const moreClass =
   "inline-flex items-center gap-1 text-sm font-bold text-blue-medium outline-none underline-offset-4 hover:underline focus-visible:ring-2 focus-visible:ring-blue-medium";
@@ -68,7 +70,11 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
   if (!cacheEnabled()) {
     await connection();
   }
-  const cars = await orFallback("fleet", listFleetCars(lang), []);
+  const [cars, collections, routes] = await Promise.all([
+    orFallback("fleet", listFleetCars(lang), []),
+    orFallback("fleet collections", listFleetCollections(lang), []),
+    orFallback("page routes", listPageRoutes(lang), []),
+  ]);
   // The cheapest car's "from" price with its condition, as the car page reads it.
   const classes = carClasses(cars).map(({ id, cheapest }) => ({
     id,
@@ -76,12 +82,11 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
     daily: cheapest.daily,
     image: cheapest.image,
   }));
-  // Shortcuts to the filtered fleet, shown only when the fleet has such cars.
-  const quickLinks = [
-    { label: t.fleetVans, query: "category=delivery", show: cars.some((car) => car.categories.includes("delivery")) },
-    // 110 is "Elektryczny" on the RentCarSoft fuel key (`lib/fleet/filters.ts`).
-    { label: t.fleetElectric, query: "fuel=110", show: cars.some((car) => car.fuel?.id === 110) },
-  ].filter((link) => link.show);
+  // The CMS collections marked "Show in fleet" that have cars now: each to its landing page in this
+  // language, else to the fleet filtered to it (`fleetCollectionHref`).
+  const quickLinks = collections
+    .filter((collection) => collectionCars(collection, cars).length > 0)
+    .map((collection) => ({ label: collection.title, icon: collection.icon, href: fleetCollectionHref(lang, collection, routes) }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -119,8 +124,9 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
           <nav aria-label={t.fleetQuickLinks}>
             <ul className="flex flex-wrap gap-2">
               {quickLinks.map((link) => (
-                <li key={link.query}>
-                  <Link href={`${fleetHref(lang)}?${link.query}`} className={chipClass}>
+                <li key={link.href}>
+                  <Link href={link.href} className={chipClass}>
+                    {link.icon ? <CtaIcon name={link.icon} className="size-4 shrink-0 text-blue-medium" /> : null}
                     {link.label}
                   </Link>
                 </li>

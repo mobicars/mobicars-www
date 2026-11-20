@@ -5,15 +5,18 @@ import { Button, Label, ListBox, ListBoxItem, Popover, Select, SelectValue } fro
 import { useId, useState, useSyncExternalStore, type ReactNode } from "react";
 
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, quietDangerClass } from "@/components/ui/button";
 import { ChoiceChips } from "@/components/ui/choice-chips";
 import { ShowMore } from "@/components/ui/show-more";
 import { BottomSheet } from "@/components/ui/sheet";
 import type { Lang } from "@/i18n/config";
+import { fill } from "@/i18n/fill";
+import { collectionCars } from "@/lib/fleet/car-collection";
 import type { FleetCard as FleetCardData } from "@/lib/fleet/cars";
 import { countLabel } from "@/lib/fleet/format";
 import { parseFleetFilters, fleetFiltersToQuery, type FleetFilters, type FleetSort } from "@/lib/fleet/filters";
 import type { OfferCategory } from "@/lib/reservation/offers";
+import type { FleetCollection } from "@/lib/strapi";
 
 const CATEGORY_ORDER: OfferCategory[] = ["small", "compact", "large", "eco", "delivery"];
 
@@ -48,11 +51,14 @@ export function FleetBrowser({
   cars,
   lang,
   t,
+  collections = [],
   more,
 }: {
   cars: FleetCardData[];
   lang: Lang;
   t: FleetTexts;
+  /** The language's "Show in fleet" collections: `?collection=<slug>` narrows the list to one, the other filters work within it. */
+  collections?: Omit<FleetCollection, "documentId" | "icon" | "landing">[];
   /** Show the (filtered) list `step` cars at a time with "Show more" (the Cars section's `full`); without it, all at once. */
   more?: { step: number; labels: { more: string; shownOf: string } };
 }) {
@@ -68,11 +74,14 @@ export function FleetBrowser({
     .sort((left, right) => left - right);
   const hasGearboxChoice = cars.some((car) => car.automatic === true) && cars.some((car) => car.automatic === false);
 
+  // A collection link (the menu, a campaign) narrows the list first; its own order stays unless a sort is picked.
+  const collection = collections.find((each) => each.slug === filters.collection) ?? null;
   const shown = sortCars(
-    cars.filter((car) => matches(car, filters)),
+    (collection ? collectionCars(collection, cars) : cars).filter((car) => matches(car, filters)),
     filters.sort,
   );
   const active =
+    Number(collection !== null) +
     Number(filters.category !== null) +
     Number(filters.gearbox !== null) +
     Number(filters.fuel !== null) +
@@ -87,7 +96,7 @@ export function FleetBrowser({
   }
 
   function clear() {
-    writeFilters({ category: null, gearbox: null, fuel: null, seats: null, sort: filters.sort });
+    writeFilters({ category: null, gearbox: null, fuel: null, seats: null, collection: null, sort: filters.sort });
   }
 
   const resultLabel = countLabel(lang, shown.length, t.results);
@@ -182,9 +191,23 @@ export function FleetBrowser({
         </div>
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <p aria-live="polite" className="text-sm font-semibold text-blue-dark">
-            {resultLabel}
-          </p>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            {/* Shown while a collection narrows the list, so a visitor from a link sees why and can drop it. */}
+            {collection ? (
+              <button
+                type="button"
+                onClick={() => update({ collection: null })}
+                aria-label={fill(t.collectionRemove, { title: collection.title })}
+                className={quietDangerClass("h-9 bg-red-50 text-sm")}
+              >
+                {collection.title}
+                <X className="size-4" aria-hidden />
+              </button>
+            ) : null}
+            <p aria-live="polite" className="text-sm font-semibold text-blue-dark">
+              {resultLabel}
+            </p>
+          </div>
           <div className="flex flex-wrap items-center gap-3">
             {active > 0 ? <ClearButton onClick={clear} label={t.clear} /> : null}
             <div className="hidden lg:block">
@@ -238,11 +261,7 @@ export function FleetBrowser({
 
 function ClearButton({ onClick, label }: { onClick: () => void; label: string }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="flex h-10 cursor-pointer items-center gap-1 rounded-full px-3 text-sm font-semibold text-blue-medium underline-offset-4 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-blue-medium"
-    >
+    <button type="button" onClick={onClick} className={quietDangerClass("h-10 text-sm")}>
       <X className="size-4" aria-hidden />
       {label}
     </button>

@@ -12,8 +12,6 @@
     "placeLinks": "Mietwagen in Ihrer Nähe",
     "hoursClosed": "geschlossen",
     "fleetQuickLinks": "Schnellauswahl",
-    "fleetVans": "Transporter",
-    "fleetElectric": "Elektroautos",
     "airport": "Flughafen",
     "trainStation": "Bahnhof",
     "office": "Büro",
@@ -354,6 +352,7 @@
     "sortPriceAsc": "Preis: aufsteigend",
     "sortPriceDesc": "Preis: absteigend",
     "clear": "Filter zurücksetzen",
+    "collectionRemove": "Filter „{title}“ entfernen",
     "showResults": "Ergebnisse anzeigen ({count})",
     "close": "Schließen",
     "results": {

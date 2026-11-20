@@ -12,8 +12,6 @@
     "placeLinks": "Wynajem w Twojej okolicy",
     "hoursClosed": "nieczynne",
     "fleetQuickLinks": "Szybki wybór",
-    "fleetVans": "Auta dostawcze",
-    "fleetElectric": "Auta elektryczne",
     "airport": "Lotnisko",
     "trainStation": "Dworzec",
     "office": "Biuro",
@@ -354,6 +352,7 @@
     "sortPriceAsc": "Cena: od najniższej",
     "sortPriceDesc": "Cena: od najwyższej",
     "clear": "Wyczyść filtry",
+    "collectionRemove": "Usuń filtr „{title}”",
     "showResults": "Pokaż wyniki ({count})",
     "close": "Zamknij",
     "results": {
@@ -834,7 +833,7 @@
       "orSimilar": "lub podobny · {segment}",
       "pickup": "Miejsce",
       "dates": "Termin",
-      "back": "Wróć",
+      "back": "Kontynuuj",
       "decline": "Nie, dziękuję"
     }
   },

@@ -15,8 +15,10 @@ export type Scalars = {
   Float: { input: number; output: number; }
   BlogBlocksDynamicZoneInput: { input: any; output: any; }
   BlogComponentsDynamicZoneInput: { input: any; output: any; }
+  BlogSectionsDynamicZoneInput: { input: any; output: any; }
   CityBlocksDynamicZoneInput: { input: any; output: any; }
   CityComponentsDynamicZoneInput: { input: any; output: any; }
+  CitySectionsDynamicZoneInput: { input: any; output: any; }
   Date: { input: any; output: any; }
   DateTime: { input: any; output: any; }
   FooterExtraNavsDynamicZoneInput: { input: any; output: any; }
@@ -25,6 +27,7 @@ export type Scalars = {
   JSON: { input: any; output: any; }
   LocalPageBlocksDynamicZoneInput: { input: any; output: any; }
   LocalPageComponentsDynamicZoneInput: { input: any; output: any; }
+  LocalPageSectionsDynamicZoneInput: { input: any; output: any; }
   NavigationItemsDynamicZoneInput: { input: any; output: any; }
   PageBlocksDynamicZoneInput: { input: any; output: any; }
   PageComponentsDynamicZoneInput: { input: any; output: any; }
@@ -81,6 +84,7 @@ export type Blog = {
   localizations: Array<Maybe<Blog>>;
   localizations_connection: Maybe<BlogRelationResponseCollection>;
   publishedAt: Maybe<Scalars['DateTime']['output']>;
+  sections: Maybe<Array<Maybe<BlogSectionsDynamicZone>>>;
   seo: Maybe<ComponentSharedSeo>;
   slug: Scalars['String']['output'];
   title: Scalars['String']['output'];
@@ -214,6 +218,7 @@ export type BlogInput = {
   coverImage?: InputMaybe<Scalars['ID']['input']>;
   excerpt?: InputMaybe<Scalars['String']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  sections?: InputMaybe<Array<Scalars['BlogSectionsDynamicZoneInput']['input']>>;
   seo?: InputMaybe<ComponentSharedSeoInput>;
   slug?: InputMaybe<Scalars['String']['input']>;
   title?: InputMaybe<Scalars['String']['input']>;
@@ -223,6 +228,8 @@ export type BlogRelationResponseCollection = {
   __typename?: 'BlogRelationResponseCollection';
   nodes: Array<Blog>;
 };
+
+export type BlogSectionsDynamicZone = ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsFaq | ComponentSectionsImage | ComponentSectionsSplit | ComponentSectionsText | Error;
 
 export type BooleanFilterInput = {
   and?: InputMaybe<Array<InputMaybe<Scalars['Boolean']['input']>>>;
@@ -255,8 +262,11 @@ export type CarCollection = {
   categories: Maybe<Scalars['JSON']['output']>;
   createdAt: Maybe<Scalars['DateTime']['output']>;
   documentId: Scalars['ID']['output'];
+  fleetOrder: Maybe<Scalars['Int']['output']>;
   fuels: Maybe<Scalars['JSON']['output']>;
   gearboxes: Maybe<Scalars['JSON']['output']>;
+  icon: Maybe<Scalars['String']['output']>;
+  landingPage: Maybe<Page>;
   locale: Maybe<Scalars['String']['output']>;
   localizations: Array<Maybe<CarCollection>>;
   localizations_connection: Maybe<CarCollectionRelationResponseCollection>;
@@ -265,6 +275,8 @@ export type CarCollection = {
   onlyPromotion: Maybe<Scalars['Boolean']['output']>;
   publishedAt: Maybe<Scalars['DateTime']['output']>;
   segmentIds: Maybe<Scalars['JSON']['output']>;
+  showInFleet: Maybe<Scalars['Boolean']['output']>;
+  slug: Maybe<Scalars['String']['output']>;
   sort: Enum_Carcollection_Sort;
   title: Scalars['String']['output'];
   updatedAt: Maybe<Scalars['DateTime']['output']>;
@@ -296,8 +308,11 @@ export type CarCollectionFiltersInput = {
   categories?: InputMaybe<JsonFilterInput>;
   createdAt?: InputMaybe<DateTimeFilterInput>;
   documentId?: InputMaybe<IdFilterInput>;
+  fleetOrder?: InputMaybe<IntFilterInput>;
   fuels?: InputMaybe<JsonFilterInput>;
   gearboxes?: InputMaybe<JsonFilterInput>;
+  icon?: InputMaybe<StringFilterInput>;
+  landingPage?: InputMaybe<PageFiltersInput>;
   locale?: InputMaybe<StringFilterInput>;
   localizations?: InputMaybe<CarCollectionFiltersInput>;
   minSeats?: InputMaybe<IntFilterInput>;
@@ -307,6 +322,8 @@ export type CarCollectionFiltersInput = {
   or?: InputMaybe<Array<InputMaybe<CarCollectionFiltersInput>>>;
   publishedAt?: InputMaybe<DateTimeFilterInput>;
   segmentIds?: InputMaybe<JsonFilterInput>;
+  showInFleet?: InputMaybe<BooleanFilterInput>;
+  slug?: InputMaybe<StringFilterInput>;
   sort?: InputMaybe<StringFilterInput>;
   title?: InputMaybe<StringFilterInput>;
   updatedAt?: InputMaybe<DateTimeFilterInput>;
@@ -315,13 +332,18 @@ export type CarCollectionFiltersInput = {
 export type CarCollectionInput = {
   bodies?: InputMaybe<Scalars['JSON']['input']>;
   categories?: InputMaybe<Scalars['JSON']['input']>;
+  fleetOrder?: InputMaybe<Scalars['Int']['input']>;
   fuels?: InputMaybe<Scalars['JSON']['input']>;
   gearboxes?: InputMaybe<Scalars['JSON']['input']>;
+  icon?: InputMaybe<Scalars['String']['input']>;
+  landingPage?: InputMaybe<Scalars['ID']['input']>;
   minSeats?: InputMaybe<Scalars['Int']['input']>;
   onlyPopular?: InputMaybe<Scalars['Boolean']['input']>;
   onlyPromotion?: InputMaybe<Scalars['Boolean']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
   segmentIds?: InputMaybe<Scalars['JSON']['input']>;
+  showInFleet?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
   sort?: InputMaybe<Enum_Carcollection_Sort>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -344,6 +366,7 @@ export type City = {
   localizations_connection: Maybe<CityRelationResponseCollection>;
   pickupPoint: Maybe<Scalars['Int']['output']>;
   publishedAt: Maybe<Scalars['DateTime']['output']>;
+  sections: Maybe<Array<Maybe<CitySectionsDynamicZone>>>;
   seo: Maybe<ComponentSharedSeo>;
   shortName: Maybe<Scalars['String']['output']>;
   slug: Scalars['String']['output'];
@@ -401,6 +424,7 @@ export type CityInput = {
   kind?: InputMaybe<Enum_City_Kind>;
   pickupPoint?: InputMaybe<Scalars['Int']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  sections?: InputMaybe<Array<Scalars['CitySectionsDynamicZoneInput']['input']>>;
   seo?: InputMaybe<ComponentSharedSeoInput>;
   shortName?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -411,6 +435,8 @@ export type CityRelationResponseCollection = {
   __typename?: 'CityRelationResponseCollection';
   nodes: Array<City>;
 };
+
+export type CitySectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSplit | ComponentSectionsText | Error;
 
 export type ComponentBlocksBlogPosts = {
   __typename?: 'ComponentBlocksBlogPosts';
@@ -3365,6 +3391,7 @@ export type LocalPage = {
   localizations_connection: Maybe<LocalPageRelationResponseCollection>;
   pickupPoint: Maybe<Scalars['Int']['output']>;
   publishedAt: Maybe<Scalars['DateTime']['output']>;
+  sections: Maybe<Array<Maybe<LocalPageSectionsDynamicZone>>>;
   seo: Maybe<ComponentSharedSeo>;
   shortName: Maybe<Scalars['String']['output']>;
   slug: Maybe<Scalars['String']['output']>;
@@ -3418,6 +3445,7 @@ export type LocalPageInput = {
   components?: InputMaybe<Array<Scalars['LocalPageComponentsDynamicZoneInput']['input']>>;
   pickupPoint?: InputMaybe<Scalars['Int']['input']>;
   publishedAt?: InputMaybe<Scalars['DateTime']['input']>;
+  sections?: InputMaybe<Array<Scalars['LocalPageSectionsDynamicZoneInput']['input']>>;
   seo?: InputMaybe<ComponentSharedSeoInput>;
   shortName?: InputMaybe<Scalars['String']['input']>;
   slug?: InputMaybe<Scalars['String']['input']>;
@@ -3427,6 +3455,8 @@ export type LocalPageRelationResponseCollection = {
   __typename?: 'LocalPageRelationResponseCollection';
   nodes: Array<LocalPage>;
 };
+
+export type LocalPageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsReviews | ComponentSectionsSplit | ComponentSectionsText | Error;
 
 export type Mutation = {
   __typename?: 'Mutation';
@@ -5624,6 +5654,13 @@ export type DocumentFileQueryVariables = Exact<{
 
 
 export type DocumentFileQuery = { __typename?: 'Query', regulations: Array<{ __typename?: 'Regulation', file: { __typename?: 'UploadFile', url: string } } | null> };
+
+export type FleetCollectionsQueryVariables = Exact<{
+  locale: Scalars['I18NLocaleCode']['input'];
+}>;
+
+
+export type FleetCollectionsQuery = { __typename?: 'Query', carCollections: Array<{ __typename?: 'CarCollection', slug: string | null, icon: string | null, documentId: string, title: string, segmentIds: any | null, categories: any | null, fuels: any | null, bodies: any | null, gearboxes: any | null, minSeats: number | null, onlyPromotion: boolean | null, onlyPopular: boolean | null, sort: Enum_Carcollection_Sort, landingPage: { __typename?: 'Page', documentId: string } | null } | null> };
 
 export type PageQueryVariables = Exact<{
   documentId: Scalars['ID']['input'];
@@ -8579,6 +8616,35 @@ export const DocumentFileDocument = new TypedDocumentString(`
   }
 }
     `) as unknown as TypedDocumentString<DocumentFileQuery, DocumentFileQueryVariables>;
+export const FleetCollectionsDocument = new TypedDocumentString(`
+    query FleetCollections($locale: I18NLocaleCode!) {
+  carCollections(
+    locale: $locale
+    filters: {showInFleet: {eq: true}}
+    sort: ["fleetOrder:asc", "title:asc"]
+    pagination: {limit: 50}
+  ) {
+    ...CarCollection
+    slug
+    icon
+    landingPage {
+      documentId
+    }
+  }
+}
+    fragment CarCollection on CarCollection {
+  documentId
+  title
+  segmentIds
+  categories
+  fuels
+  bodies
+  gearboxes
+  minSeats
+  onlyPromotion
+  onlyPopular
+  sort
+}`) as unknown as TypedDocumentString<FleetCollectionsQuery, FleetCollectionsQueryVariables>;
 export const PageDocument = new TypedDocumentString(`
     query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
   page(documentId: $documentId, locale: $locale, status: $status) {

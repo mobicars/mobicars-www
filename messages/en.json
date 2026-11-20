@@ -12,8 +12,6 @@
     "placeLinks": "Car rental near you",
     "hoursClosed": "closed",
     "fleetQuickLinks": "Quick picks",
-    "fleetVans": "Vans",
-    "fleetElectric": "Electric cars",
     "airport": "Airport",
     "trainStation": "Train station",
     "office": "Office",
@@ -354,6 +352,7 @@
     "sortPriceAsc": "Price: low to high",
     "sortPriceDesc": "Price: high to low",
     "clear": "Clear filters",
+    "collectionRemove": "Remove the “{title}” filter",
     "showResults": "Show results ({count})",
     "close": "Close",
     "results": {
@@ -834,7 +833,7 @@
       "orSimilar": "or similar · {segment}",
       "pickup": "Place",
       "dates": "Dates",
-      "back": "Go back",
+      "back": "Continue",
       "decline": "No, thanks"
     }
   },

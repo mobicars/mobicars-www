@@ -13,9 +13,10 @@ import { fill, getMessages } from "@/i18n/messages";
 import { fleetHref } from "@/i18n/routes";
 import { absoluteUrl, jsonLd } from "@/lib/fleet/seo";
 import { cacheEnabled } from "@/lib/cache";
+import { fleetFilterCollections } from "@/lib/fleet/car-collection";
 import { listFleetCarIdsAt, listFleetCars, type FleetCard as FleetCardData } from "@/lib/fleet/cars";
 import { selectBlockCars } from "@/lib/fleet/cars-block";
-import type { CarsBlock, CarsTab } from "@/lib/strapi";
+import { listFleetCollections, type CarsBlock, type CarsTab } from "@/lib/strapi";
 
 import { CarCategories } from "./car-categories";
 import { LazyScenarioTabs } from "./scenario-tabs-lazy";
@@ -301,7 +302,7 @@ async function CatalogList({
   };
   return (
     <>
-      <FleetBrowser cars={cars} lang={lang} t={getMessages(lang).fleet} />
+      <FleetBrowser cars={cars} lang={lang} t={getMessages(lang).fleet} collections={fleetFilterCollections(await listFleetCollections(lang))} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLd(itemList) }} />
     </>
   );
