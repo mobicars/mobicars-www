@@ -11,7 +11,6 @@ import { CompanyFields } from "@/components/auth/company-fields";
 import { PasswordField, TextField } from "@/components/auth/fields";
 import { PhoneField } from "@/components/auth/phone-field";
 import { AccountBox } from "@/components/reservation/account-box";
-import { ExtendHintSlot, ProtectionUpgrade } from "@/components/reservation/nudges";
 import { formatMoney } from "@/components/reservation/format";
 import {
   MobileSummaryBar,
@@ -44,9 +43,7 @@ import {
   type CustomerType,
 } from "@/lib/reservation/customer";
 import { termOfSearchQuery, useBookingStep } from "@/lib/reservation/analytics";
-import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
-import type { ProtectionOption } from "@/lib/reservation/protection";
 import { quoteQuery, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
@@ -84,8 +81,6 @@ export function CustomerStep({
   trip,
   airport,
   account,
-  extension,
-  upgrade,
 }: {
   lang: Lang;
   searchQuery: string;
@@ -102,10 +97,6 @@ export function CustomerStep({
   /** Pickup at an airport: asks for the flight number. */
   airport: boolean;
   account: AccountPrefill | null;
-  /** "Weź 4 dni zamiast 3", above the customer's data. */
-  extension?: Promise<ExtensionHint | null> | null;
-  /** The recommended package, between the data and the consents. */
-  upgrade?: { from: ProtectionOption; to: ProtectionOption } | null;
 }) {
   const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
@@ -229,7 +220,6 @@ export function CustomerStep({
           </div>
         </Review>
 
-        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
 
         {/* One card: heading, the sign-in box (its own form) and the booking form; forms cannot nest. */}
         <section aria-labelledby="customer-title" className="flex flex-col gap-6 rounded-card bg-white p-5 ring-1 ring-line @xl:p-6">
@@ -467,8 +457,6 @@ export function CustomerStep({
             />
             <FieldError className="text-xs font-normal text-red-700">{errors.comment ? fieldError(errors.comment) : null}</FieldError>
           </AriaTextField>
-
-          {upgrade ? <ProtectionUpgrade from={upgrade.from} to={upgrade.to} /> : null}
 
           <fieldset className="flex flex-col gap-3 border-t border-muted-light pt-5">
             <legend className="sr-only">{t.consentsLegend}</legend>

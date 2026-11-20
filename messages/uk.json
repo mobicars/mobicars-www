@@ -602,7 +602,7 @@
     "gross": "з ПДВ",
     "perDay": "/ доба",
     "oneTime": "одноразово",
-    "wholeRental": "{price} за весь період оренди",
+    "wholeRental": "за весь період оренди",
     "rows": {
       "thirdPartyInsuranceDamage": "Шкода третім особам (OC)",
       "bodyworkDamage": "Пошкодження кузова",

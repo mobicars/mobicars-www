@@ -602,7 +602,7 @@
     "gross": "incl. VAT",
     "perDay": "/ day",
     "oneTime": "one-time",
-    "wholeRental": "{price} for the whole rental",
+    "wholeRental": "for the whole rental",
     "rows": {
       "thirdPartyInsuranceDamage": "Third-party liability claim",
       "bodyworkDamage": "Bodywork damage",

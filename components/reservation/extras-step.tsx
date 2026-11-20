@@ -33,8 +33,8 @@ import { termOfSearchQuery, trackExtrasChange, useBookingStep } from "@/lib/rese
 import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
 import type { ProtectionOption } from "@/lib/reservation/protection";
-import type { UpsellOption } from "@/lib/reservation/upsell";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
+import type { UpsellOption } from "@/lib/reservation/upsell";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 import noTripMap from "@/public/assets/maps/mapa0.png";
 
@@ -69,9 +69,9 @@ export function ExtrasStep({
   trip: TripSummary;
   /** Choices from the URL that this car (segment) or these dates no longer offer. */
   droppedCount?: number;
-  /** Dearer classes to suggest, see `lib/reservation/upsell.ts`. */
+  /** Dearer classes to suggest, see `lib/reservation/upsell.ts`. At the bottom, as on the protection step's top. */
   upsell?: UpsellOption[];
-  /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). */
+  /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). At the bottom, over the upsell. */
   extension?: Promise<ExtensionHint | null> | null;
   /** The best package, offered to someone who chose a lesser one. */
   upgrade?: { from: ProtectionOption; to: ProtectionOption } | null;
@@ -153,7 +153,6 @@ export function ExtrasStep({
         ) : null}
 
         {upgrade ? <ProtectionUpgrade from={upgrade.from} to={upgrade.to} /> : null}
-        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
 
         {view.zones.length > 0 ? (
           <Revealed icon={Globe} question={t.borderAsk} action={t.borderShow} chosen={selection.zone !== null}>
@@ -232,6 +231,8 @@ export function ExtrasStep({
           </p>
         ) : null}
 
+        {/* Once more under all the extras, in the protection step's order: a longer rental, then a bigger car. */}
+        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
         <Upsell options={upsell} />
       </section>
       <SummaryPanel trip={trip} car={car} prices={prices} action={action} onChangeCar={backToCars} searchQuery={searchQuery} />

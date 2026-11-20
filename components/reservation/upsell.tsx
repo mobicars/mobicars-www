@@ -19,10 +19,11 @@ import type { UpsellOption } from "@/lib/reservation/upsell";
 
 /**
  * "Potrzebujesz większego komfortu?": dearer classes next to the chosen car
- * (rules in `lib/reservation/upsell.ts`). Picking one asks first; then the
- * car changes and the page checks protection and extras for the new class.
+ * (rules in `lib/reservation/upsell.ts`), at the top of the protection step.
+ * Picking one asks first; then the car changes and the step starts over with
+ * the new class's packages.
  */
-export function Upsell({ options }: { options: UpsellOption[] }) {
+export function Upsell({ options, className = "" }: { options: UpsellOption[]; className?: string }) {
   const router = useRouter();
   const t = useMessages().upsell;
   const [pending, startTransition] = useTransition();
@@ -38,7 +39,7 @@ export function Upsell({ options }: { options: UpsellOption[] }) {
   }
 
   return (
-    <section aria-labelledby="upsell-title" aria-busy={pending}>
+    <section aria-labelledby="upsell-title" aria-busy={pending} className={className}>
       <div className="mb-3 flex items-center gap-2">
         <h3 id="upsell-title" className="text-lg font-semibold text-blue-dark">
           {t.title}

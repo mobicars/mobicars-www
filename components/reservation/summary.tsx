@@ -187,8 +187,8 @@ function TripList({ trip }: { trip: TripSummary }) {
   );
 }
 
-/** "za 3 dni" or, monthly, the month count; null when the car has neither. */
-function periodLabel(lang: Lang, car: OfferCard, prices: SummaryPrices, forPeriod: string): string | null {
+/** "za 3 dni" or, monthly, the month count; null when the car has neither. Also the protection packages' total. */
+export function periodLabel(lang: Lang, car: OfferCard, prices: SummaryPrices, forPeriod: string): string | null {
   if (prices.monthly) {
     return fill(forPeriod, { period: formatMonths(lang, prices.monthly.months) });
   }

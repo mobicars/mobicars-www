@@ -602,7 +602,7 @@
     "gross": "brutto",
     "perDay": "/ Tag",
     "oneTime": "einmalig",
-    "wholeRental": "{price} für die gesamte Miete",
+    "wholeRental": "für die gesamte Miete",
     "rows": {
       "thirdPartyInsuranceDamage": "Haftpflichtschaden",
       "bodyworkDamage": "Karosserieschaden",

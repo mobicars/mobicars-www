@@ -35,9 +35,10 @@ import {
   quoteFor,
 } from "@/lib/reservation/booking";
 import { draftLabels } from "@/lib/reservation/draft-labels";
-import { extensionCandidate } from "@/lib/reservation/extend";
+import { extensionCandidate, type ExtensionHint } from "@/lib/reservation/extend";
 import { monthlyAlternative } from "@/lib/reservation/monthly-hint";
 import { toPickupPlace, type PickupPlace } from "@/lib/reservation/places";
+import type { OfferCard } from "@/lib/reservation/offers";
 import type { ProtectionOption } from "@/lib/reservation/protection";
 import { upsellOptions } from "@/lib/reservation/upsell";
 import { quoteQuery, type QuoteAccessory, type QuoteView } from "@/lib/reservation/quote";
@@ -303,9 +304,6 @@ async function Offers({
     // The protection and extras steps start over for another car or search; not
     // for a discount code, so the code box keeps its message when it drops one.
     const stepKey = `${car.id}|${searchToQuery(search)}`;
-    // Started now, awaited by the step that shows it. Only when a cheaper band is within reach:
-    // the step then keeps the hint's place while it is quoted, and no hint means no empty place.
-    const extension = search.term === "short" && extensionCandidate(car) ? extensionHint(lang, search, car, promo) : null;
     const { options, extrasView } = await loadBookingChoices(lang, search, car);
     // For the homepage's "finish your booking" banner.
     const where = compactTrip(lang, search, places);
@@ -352,8 +350,6 @@ async function Offers({
               trip={trip}
               airport={places.find((place) => place.id === search.pickup.id)?.airport ?? false}
               account={prefill}
-              extension={extension}
-              upgrade={protectionUpgrade(options, chosen)}
             />
           </>
         );
@@ -373,7 +369,7 @@ async function Offers({
             initialSelection={selection}
             droppedCount={dropped}
             upsell={upsellOptions(car, offers, undefined, search.term === "long" ? search.months : null)}
-            extension={extension}
+            extension={extensionFor(lang, search, car, promo)}
             upgrade={protectionUpgrade(options, chosen)}
             initialQuote={quote}
             trip={trip}
@@ -395,7 +391,8 @@ async function Offers({
           initialProtection={chosen}
           protectionDropped={protection !== null && chosen === null}
           initialQuote={await quoteOrEarly(earlyQuote, lang, search, searchQuery, car.id, chosen === null ? [] : [chosen])}
-          extension={extension}
+          upsell={upsellOptions(car, offers, undefined, search.term === "long" ? search.months : null)}
+          extension={extensionFor(lang, search, car, promo)}
           trip={trip}
         />
       </>
@@ -466,6 +463,15 @@ function protectionUpgrade(
     return null;
   }
   return { from, to };
+}
+
+/**
+ * "Weź 4 dni zamiast 3" for the protection and extras steps (not the last one),
+ * started now and awaited by the step. Only when a cheaper band is within reach:
+ * the step then keeps the hint's place while it is quoted, and no hint means no empty place.
+ */
+function extensionFor(lang: Lang, search: ReservationSearch, car: OfferCard, promo: string | null): Promise<ExtensionHint | null> | null {
+  return search.term === "short" && extensionCandidate(car) ? extensionHint(lang, search, car, promo) : null;
 }
 
 /** The search query plus the discount code, the form every step and quote request receives. */

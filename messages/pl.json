@@ -602,7 +602,7 @@
     "gross": "brutto",
     "perDay": "/ doba",
     "oneTime": "jednorazowo",
-    "wholeRental": "{price} za cały wynajem",
+    "wholeRental": "za cały wynajem",
     "rows": {
       "thirdPartyInsuranceDamage": "Szkoda z OC",
       "bodyworkDamage": "Uszkodzenie zewnętrzne",

@@ -10,13 +10,13 @@ import { DescriptionButton } from "@/components/reservation/description-button";
 import { DialogActions, DialogHeader, WidgetModal } from "@/components/reservation/dialog-parts";
 import { formatMoney } from "@/components/reservation/format";
 import { ExtendHintSlot } from "@/components/reservation/nudges";
+import { Upsell } from "@/components/reservation/upsell";
 import { ChooseFace, chooseClass } from "@/components/reservation/offer-parts";
-import { MobileSummaryBar, SummaryPanel, quotePrices, type TripSummary } from "@/components/reservation/summary";
+import { MobileSummaryBar, SummaryPanel, periodLabel, quotePrices, type TripSummary } from "@/components/reservation/summary";
 import { Slider } from "@/components/reservation/slider";
 import { useQuote } from "@/components/reservation/use-quote";
 import { currentHrefWith, replaceParam, restartCarChoice } from "@/components/reservation/url";
 import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
-import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import { termOfSearchQuery, track, useBookingStep } from "@/lib/reservation/analytics";
@@ -24,6 +24,7 @@ import type { ExtensionHint } from "@/lib/reservation/extend";
 import type { OfferCard } from "@/lib/reservation/offers";
 import { rowValue, type ProtectionOption, type ProtectionTier } from "@/lib/reservation/protection";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
+import type { UpsellOption } from "@/lib/reservation/upsell";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
 /**
@@ -39,6 +40,7 @@ export function ProtectionStep({
   initialQuote,
   trip,
   protectionDropped = false,
+  upsell = [],
   extension = null,
 }: {
   lang: string;
@@ -53,18 +55,23 @@ export function ProtectionStep({
   trip: TripSummary;
   /** The URL named a package this car (segment, dates) does not offer. */
   protectionDropped?: boolean;
+  /** Dearer classes to suggest, see `lib/reservation/upsell.ts`. */
+  upsell?: UpsellOption[];
   /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). */
   extension?: Promise<ExtensionHint | null> | null;
 }) {
   const searchQuery = useLiveSearchQuery(serverSearchQuery);
   const router = useRouter();
   useBookingStep("protection", termOfSearchQuery(serverSearchQuery));
-  const t = useMessages().protection;
+  const messages = useMessages();
+  const t = messages.protection;
   const [selectedId, setSelectedId] = useState<number | null>(initialProtection);
   const quote = useQuote(
     quoteQuery(lang, searchQuery, car.id, selectedId === null ? [] : [selectedId]),
     initialQuote,
   );
+  // "za 3 doby": the packages read as the summary's total does, for the whole rental.
+  const period = periodLabel(useLang(), car, quotePrices(quote), messages.summary.forPeriod);
 
   // Drop a package the API no longer offers from the URL, so a refresh does not carry it on.
   useEffect(() => {
@@ -118,7 +125,7 @@ export function ProtectionStep({
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
-      <section aria-labelledby="protection-title" className="min-w-0">
+      <section aria-labelledby="protection-title" className="@container min-w-0">
         <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
           <h2 id="protection-title" tabIndex={-1} data-step-heading className="text-title text-blue-dark outline-none">
             {t.title}
@@ -137,14 +144,16 @@ export function ProtectionStep({
             {t.dropped}
           </p>
         ) : null}
-        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} className="mb-4" /> : null}
+        {/* A longer rental, then a bigger car, come first, above the packages: the step every customer sees whole, on phones too. */}
+        {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} className="mb-6" /> : null}
+        <Upsell options={upsell} className="mb-6" />
         {options.length === 0 ? (
           <p className="rounded-card bg-white p-6 text-sm text-blue-dark ring-1 ring-line">
             {t.none}
           </p>
         ) : (
           <>
-            <ProtectionTable options={options} selectedId={selectedId} onChoose={choose} />
+            <ProtectionTable options={options} period={period} selectedId={selectedId} onChoose={choose} />
             {/* Phones: one package per swipe, in the same order, opening on the chosen or recommended one. */}
             <div className="md:hidden">
               <Slider
@@ -167,7 +176,7 @@ export function ProtectionStep({
                     className={`${className} outline-none`}
                   >
                     {options.map((option) => (
-                      <ProtectionCard key={option.id} option={option} className={itemClassName} />
+                      <ProtectionCard key={option.id} option={option} period={period} className={itemClassName} />
                     ))}
                   </GridList>
                 )}
@@ -244,10 +253,12 @@ function DowngradeDialog({
  */
 function ProtectionTable({
   options,
+  period,
   selectedId,
   onChoose,
 }: {
   options: ProtectionOption[];
+  period: string | null;
   selectedId: number | null;
   onChoose: (id: number) => void;
 }) {
@@ -318,7 +329,7 @@ function ProtectionTable({
                     {option.name}
                     {option.description ? <DescriptionButton title={option.name} description={option.description} tone="light" /> : null}
                   </h3>
-                  <PackagePrice option={option} />
+                  <PackagePrice option={option} period={period} />
                 </div>
                 {keys.map((key) => {
                   const row = option.rows.find((item) => item.key === key);
@@ -380,35 +391,57 @@ function ChooseLook({ selected, className }: { selected: boolean; className: str
 }
 
 /**
- * A package's price, the same in the table head and on the phone cards: per
- * day (or once) as the API sends it, and the whole rental with the regular
- * total struck through during a promotion. A free package reads "W cenie".
+ * A package's price, the same in the table head and on the phone cards. The
+ * whole rental leads ("+297 zł", "brutto za 3 doby"), as the car list, the
+ * summary and the phone bar count it, so the total never jumps unexpectedly;
+ * the regular total is struck through during a promotion, and the per-day (or
+ * per-month) price sits small below. A one-time fee shows once; a free package
+ * reads "W cenie", over two empty lines.
  */
-function PackagePrice({ option }: { option: ProtectionOption }) {
+function PackagePrice({ option, period }: { option: ProtectionOption; period: string | null }) {
   const t = useMessages().protection;
   const lang = useLang();
-  const free = !option.price;
+  const whole = period ?? t.wholeRental;
+  if (!option.price) {
+    return (
+      <div className="flex flex-col items-center text-center">
+        <p className="text-2xl font-bold text-green-medium">{t.included}</p>
+        {/* Empty lines as tall as a paid package's, so the cards' prices line up. */}
+        <p aria-hidden className="text-xs font-semibold">&nbsp;</p>
+        <p aria-hidden className="text-xxs">&nbsp;</p>
+      </div>
+    );
+  }
+  const total = option.oneTime ? option.price : option.totalPrice;
+  if (total === null) {
+    return (
+      <div className="flex flex-col items-center text-center">
+        <p className="text-2xl font-bold text-blue-medium">+{formatMoney(lang, option.price)}</p>
+        <p className="text-xs font-semibold text-muted-dark">
+          {t.gross} {option.unit === "month" ? t.perMonth : t.perDay}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col items-center text-center">
-      <p className={`text-2xl font-bold ${free ? "text-green-medium" : "text-blue-medium"}`}>
-        {option.price ? formatMoney(lang, option.price) : t.included}
+      <p className="flex flex-wrap items-baseline justify-center gap-x-1.5">
+        {option.regularTotalPrice ? <s className="text-sm text-muted-dark">{formatMoney(lang, option.regularTotalPrice)}</s> : null}
+        <span className="text-2xl font-bold text-blue-medium">+{formatMoney(lang, total)}</span>
       </p>
-      {option.price ? (
-        <p className="text-xs font-semibold text-muted-dark">
-          {t.gross} {option.oneTime ? t.oneTime : option.unit === "month" ? t.perMonth : t.perDay}
-        </p>
-      ) : null}
-      {free || (!option.oneTime && option.totalPrice !== null) ? (
+      <p className="text-xs font-semibold text-muted-dark">
+        {t.gross} {option.oneTime ? t.oneTime : whole}
+      </p>
+      {option.oneTime ? null : (
         <p className="text-xxs text-muted-dark">
-          {option.regularTotalPrice ? <s className="mr-1">{formatMoney(lang, option.regularTotalPrice)}</s> : null}
-          {fill(t.wholeRental, { price: formatMoney(lang, option.totalPrice ?? 0) })}
+          {formatMoney(lang, option.price)} {option.unit === "month" ? t.perMonth : t.perDay}
         </p>
-      ) : null}
+      )}
     </div>
   );
 }
 
-function ProtectionCard({ option, className }: { option: ProtectionOption; className: string }) {
+function ProtectionCard({ option, period, className }: { option: ProtectionOption; period: string | null; className: string }) {
   const t = useMessages().protection;
   const lang = useLang();
   return (
@@ -455,7 +488,7 @@ function ProtectionCard({ option, className }: { option: ProtectionOption; class
           </dl>
 
           <div className="mt-auto flex flex-col gap-3 p-4">
-            <PackagePrice option={option} />
+            <PackagePrice option={option} period={period} />
             <ChooseLook selected={isSelected} className="w-full" />
           </div>
         </>
