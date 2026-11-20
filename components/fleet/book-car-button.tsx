@@ -4,8 +4,10 @@ import { CalendarDays } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 
+import { loadPlaces } from "@/components/fleet/load-places";
 import { WidgetModal } from "@/components/reservation/dialog-parts";
 import { DialogLoading } from "@/components/reservation/lazy-dialog";
+import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 
 const loadDialog = () => import("@/components/fleet/book-car-dialog");
@@ -17,8 +19,9 @@ const BookCarDialog = dynamic(() => loadDialog().then((module) => module.BookCar
 /**
  * The car card's "Rezerwuj": opens the short-term search for this car in a
  * dialog; its "Rezerwuj" goes straight to the booking's next step with the car
- * chosen. The dialog's module and the pickup points load on the first hover,
- * touch or focus of the button, so the cards cost the page nothing.
+ * chosen. The dialog's module and the pickup points load together on the first
+ * hover, touch or focus of the button, so the cards cost the page nothing and
+ * the dialog opens with its form.
  */
 export function BookCarButton({
   offerId,
@@ -35,8 +38,12 @@ export function BookCarButton({
   className: string;
 }) {
   const texts = useMessages().search;
+  const lang = useLang();
   const [open, setOpen] = useState(false);
-  const preload = () => void loadDialog().catch(() => undefined);
+  const preload = () => {
+    void loadDialog().catch(() => undefined);
+    void loadPlaces(lang).catch(() => undefined);
+  };
 
   return (
     <>

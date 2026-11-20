@@ -462,7 +462,6 @@
     "checkAvailability": "Check availability",
     "allCars": "Whole fleet",
     "breadcrumbLabel": "Breadcrumb",
-    "dailyFromNote": "for rentals of {days}+ days",
     "oneDayPrice": "1 day: {price}",
     "promotionUntilGeneric": "Offer until {date}",
     "detailsUnavailable": "Details of this car are temporarily unavailable. Call us: {phone} or book online.",

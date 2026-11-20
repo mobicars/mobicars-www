@@ -462,7 +462,6 @@
     "checkAvailability": "Перевірити наявність",
     "allCars": "Весь автопарк",
     "breadcrumbLabel": "Навігаційний ланцюжок",
-    "dailyFromNote": "за оренди від {days} днів",
     "oneDayPrice": "1 доба: {price}",
     "promotionUntilGeneric": "Offer until {date}",
     "detailsUnavailable": "Деталі цього авто тимчасово недоступні. Зателефонуйте: {phone} або забронюйте онлайн.",

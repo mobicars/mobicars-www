@@ -107,12 +107,6 @@ export async function FleetPanel({ lang }: { lang: Lang }) {
                 {item.daily ? (
                   <span className="text-xs text-muted-dark">
                     {fill(t.fromPerDay, { price: formatPrice(lang, item.daily.price) })}
-                    {item.daily.fromDays > 1 ? (
-                      <>
-                        <br />
-                        {fill(messages.fleet.dailyFromNote, { days: item.daily.fromDays })}
-                      </>
-                    ) : null}
                   </span>
                 ) : null}
               </span>

@@ -4,27 +4,12 @@ import { useEffect, useId, useState } from "react";
 import { Dialog } from "react-aria-components";
 import { LoaderCircle } from "lucide-react";
 
+import { loadPlaces } from "@/components/fleet/load-places";
 import { DialogHeader } from "@/components/reservation/dialog-parts";
 import { ReservationPicker } from "@/components/reservation/picker";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import type { PickupPlace } from "@/lib/reservation/places";
-
-/** Points per language, fetched once per page view: every card's dialog shares them. */
-const placesByLang = new Map<string, Promise<PickupPlace[]>>();
-
-function loadPlaces(lang: string): Promise<PickupPlace[]> {
-  let places = placesByLang.get(lang);
-  if (!places) {
-    places = fetch(`/api/reservation/places?lang=${lang}`).then((response) =>
-      response.ok ? (response.json() as Promise<PickupPlace[]>) : Promise.reject(new Error(String(response.status))),
-    );
-    // A failed fetch is not kept, so the next open tries again.
-    places.catch(() => placesByLang.delete(lang));
-    placesByLang.set(lang, places);
-  }
-  return places;
-}
 
 /**
  * The dialog of the car card's "Rezerwuj" (`BookCarButton`): the car's name

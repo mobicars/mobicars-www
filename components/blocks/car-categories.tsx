@@ -10,12 +10,10 @@ import type { FleetCard } from "@/lib/fleet/cars";
 import { formatPrice } from "@/lib/fleet/format";
 import { OFFER_CATEGORIES } from "@/lib/reservation/offers";
 
-import { Pill } from "@/components/ui/surface";
-
 /**
  * Car classes as photo tiles (as the vehicle types on carnet.pl, with our
  * "from" price): the photo of the class's cheapest car, the class name and its
- * lowest daily price with the rental length it needs. Each tile opens the fleet
+ * lowest daily price (the bare "od", decided 20 November 2026). Each tile opens the fleet
  * filtered to the class. Only classes the fleet has are shown. Server markup
  * only, no JavaScript. `headingLevel` is the tiles' own level, as with
  * `FleetCard`: `h3` under the block's title, `h2` when the block has none.
@@ -63,12 +61,6 @@ export function CarCategories({ cars, lang, headingLevel }: { cars: FleetCard[];
                   quality={60}
                   className="object-contain p-4 transition-transform duration-250 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
                 />
-              ) : null}
-              {/* The rental length the "from" price needs, where the eye already is. */}
-              {item.daily && item.daily.fromDays > 1 ? (
-                <Pill tone="glass" className="absolute top-3 left-3 shadow-card">
-                  {fill(messages.fleet.dailyFromNote, { days: item.daily.fromDays })}
-                </Pill>
               ) : null}
             </div>
             <div className="flex flex-1 items-end justify-between gap-3 p-5">
