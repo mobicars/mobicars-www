@@ -10,6 +10,13 @@ import { languages, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { useMessages } from "@/i18n/messages-context";
 import { switchLangHref } from "@/i18n/routes";
+import de from "@/public/assets/flags/de.svg";
+import en from "@/public/assets/flags/en.svg";
+import pl from "@/public/assets/flags/pl.svg";
+import uk from "@/public/assets/flags/uk.svg";
+
+/** Imported, so each file gets a hashed address the browser keeps for a year. */
+const flags: Record<Lang, string> = { pl: pl.src, en: en.src, de: de.src, uk: uk.src };
 
 /** `.pickup-modal[data-exiting]` in globals.css runs 180 ms. */
 const EXIT_MS = 200;
@@ -26,7 +33,7 @@ const triggerClass = {
 /**
  * Language button and its dialog: the languages one under another, each with its
  * own name and, below, its name in the page's language. Languages come from
- * `i18n/config`; flags from `public/assets/flags/{lang}.svg`. Picking one
+ * `i18n/config`; flags from `public/assets/flags/{lang}.svg` (`flags`). Picking one
  * opens the same page in that language, search included: from the page's
  * hreflang links when it has them (CMS pages and the fleet, whose slugs differ
  * per language), otherwise by translating the path (`switchLangHref`).
@@ -59,7 +66,7 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
         {variant === "header" ? <Globe className="size-4 shrink-0" aria-hidden /> : null}
         {variant === "menu" ? <Globe className="size-5 shrink-0 text-blue-medium" aria-hidden /> : null}
         {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG flag */}
-        <img src={`/assets/flags/${current.lang}.svg`} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover" />
+        <img src={flags[current.lang]} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover" />
         <span aria-hidden>{variant === "header" ? current.lang : current.label}</span>
         <span className="sr-only">
           {fill(t.languageCurrent, { label: current.label })}
@@ -89,7 +96,7 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
                       <Square className="size-5 shrink-0 text-blue-dark/30" aria-hidden />
                     )}
                     {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG flag */}
-                    <img src={`/assets/flags/${item.lang}.svg`} alt="" width={28} height={20} className="h-5 w-7 shrink-0 rounded-[3px] object-cover shadow-sm" />
+                    <img src={flags[item.lang]} alt="" width={28} height={20} className="h-5 w-7 shrink-0 rounded-[3px] object-cover shadow-sm" />
                     <span className="flex min-w-0 flex-col">
                       <span className="font-semibold">{item.label}</span>
                       <span className={`text-sm ${selected ? "text-white/85" : "text-muted-dark"}`} lang={lang}>

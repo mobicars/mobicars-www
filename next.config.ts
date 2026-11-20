@@ -18,6 +18,9 @@ const nextConfig: NextConfig = {
     // 3 → 416, half → 608, collage → 528, card banner → 1280, full photo → 1350).
     imageSizes: [32, 48, 64, 96, 128, 176, 192, 256, 304, 320, 384, 416, 528],
     deviceSizes: [576, 608, 640, 672, 750, 828, 1080, 1280, 1350, 1920, 2048, 3840],
+    // A year in Vercel's cache and the browser: every address here changes with its
+    // file (Strapi and RentCarSoft name each upload anew, imports carry a hash).
+    minimumCacheTTL: 31536000,
     remotePatterns: [
       // Car photos from the RentCarSoft offer gallery.
       new URL("https://mobicars.rentcarsoft.pl/grafiki/**"),

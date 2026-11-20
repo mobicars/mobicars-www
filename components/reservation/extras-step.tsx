@@ -36,6 +36,7 @@ import type { ProtectionOption } from "@/lib/reservation/protection";
 import type { UpsellOption } from "@/lib/reservation/upsell";
 import { quoteQuery, type QuoteView } from "@/lib/reservation/quote";
 import { QUERY_KEYS } from "@/lib/reservation/search";
+import noTripMap from "@/public/assets/maps/mapa0.png";
 
 /**
  * Third step: border trip first, then the other extras by group. Yes/no
@@ -292,8 +293,8 @@ function Revealed({
   );
 }
 
-/** Poland alone, drawn like the zone maps from RentCarSoft. */
-const NO_TRIP_MAP = "/assets/maps/mapa0.png";
+/** Poland alone, drawn like the zone maps from RentCarSoft; imported for a hashed, year-long address. */
+const NO_TRIP_MAP = noTripMap.src;
 
 /** The key of "Bez wyjazdu" in the zone list; a zone's is its id. */
 const NO_TRIP = "none";
