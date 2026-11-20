@@ -57,3 +57,13 @@ const SIZES: Record<ButtonSize, string> = {
 export function buttonClass(variant: ButtonVariant, size: ButtonSize = "md", extra = ""): string {
   return `${BASE} ${FILL} ${VARIANTS[variant]} ${SIZES[size]} ${extra}`.trim();
 }
+
+/**
+ * A quiet red action in text, as "Wyczyść filtry" on the car list: red
+ * semibold text that gets a light red pill on hover. For undoing or leaving
+ * (Wyczyść filtry, Zacznij od nowa, Usuń kod, Wyloguj), next to the real
+ * buttons rather than instead of them.
+ */
+export function quietDangerClass(extra = ""): string {
+  return `inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-3 font-semibold text-red-600 transition-colors duration-200 ease-out outline-none hover:bg-red-50 focus-visible:ring-2 focus-visible:ring-blue-medium disabled:cursor-default disabled:opacity-50 disabled:hover:bg-transparent motion-reduce:transition-none ${extra}`.trim();
+}

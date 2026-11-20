@@ -18,7 +18,7 @@ import {
 } from "@/components/reservation/schedule";
 import { StartDateDialog } from "@/components/reservation/start-date-dialog";
 import { currentHrefWith } from "@/components/reservation/url";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, quietDangerClass } from "@/components/ui/button";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
@@ -147,7 +147,7 @@ export function PickupTimeGuard({
           type="button"
           disabled={moving}
           onClick={restart}
-          className="cursor-pointer rounded-full px-3 py-1.5 text-sm font-medium text-red-700 underline-offset-2 outline-none hover:underline focus-visible:ring-2 focus-visible:ring-blue-medium disabled:cursor-default"
+          className={quietDangerClass("h-9 text-sm")}
         >
           {texts.guardRestart}
         </button>

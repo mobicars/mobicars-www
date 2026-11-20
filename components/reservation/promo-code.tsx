@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { BadgePercent, LoaderCircle, X } from "lucide-react";
 
 import { replaceParam } from "@/components/reservation/url";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, quietDangerClass } from "@/components/ui/button";
 import { useMessages } from "@/i18n/messages-context";
 import { QUERY_KEYS } from "@/lib/reservation/search";
 
@@ -80,7 +80,7 @@ export function PromoCode({ searchQuery }: { searchQuery: string }) {
           <button
             type="button"
             onClick={() => go(null)}
-            className="flex shrink-0 cursor-pointer items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-red-700 hover:bg-red-50"
+            className={quietDangerClass("h-8 px-2.5 text-xs")}
           >
             <X className="size-3.5" aria-hidden />
             {t.remove}

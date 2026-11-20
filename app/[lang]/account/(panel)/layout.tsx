@@ -2,6 +2,7 @@ import { LogOut } from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { PanelNav } from "@/components/account/panel-nav";
+import { quietDangerClass } from "@/components/ui/button";
 import { accountCopy } from "@/i18n/panel-copy";
 import { isLang } from "@/i18n/config";
 import { logout } from "@/lib/auth/actions";
@@ -27,7 +28,7 @@ export default async function PanelLayout({
       <div className="mx-auto flex w-full max-w-6xl justify-end px-4 pt-4 lg:hidden">
         <form action={logout}>
           <input type="hidden" name="lang" value={lang} />
-          <button type="submit" className="flex items-center gap-1.5 text-sm font-medium text-red-700">
+          <button type="submit" className={quietDangerClass("h-9 gap-1.5 text-sm")}>
             <LogOut className="size-4" aria-hidden />
             {t.logout}
           </button>

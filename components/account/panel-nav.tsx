@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 
+import { quietDangerClass } from "@/components/ui/button";
 import { useAccountCopy } from "@/i18n/account";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
@@ -73,7 +74,7 @@ function PanelNavList({ lang, pathname }: { lang: Lang; pathname: string | null 
         <input type="hidden" name="lang" value={lang} />
         <button
           type="submit"
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50"
+          className={quietDangerClass("h-11 w-full gap-3 text-sm")}
         >
           <LogOut className="size-5 shrink-0" aria-hidden />
           {t.logout}

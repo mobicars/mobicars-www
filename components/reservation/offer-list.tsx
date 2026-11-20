@@ -28,7 +28,7 @@ import {
 import { useQuote } from "@/components/reservation/use-quote";
 import { currentHrefWith, replaceParam } from "@/components/reservation/url";
 import { useLiveSearchQuery } from "@/components/reservation/use-search-query";
-import { buttonClass } from "@/components/ui/button";
+import { buttonClass, quietDangerClass } from "@/components/ui/button";
 import { BottomSheet } from "@/components/ui/sheet";
 import { ChoiceChips } from "@/components/ui/choice-chips";
 import { fill } from "@/i18n/fill";
@@ -287,7 +287,7 @@ export function OfferList({
           <button
             type="button"
             onClick={clearFilters}
-            className="mt-3 cursor-pointer font-semibold text-blue-medium underline-offset-2 hover:underline"
+            className={quietDangerClass("mt-3 h-9 text-sm")}
           >
             {cars.clearFilters}
           </button>
@@ -397,7 +397,7 @@ function ClearButton({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex h-9 shrink-0 cursor-pointer items-center gap-1 rounded-full px-3 text-sm font-semibold text-red-600 transition-colors duration-200 ease-out hover:bg-red-50 motion-reduce:transition-none"
+      className={quietDangerClass("h-9 text-sm")}
     >
       <X className="size-4" aria-hidden />
       {cars.clearFilters}
