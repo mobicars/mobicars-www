@@ -1,4 +1,4 @@
-import { ArrowRight, BadgePercent, CarFront, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
+import { BadgePercent, CarFront, ChevronRight, Fuel, Settings2, Star, Users, type LucideIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -117,7 +117,7 @@ export function FleetCard({
       <div className="grid h-12 shrink-0 grid-cols-2 border-t border-line text-sm font-bold">
         <span aria-hidden className="flex items-center justify-center gap-2 text-blue-medium transition-colors duration-150 ease-out-soft group-hover:bg-tint motion-reduce:transition-none">
           {t.details}
-          <ArrowRight className="size-4 transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none" strokeWidth={2} />
+          <ChevronRight className="size-4 transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 motion-reduce:transition-none" />
         </span>
         <BookCarButton
           offerId={car.id}
