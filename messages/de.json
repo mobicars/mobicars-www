@@ -38,6 +38,8 @@
     "fleet": "Flotte",
     "book": "Buchen",
     "myReservations": "Meine Buchungen",
+    "login": "Anmelden",
+    "topNav": "Weitere Links",
     "callHotline": "Hotline anrufen: {phone}",
     "callDepartment": "Anrufen: {name}, {phone}",
     "footerNav": "Links in der Fußzeile",

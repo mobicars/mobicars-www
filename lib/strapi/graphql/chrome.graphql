@@ -20,6 +20,9 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
     headerCta {
       ...Link
     }
+    topLinks {
+      ...Link
+    }
     footerText
     legalLinks {
       ...Link

@@ -38,6 +38,8 @@
     "fleet": "Flota",
     "book": "Zarezerwuj",
     "myReservations": "Moje rezerwacje",
+    "login": "Zaloguj się",
+    "topNav": "Menu dodatkowe",
     "callHotline": "Zadzwoń na infolinię {phone}",
     "callDepartment": "Zadzwoń: {name}, {phone}",
     "footerNav": "Linki w stopce",

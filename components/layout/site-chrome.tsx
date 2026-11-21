@@ -5,11 +5,10 @@ import { Suspense } from "react";
 
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { Logo } from "@/components/layout/logo";
-import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/section";
 import type { Lang } from "@/i18n/config";
 import { fill, getMessages } from "@/i18n/messages";
-import { accountHref, reservationHref } from "@/i18n/routes";
+import { accountHref } from "@/i18n/routes";
 import { formatOpeningHours, getChrome, listPlaceLinks, type Contact, type MenuItem, type NavLink } from "@/lib/strapi";
 
 import { AnnouncementBar } from "./announcement-bar";
@@ -27,11 +26,15 @@ import { TopBarScroll } from "./top-bar-scroll";
  * with it off they stream in per request. The logo, the language dialog and the
  * customer panel do not wait for the CMS.
  *
- * Header: sticky, a 36px navy top bar over the main row (64px on phones, 80px
+ * Header: sticky, a 48px navy top bar over the main row (64px on phones, 80px
  * from `lg`), as on the old site, carfree.pl and carnet.pl. The bar holds the
- * hotline (its hours from `md`, the e-mail from `lg`), the language and "Moje
- * rezerwacje", so the main row keeps only the logo, the menu (from `xl`), the
- * green "Zarezerwuj" button and the menu button (below `xl`).
+ * social links and the CMS top links (`topLinks`, from `md`; in the phone menu
+ * too) on the left, "Zaloguj się" and the language as white-framed pills on the
+ * right. The main row: the logo, the menu (from `xl`), the hotline button
+ * (green, "Infolinia | phone"; the phone icon alone on phones, the number from
+ * `sm`, the word from `md`) and the menu
+ * button (below `xl`); no "Zarezerwuj". Once the bar has hidden, the main row turns blue (`blue-medium`)
+ * with a white logo and white links (the `scrolled` variant, `globals.css`).
  * The bar hides while the page scrolls down and comes back on the way up
  * (`TopBarScroll`). The header stays `sticky`, never `fixed`: it slides up by
  * the bar's height with a `transform`, as carnet.pl's header does (the compositor
@@ -54,11 +57,11 @@ const HEADER_CSS = `
 @supports not (animation-timeline: scroll()) {
   .site-header { border-bottom-color: var(--color-line); }
 }
-:root { --site-topbar: 2.25rem; --site-header-row: 4rem; --site-header: calc(var(--site-header-row) + var(--site-topbar)); }
+:root { --site-topbar: 3rem; --site-header-row: 4rem; --site-header: calc(var(--site-header-row) + var(--site-topbar)); }
 @media (min-width: 64rem) { :root { --site-header-row: 5rem; } }
 html[data-topbar="hidden"] { --site-header: var(--site-header-row); }
-.site-header { transition: transform 300ms ease-in-out; }
-html[data-topbar="hidden"] .site-header { transform: translateY(calc(var(--site-topbar) * -1)); }
+.site-header { transition: transform 300ms ease-in-out, background-color 300ms ease-in-out; }
+html[data-topbar="hidden"] .site-header { transform: translateY(calc(var(--site-topbar) * -1)); background-color: var(--color-blue-medium); animation: none; border-bottom-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .site-header { transition: none; } }`;
 
 export function SiteHeader({ lang }: { lang: Lang }) {
@@ -75,26 +78,23 @@ export function SiteHeader({ lang }: { lang: Lang }) {
           <Announcement lang={lang} />
         </Suspense>
         <div className="bg-blue-dark text-white">
-          <Container className="flex h-9 items-center gap-x-5 text-xs">
+          <Container className="flex h-12 items-center gap-x-6 text-xs">
             <Suspense fallback={null}>
-              <TopBarContact lang={lang} />
+              <TopBarLinks lang={lang} />
             </Suspense>
-            <div className="ml-auto flex items-center gap-1">
-              <LanguageSwitcher lang={lang} />
-              <Link
-                href={accountHref(lang, "reservations")}
-                className="flex h-7 items-center gap-1.5 rounded-full px-2.5 font-bold whitespace-nowrap text-white/90 outline-none transition-colors duration-200 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
-              >
-                <UserRound className="size-4 shrink-0" aria-hidden />
-                <span className="sr-only sm:not-sr-only">{t.myReservations}</span>
+            <div className="ml-auto flex items-center gap-2">
+              <Link href={accountHref(lang, "reservations")} className={TOP_BAR_PILL}>
+                <UserRound className="size-3.5 shrink-0" aria-hidden />
+                {t.login}
               </Link>
+              <LanguageSwitcher lang={lang} />
             </div>
           </Container>
         </div>
       </div>
       <Container className="flex h-16 items-center gap-1 sm:gap-2 lg:h-20">
         <Link href={`/${lang}`} aria-label={t.home} className="mr-auto shrink-0 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-blue-medium xl:mr-1 2xl:mr-6">
-          <Logo className="h-6 w-auto fill-blue-medium min-[360px]:h-7 sm:h-8 lg:h-10" label="MobiCars" />
+          <Logo className="h-6 w-auto fill-blue-medium transition-[fill] duration-300 min-[360px]:h-7 sm:h-8 lg:h-10 scrolled:fill-white" taglineClassName="scrolled:fill-white" label="MobiCars" />
         </Link>
         <Suspense fallback={<div className="hidden flex-1 xl:block" />}>
           <HeaderMenu lang={lang} />
@@ -116,47 +116,82 @@ async function Announcement({ lang }: { lang: Lang }) {
 }
 
 async function HeaderMenu({ lang }: { lang: Lang }) {
-  const t = getMessages(lang).layout;
-  const { header, headerCta, contact } = await getChrome(lang);
-  const cta = headerCta ?? { label: t.book, href: reservationHref(lang), newTab: false };
+  // No "Zarezerwuj" in the header (decided 21 November 2026): the hotline is its one button; the booking starts from the
+  // pages' search. `layout.headerCta` stays in the CMS, unused.
+  const { header, contact, topLinks } = await getChrome(lang);
   return (
     <MainNav
       entries={header.map((item) => toEntry(item, lang))}
-      menuFooter={<MenuFooter lang={lang} contact={contact} />}
-      actions={
-        // In the order they are drawn: Tab follows the header from left to right.
-        <>
-          <CtaLink link={cta} className={buttonClass("success", "sm", "whitespace-nowrap px-3 sm:ml-1 sm:px-4 lg:h-12")} />
-        </>
-      }
+      menuFooter={<MenuFooter lang={lang} contact={contact} links={topLinks} />}
+      actions={contact ? <HotlineButton lang={lang} contact={contact} /> : null}
     />
   );
 }
 
-/** The top bar's left side: the hotline, its hours from `md`, the e-mail from `lg` (CMS `site`). */
-async function TopBarContact({ lang }: { lang: Lang }) {
+/** The top bar's right side: "Zaloguj się" and (`LanguageSwitcher`) the language, white-framed pills on the navy. */
+const TOP_BAR_PILL =
+  "flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/60 px-3 text-xs font-semibold text-white outline-none transition-colors duration-200 ease-out hover:border-white hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-dark motion-reduce:transition-none";
+
+/** The top bar's left side: the social links (green circles, CMS `site`), then the CMS top links from `md` (`layout.topLinks`). */
+async function TopBarLinks({ lang }: { lang: Lang }) {
   const t = getMessages(lang).layout;
-  const { contact } = await getChrome(lang);
-  if (!contact) {
-    return null;
-  }
-  const link = "flex items-center gap-1.5 whitespace-nowrap rounded-full text-white/90 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white";
-  const hours = hoursLines(contact, lang);
+  const { social, topLinks } = await getChrome(lang);
   return (
     <>
-      <a href={contact.phoneHref} aria-label={fill(t.callHotline, { phone: contact.phone })} className={link}>
-        <Phone className="size-4 shrink-0 text-green-light" aria-hidden />
-        <span className="hidden sm:inline">{t.hotline}</span>
-        <span className="font-bold text-white">{contact.phone}</span>
-      </a>
-      {hours.length > 0 ? <p className="hidden truncate text-white/75 md:block">{hours.join(" · ")}</p> : null}
-      {contact.email ? (
-        <a href={`mailto:${contact.email}`} className={`${link} hidden lg:flex`}>
-          <Mail className="size-4 shrink-0 text-green-light" aria-hidden />
-          {contact.email}
-        </a>
+      {social.length > 0 ? (
+        <ul aria-label={t.followUs} className="flex items-center gap-2">
+          {social.map((item) => (
+            <li key={item.platform}>
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative grid size-6 place-items-center rounded-full text-green-medium outline-none transition-colors duration-200 ease-out hover:text-go-strong focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
+              >
+                {/* The icon is a circle with the mark cut out: a white disc under it makes the mark white, as on the old site. */}
+                <span aria-hidden className="absolute inset-[3px] rounded-full bg-white" />
+                <SocialIcon platform={item.platform} className="relative size-6" />
+                <span className="sr-only">{SOCIAL_NAMES[item.platform]}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {topLinks.length > 0 ? (
+        <nav aria-label={t.topNav} className="hidden md:block">
+          <ul className="flex items-center gap-x-5">
+            {topLinks.map((link) => (
+              <li key={`${link.href}-${link.label}`}>
+                <CtaLink
+                  link={link}
+                  className="rounded-sm text-xs font-medium whitespace-nowrap text-white/80 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white"
+                />
+              </li>
+            ))}
+          </ul>
+        </nav>
       ) : null}
     </>
+  );
+}
+
+/**
+ * "Infolinia | phone" in the main row, green as on the old site: the phone icon alone on phones (a 40px circle), the
+ * number from `sm`, "Infolinia |" before them from `md`. Stays green on the blue row too.
+ */
+function HotlineButton({ lang, contact }: { lang: Lang; contact: Contact }) {
+  const t = getMessages(lang).layout;
+  return (
+    <a
+      href={contact.phoneHref}
+      aria-label={fill(t.callHotline, { phone: contact.phone })}
+      className="ml-1 flex size-10 shrink-0 items-center justify-center gap-3 rounded-full bg-green-medium text-sm whitespace-nowrap text-white outline-none transition-colors duration-200 ease-out hover:bg-go-strong focus-visible:ring-2 focus-visible:ring-blue-medium focus-visible:ring-offset-2 motion-reduce:transition-none sm:w-auto sm:px-5 lg:h-12 scrolled:focus-visible:ring-white scrolled:focus-visible:ring-offset-blue-medium"
+    >
+      <span className="hidden text-xxs font-semibold md:inline">{t.hotline}</span>
+      <span aria-hidden className="hidden h-5 w-px bg-white/40 md:block" />
+      <Phone className="size-4 shrink-0 md:size-5 md:text-white/80" strokeWidth={1.75} aria-hidden />
+      <span className="hidden font-bold sm:inline">{contact.phone}</span>
+    </a>
   );
 }
 
@@ -168,13 +203,22 @@ function hoursLines(contact: Contact, lang: Lang): string[] {
   return contact.openingHours ? [contact.openingHours] : [];
 }
 
-/** Bottom of the phone menu: hotline with its hours, the customer's bookings, the language. */
-function MenuFooter({ lang, contact }: { lang: Lang; contact: Contact | null }) {
+/** Bottom of the phone menu: the top bar's links (hidden there below `md`), hotline with its hours, the customer's bookings, the language. */
+function MenuFooter({ lang, contact, links }: { lang: Lang; contact: Contact | null; links: NavLink[] }) {
   const t = getMessages(lang).layout;
   const rowClass =
     "flex min-h-12 items-center gap-3 rounded-control px-3 py-2 text-base font-bold text-blue-dark outline-none hover:bg-blue-dark/[0.04] focus-visible:ring-2 focus-visible:ring-blue-medium";
   return (
     <div className="flex flex-col gap-1">
+      {links.length > 0 ? (
+        <ul className="mb-2 flex flex-wrap gap-x-5 gap-y-1 border-b border-line px-3 pb-3">
+          {links.map((link) => (
+            <li key={`${link.href}-${link.label}`}>
+              <CtaLink link={link} className="flex min-h-11 items-center rounded-sm text-sm font-semibold text-blue-dark/80 outline-none hover:text-blue-dark focus-visible:ring-2 focus-visible:ring-blue-medium" />
+            </li>
+          ))}
+        </ul>
+      ) : null}
       {contact ? (
         <a href={contact.phoneHref} className={rowClass}>
           <Phone className="size-5 shrink-0 text-blue-medium" aria-hidden />
@@ -218,7 +262,7 @@ export function SiteFooter({ lang }: { lang: Lang }) {
       <Suspense
         fallback={
           <Container className="py-section-sm">
-            <Logo className="h-auto w-40 fill-white" label="MobiCars" />
+            <Logo className="h-auto w-40 fill-white" tone="white" label="MobiCars" />
           </Container>
         }
       >
@@ -269,7 +313,7 @@ async function FooterContent({ lang }: { lang: Lang }) {
       ) : null}
       <Container className="grid gap-12 py-section-sm lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:gap-16">
         <div className="flex flex-col gap-5">
-          <Logo className="h-auto w-40 fill-white" label="MobiCars" />
+          <Logo className="h-auto w-40 fill-white" tone="white" label="MobiCars" />
           {footer.text ? <p className="text-sm text-pretty text-white/80">{footer.text}</p> : null}
           {social.length > 0 ? (
             <div className="flex flex-col gap-2">

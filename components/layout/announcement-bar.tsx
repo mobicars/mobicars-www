@@ -18,8 +18,9 @@ const VARIANTS: Record<Announcement["variant"], string> = {
  * did not: 2.98:1 on the promo green).
  */
 const LINK_CLASS =
-  // Phones: a round arrow at the end of the text, and the whole bar is the link (`after:`), as wide as a thumb needs.
-  "ml-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-white align-middle after:absolute after:inset-0 sm:ml-0 sm:size-auto sm:h-7 sm:gap-1 sm:pr-2.5 sm:pl-3.5 sm:after:hidden text-xs leading-none font-bold whitespace-nowrap text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transition-none";
+  // Phones: the whole bar is the link (`after:`), as wide as a thumb needs, so the arrow at the end of the text is a
+  // plain white chevron, no pill. From `sm`: the white pill with the label.
+  "ml-0.5 inline-flex shrink-0 items-center justify-center align-middle text-white after:absolute after:inset-0 sm:ml-0 sm:h-7 sm:gap-1 sm:rounded-full sm:bg-white sm:pr-2.5 sm:pl-3.5 sm:text-blue-dark sm:after:hidden sm:hover:bg-white/90 text-xs leading-none font-bold whitespace-nowrap outline-none transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transition-none";
 
 const BAR_ID = "announcement-bar";
 /** Holds the version of the last announcement the visitor closed. */
@@ -56,12 +57,12 @@ export function AnnouncementBar({
               {link.newTab ? (
                 <a href={link.href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
                   <span className="max-sm:sr-only">{link.label}</span>
-                  <ChevronRight className="size-4 sm:size-3.5" aria-hidden />
+                  <ChevronRight className="size-5 -translate-y-px sm:size-3.5 sm:translate-y-0" aria-hidden />
                 </a>
               ) : (
                 <Link href={link.href} className={LINK_CLASS}>
                   <span className="max-sm:sr-only">{link.label}</span>
-                  <ChevronRight className="size-4 sm:size-3.5" aria-hidden />
+                  <ChevronRight className="size-5 -translate-y-px sm:size-3.5 sm:translate-y-0" aria-hidden />
                 </Link>
               )}
             </>

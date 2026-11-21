@@ -33,8 +33,11 @@ const iconButtonClass =
 const itemClass =
   "flex h-10 cursor-pointer items-center gap-1 whitespace-nowrap rounded-full px-3 text-sm font-bold text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
 
-/** Desktop menu items: tighter until `2xl`, so six items, the actions and the CTA fit at 1280 px in every language. */
-const desktopItemClass = itemClass.replace("px-3", "px-2 2xl:px-3");
+/**
+ * Desktop menu items: tighter until `2xl`, so six items, the actions and the CTA fit at 1280 px in every language.
+ * White on the blue row once the top bar has hidden (`scrolled`).
+ */
+const desktopItemClass = `${itemClass.replace("px-3", "px-2 2xl:px-3")} scrolled:text-white scrolled:hover:bg-white/10 scrolled:focus-visible:ring-white`;
 
 /**
  * The header menu, on React Aria's disclosure pattern (WAI-ARIA "disclosure
@@ -108,7 +111,8 @@ export function MainNav({
       <div className={`hidden flex-1 xl:block ${className}`} onClick={closeOnLink} {...focusWithinProps}>
         <nav aria-label={t.mainNav}>
           <DisclosureGroup expandedKeys={expanded} onExpandedChange={setExpanded}>
-            <ul className="flex items-center gap-0.5 2xl:gap-1">
+            {/* Centred between the logo and the hotline. */}
+            <ul className="flex items-center justify-center gap-0.5 2xl:gap-1">
               {entries.map((entry, index) => (
                 <li key={index}>
                   {"href" in entry ? (
@@ -143,8 +147,8 @@ export function MainNav({
       {actions}
 
       <SheetTrigger isOpen={sheet} onOpenChange={setSheet}>
-        <Button className={`${iconButtonClass} xl:hidden ${menuButtonClassName}`} aria-label={t.menu}>
-          <TextAlignJustify className="size-5 text-blue-medium" aria-hidden />
+        <Button className={`${iconButtonClass} xl:hidden scrolled:hover:bg-white/10 scrolled:data-focus-visible:ring-white ${menuButtonClassName}`} aria-label={t.menu}>
+          <TextAlignJustify className="size-7 text-blue-medium scrolled:text-white" aria-hidden />
         </Button>
         <SheetOverlay position="end" className="z-50 xl:hidden">
           <SheetBackdrop swipeAnimation="sheet-backdrop" className="bg-blue-dark/40 backdrop-blur-[4px]" />
@@ -155,16 +159,17 @@ export function MainNav({
               visible, so React Aria would never finish closing it and the page would stay locked. */}
           <Sheet overscrollPadding className="box-content h-full w-[calc(100vw-1px)] bg-white shadow-[-1px_0_0_white] outline-none">
             <SheetContent className="flex h-full flex-col overflow-y-auto pb-[var(--sheet-scroll-padding-y)] outline-none">
-              <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-line bg-white px-gutter">
+              {/* Blue, as the page's header row under it, once its top bar has hidden (`topbar-hidden`, `globals.css`). */}
+              <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-line bg-white px-gutter topbar-hidden:border-transparent topbar-hidden:bg-blue-medium">
                 {/* The header's logo, as on the page under it; the sheet is still named "Menu" for screen readers. */}
                 <Heading slot="title" className="flex items-center">
                   <span className="sr-only">{t.menu}</span>
                   <span aria-hidden>
-                    <Logo className="h-6 w-auto fill-blue-medium min-[360px]:h-7 sm:h-8" />
+                    <Logo className="h-6 w-auto fill-blue-medium min-[360px]:h-7 sm:h-8 topbar-hidden:fill-white" taglineClassName="topbar-hidden:fill-white" />
                   </span>
                 </Heading>
-                <Button slot="close" aria-label={t.closeMenu} className={`${iconButtonClass} -mr-1`}>
-                  <X className="size-5 text-blue-medium" aria-hidden />
+                <Button slot="close" aria-label={t.closeMenu} className={`${iconButtonClass} -mr-1 topbar-hidden:hover:bg-white/10 topbar-hidden:data-focus-visible:ring-white`}>
+                  <X className="size-7 text-blue-medium topbar-hidden:text-white" aria-hidden />
                 </Button>
               </div>
               <nav aria-label={t.mainNav} className="px-gutter py-3" onClick={closeOnLink}>
@@ -255,7 +260,7 @@ function Submenu({
 function Chevron({ open, size = "size-4" }: { open: boolean; size?: string }) {
   return (
     <ChevronDown
-      className={`${size} text-blue-medium transition-transform duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
+      className={`${size} text-blue-medium transition-transform scrolled:text-white duration-200 motion-reduce:transition-none ${open ? "rotate-180" : ""}`}
       aria-hidden
     />
   );

@@ -38,6 +38,8 @@
     "fleet": "Автопарк",
     "book": "Забронювати",
     "myReservations": "Мої бронювання",
+    "login": "Увійти",
+    "topNav": "Додаткове меню",
     "callHotline": "Зателефонувати на гарячу лінію {phone}",
     "callDepartment": "Зателефонувати: {name}, {phone}",
     "footerNav": "Посилання у футері",

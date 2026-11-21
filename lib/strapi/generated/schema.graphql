@@ -2877,6 +2877,7 @@ type Layout {
   localizations_connection: LayoutRelationResponseCollection
   paymentMethods(filters: ComponentSitePaymentMethodFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentSitePaymentMethod]
   publishedAt: DateTime
+  topLinks(filters: ComponentElementsLinkFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentElementsLink]
   updatedAt: DateTime
 }
 
@@ -2890,6 +2891,7 @@ input LayoutInput {
   legalText: String
   paymentMethods: [ComponentSitePaymentMethodInput]
   publishedAt: DateTime
+  topLinks: [ComponentElementsLinkInput]
 }
 
 type LayoutRelationResponseCollection {

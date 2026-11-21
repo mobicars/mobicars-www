@@ -1442,6 +1442,8 @@ export type Chrome = {
   header: MenuItem[];
   /** The header's "Zarezerwuj" button; `null`: the site's default (the booking search). */
   headerCta: NavLink | null;
+  /** The navy top bar's links after the social icons (FAQ, Blog, O firmie); in the phone menu too. */
+  topLinks: NavLink[];
   footer: {
     groups: { title: string; links: NavLink[] }[];
     text: string | null;
@@ -1467,6 +1469,7 @@ export const EMPTY_CHROME: Chrome = {
   announcement: null,
   header: [],
   headerCta: null,
+  topLinks: [],
   footer: {
     groups: [],
     text: null,
@@ -1532,6 +1535,7 @@ export function parseChrome(raw: ChromeQuery, lang: Lang, routes: readonly PageR
         : null,
     header,
     headerCta: raw.layout?.headerCta ? resolveLink(raw.layout.headerCta, lang, routes) : null,
+    topLinks: links(raw.layout?.topLinks ?? null),
     footer: {
       groups: (raw.layout?.footerGroups ?? []).flatMap((group) => {
         const resolved = group ? links(group.links) : [];

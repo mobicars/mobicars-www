@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* The header once its top bar has hidden (`TopBarScroll`): the main row turns blue, its links white. Not the menu sheet (a portal). */
+@custom-variant scrolled (html[data-topbar="hidden"] .site-header &);
+/* The same moment anywhere on the page, e.g. the phone menu sheet, a portal outside the header. */
+@custom-variant topbar-hidden (html[data-topbar="hidden"] &);
+
 /*
  * The site is light only until a dark theme is designed. The old
  * `prefers-color-scheme: dark` switch turned the page behind the blocks near
@@ -227,14 +232,15 @@ body {
     scroll-padding-bottom: 7rem;
   }
 
-  /* Outside production the red preview banner (2.75rem) takes the bottom edge: the bar goes above it. */
-  body:has([data-preview-banner]) [data-mobile-summary-bar] {
-    bottom: 2.75rem;
-  }
-
   body:has([data-preview-banner]):has([data-mobile-summary-bar]) {
     padding-bottom: 8.75rem;
   }
+}
+
+/* Outside production the red preview banner (2.75rem) takes the bottom edge: a bottom bar goes above it, at any width
+   (the homepage's resume bar shows on desktops too). */
+body:has([data-preview-banner]) [data-mobile-summary-bar] {
+  bottom: 2.75rem;
 }
 
 /* Descriptions from RentCarSoft (addons, zones, protection) in the "i" dialogs: `prose` in the site's colours, tighter. */

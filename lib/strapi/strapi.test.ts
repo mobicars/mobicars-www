@@ -297,6 +297,7 @@ describe("chrome parsing", () => {
       footerText: "  ",
       legalLinks: [],
       headerCta: null,
+      topLinks: [link({ label: "FAQ" }), null],
       paymentMethods: [{ method: "blik" as const }, null, { method: "card" as const }, { method: "blik" as const }],
       companyName: " MobiCars Sp. z o.o. Sp. k. ",
       legalText: null,
@@ -416,12 +417,13 @@ describe("chrome parsing", () => {
     ]);
   });
 
-  it("reads payment methods once each, the company name and the default header button", () => {
+  it("reads payment methods once each, the company name, the default header button and the top bar links", () => {
     const chrome = parsePageChrome(raw(null));
     assert.deepEqual(chrome.footer.paymentMethods, ["blik", "card"]);
     assert.equal(chrome.footer.companyName, "MobiCars Sp. z o.o. Sp. k.");
     assert.equal(chrome.footer.legalText, null);
     assert.equal(chrome.headerCta, null);
+    assert.deepEqual(chrome.topLinks.map((link) => link.label), ["FAQ"]);
   });
 
   it("shows the announcement only inside its dates", () => {
