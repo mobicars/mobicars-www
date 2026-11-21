@@ -4,7 +4,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 
 import { CtaLink } from "@/components/blocks/cta-link";
-import { CardArrow } from "@/components/ui/surface";
+import { PRODUCT_IMAGE, PRODUCT_PHOTO, PRODUCT_TITLE, ProductMore, ProductPrice, productCardClass } from "@/components/ui/product-card";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { fleetHref } from "@/i18n/routes";
@@ -47,7 +47,7 @@ export async function CarClasses({ section, lang, pickupId }: { section: CarClas
   const heading = section.title ? "h3" : "h2";
   const more = section.moreCard ? <CardItem card={section.moreCard} heading={heading} sizes={PHOTO_SIZES} banner={false} fill /> : null;
   const card = (item: ClassItem) => (
-    <ClassCard item={item} lang={lang} heading={heading} texts={{ from: t.fleet.from, perDay: t.fleet.perDay }} />
+    <ClassCard item={item} lang={lang} heading={heading} texts={{ from: t.fleet.from, perDay: t.fleet.perDay, more: t.fleet.seeCars }} />
   );
 
   return (
@@ -128,18 +128,18 @@ function ClassCard({
   item: ClassItem;
   lang: Lang;
   heading: "h2" | "h3";
-  texts: { from: string; perDay: string };
+  texts: { from: string; perDay: string; more: string };
 }) {
   return (
-    <article className="group relative flex w-full flex-col overflow-hidden rounded-card border border-line bg-white text-blue-dark focus-within:ring-2 focus-within:ring-blue-medium focus-within:ring-offset-2">
-      <div className="relative aspect-[16/10] overflow-hidden bg-surface">
+    <article className={productCardClass({ interactive: true })}>
+      <div className={PRODUCT_PHOTO}>
         {car.image ? (
           <Image
             src={car.image.src}
             alt=""
             fill
             sizes={PHOTO_SIZES}
-            className="object-contain p-3 transition-transform duration-500 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100 sm:p-4"
+            className={PRODUCT_IMAGE}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-muted-dark">
@@ -147,8 +147,8 @@ function ClassCard({
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4 sm:p-5">
-        <Heading className="text-lg leading-snug font-bold text-balance">
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <Heading className={PRODUCT_TITLE}>
           <Link
             href={href}
             {...(newTab ? { target: "_blank", rel: "noopener noreferrer" } : {})}
@@ -157,16 +157,11 @@ function ClassCard({
             {label}
           </Link>
         </Heading>
-        <div className="mt-auto flex items-end justify-between gap-2">
-          {car.dailyFrom !== null ? (
-            <p className={`text-sm whitespace-nowrap ${car.promotion ? "text-green-dark" : ""}`}>
-              {texts.from} <span className="text-xl font-bold tracking-tight tabular-nums">{formatPrice(lang, car.dailyFrom)}</span>{" "}
-              <span className="text-xs font-semibold">{texts.perDay}</span>
-            </p>
-          ) : (
-            <span />
-          )}
-          <CardArrow />
+        {car.dailyFrom !== null ? (
+          <ProductPrice from={texts.from} amount={formatPrice(lang, car.dailyFrom)} unit={texts.perDay} promotion={car.promotion} small />
+        ) : null}
+        <div className="mt-auto border-t border-line pt-3">
+          <ProductMore label={texts.more} />
         </div>
       </div>
     </article>

@@ -3,8 +3,10 @@
 import { useState, type ReactNode } from "react";
 import Image from "next/image";
 import { ToggleButton, ToggleButtonGroup } from "react-aria-components";
+import { Star } from "lucide-react";
 
 import { ChooseButton, CompactOfferCard, Price, PromotionLine, SpecList } from "@/components/reservation/offer-parts";
+import { PRODUCT_BADGES, ProductBadge } from "@/components/ui/product-card";
 import { ScrollRow } from "@/components/reservation/scroll-row";
 import { fill } from "@/i18n/fill";
 import { useMessages } from "@/i18n/messages-context";
@@ -98,10 +100,10 @@ export function SegmentRow({
                 key={offer.id}
                 id={offer.id}
                 // Green for the chosen car, blue for a car only previewed.
-                className={`flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border-2 bg-white pr-3 pl-1 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none ${
+                className={`flex h-12 shrink-0 cursor-pointer items-center gap-2 rounded-xl border bg-white pr-3 pl-1 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none ${
                   offer.id === selectedId
-                    ? "border-green-medium"
-                    : "border-muted-light data-selected:border-blue-medium"
+                    ? "border-green-medium ring-1 ring-green-medium"
+                    : "border-line data-selected:border-blue-medium data-selected:ring-1 data-selected:ring-blue-medium"
                 }`}
               >
                 <span className="relative block h-8 w-14 shrink-0">
@@ -119,11 +121,11 @@ export function SegmentRow({
     </div>
     <article
       aria-labelledby={titleId}
-      className={`hidden grid-cols-1 overflow-hidden @xl:grid rounded-card border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none @xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] @3xl:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)] ${
-        chosenHere ? "border-green-medium" : "border-line hover:border-blue-medium/40"
+      className={`hidden grid-cols-1 overflow-hidden @xl:grid rounded-card border bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none @xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] @3xl:grid-cols-[minmax(0,4fr)_minmax(0,5fr)_minmax(0,3fr)] ${
+        chosenHere ? "border-green-medium ring-1 ring-green-medium" : "border-line hover:border-blue-medium/40"
       }`}
     >
-      <div className="relative aspect-[16/10] bg-white @xl:aspect-auto @xl:min-h-56">
+      <div className="relative aspect-[16/10] bg-surface @xl:aspect-auto @xl:min-h-56">
         {preview.image ? (
           <Image
             key={preview.id}
@@ -137,15 +139,17 @@ export function SegmentRow({
           />
         ) : null}
         {preview.popular ? (
-          <span className="absolute top-3 left-3 rounded-full bg-green-light px-2.5 py-1 text-xxs font-bold text-green-dark">
-            {cars.popular}
+          <span className={PRODUCT_BADGES}>
+            <ProductBadge icon={Star} tone="plain">
+              {cars.popular}
+            </ProductBadge>
           </span>
         ) : null}
       </div>
 
       <div className="flex min-w-0 flex-col gap-3 p-4 @xl:p-5">
         <div>
-          <h3 id={titleId} className="text-xl font-semibold text-blue-dark">
+          <h3 id={titleId} className="text-xl leading-snug font-bold text-blue-dark">
             {segment.name}
           </h3>
           <p className="text-sm text-muted-dark">
@@ -160,13 +164,13 @@ export function SegmentRow({
                 key={offer.id}
                 id={offer.id}
                 // Green for the chosen car, blue for a car only previewed.
-                className={`flex w-28 cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-1 motion-reduce:transition-none ${
+                className={`flex w-28 cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-1 motion-reduce:transition-none ${
                   offer.id === selectedId
-                    ? "border-green-medium"
-                    : "border-muted-light hover:border-blue-medium/40 data-selected:border-blue-medium"
+                    ? "border-green-medium ring-1 ring-green-medium"
+                    : "border-line hover:border-blue-medium/40 data-selected:border-blue-medium data-selected:ring-1 data-selected:ring-blue-medium"
                 }`}
               >
-                <span className="relative block aspect-[16/10] w-full bg-white">
+                <span className="relative block aspect-[16/10] w-full bg-surface">
                   {offer.image ? (
                     <Image src={offer.image.src} alt="" fill sizes="112px" className="object-contain p-1" />
                   ) : null}

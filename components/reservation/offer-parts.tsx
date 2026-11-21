@@ -1,11 +1,12 @@
 "use client";
 
-import { BadgePercent, Fuel, Settings2, Square, SquareCheck, Users, type LucideIcon } from "lucide-react";
+import { BadgePercent, Fuel, Settings2, Square, SquareCheck, Star, Users, type LucideIcon } from "lucide-react";
 
 import Image from "next/image";
 import { createContext, useContext, type ReactNode } from "react";
 
 import { formatDayCount, formatMoney } from "@/components/reservation/format";
+import { ProductBadge } from "@/components/ui/product-card";
 import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
 import { useLang } from "@/i18n/lang-context";
@@ -292,18 +293,20 @@ export function CompactOfferCard({
   const price = rent === null ? null : withFees(rent, fees);
   return (
     <article
-      className={`flex flex-col gap-3 rounded-card border-2 bg-white p-3 transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
-        highlighted ? "border-green-medium" : "border-line"
+      className={`flex flex-col gap-3 rounded-card border bg-white p-3 transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
+        highlighted ? "border-green-medium ring-1 ring-green-medium" : "border-line"
       }`}
     >
       <div className="flex gap-3">
-        <span className="relative block h-20 w-32 shrink-0">
+        <span className="relative block h-20 w-32 shrink-0 overflow-hidden rounded-control bg-surface">
           {offer.image ? (
             <Image src={offer.image.src} alt="" fill sizes="128px" preload={preload} className="object-contain" />
           ) : null}
           {offer.popular ? (
-            <span className="absolute -top-1 -left-1 rounded-full bg-green-light px-2 py-0.5 text-xxs font-bold text-green-dark">
-              {cars.popular}
+            <span className="absolute top-1 left-1">
+              <ProductBadge icon={Star} tone="plain">
+                {cars.popular}
+              </ProductBadge>
             </span>
           ) : null}
         </span>

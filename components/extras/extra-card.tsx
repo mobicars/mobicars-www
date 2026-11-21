@@ -2,8 +2,9 @@ import { Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
-import { CardArrow } from "@/components/ui/surface";
+import { PRODUCT_IMAGE, PRODUCT_PHOTO, ProductMore, productCardClass } from "@/components/ui/product-card";
 import type { Lang } from "@/i18n/config";
+import { getMessages } from "@/i18n/messages";
 import { extrasHref } from "@/i18n/routes";
 import type { CatalogExtra } from "@/lib/extras/catalog";
 
@@ -29,15 +30,15 @@ export function ExtraCard({
   heading?: "h2" | "h3" | "h4";
 }) {
   return (
-    <article className="group relative flex w-full flex-col overflow-hidden rounded-card border border-line bg-white text-blue-dark focus-within:ring-2 focus-within:ring-blue-medium focus-within:ring-offset-2">
-      <div className="relative aspect-[4/3] overflow-hidden bg-surface">
+    <article className={productCardClass({ interactive: true })}>
+      <div className={PRODUCT_PHOTO}>
         {extra.image ? (
           <Image
             src={extra.image}
             alt=""
             fill
             sizes={PHOTO_SIZES}
-            className="object-contain p-4 transition-transform duration-500 ease-out-soft group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+            className={PRODUCT_IMAGE}
           />
         ) : (
           <div className="flex size-full items-center justify-center text-muted-dark">
@@ -45,14 +46,14 @@ export function ExtraCard({
           </div>
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2 p-4">
-        <Heading className="text-base leading-snug font-bold text-balance">
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <Heading className="text-base leading-snug font-bold text-balance text-blue-dark">
           <Link href={extrasHref(lang, extra.slug)} className="outline-none after:absolute after:inset-0 after:content-['']">
             {extra.name}
           </Link>
         </Heading>
-        <div className="mt-auto flex justify-end">
-          <CardArrow />
+        <div className="mt-auto">
+          <ProductMore label={getMessages(lang).fleet.details} />
         </div>
       </div>
     </article>

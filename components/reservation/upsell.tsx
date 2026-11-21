@@ -8,6 +8,7 @@ import { Fuel, LoaderCircle, Settings2, Users } from "lucide-react";
 import { ConfirmQuestion } from "@/components/reservation/dialog-parts";
 import { formatMoney } from "@/components/reservation/format";
 import { ChooseButton } from "@/components/reservation/offer-parts";
+import { PRODUCT_EYEBROW, PRODUCT_TITLE } from "@/components/ui/product-card";
 import { Slider } from "@/components/reservation/slider";
 import { currentHrefWith } from "@/components/reservation/url";
 import { fill } from "@/i18n/fill";
@@ -96,25 +97,27 @@ function UpsellCard({
   disabled: boolean;
   onChoose: () => void;
 }) {
-  const t = useMessages().upsell;
+  const messages = useMessages();
+  const t = messages.upsell;
   const lang = useLang();
   const { car } = option;
+  // The photo on the product cards' grey (`components/ui/product-card.tsx`), here inset in the card's padding.
   const photo = car.image ? (
-    <span className={`relative block w-full ${wide ? "h-44 @xl:h-auto @xl:min-h-48 @xl:w-1/2 @xl:shrink-0" : "my-3 h-28"}`}>
+    <span className={`relative block w-full overflow-hidden rounded-control bg-surface ${wide ? "h-44 @xl:h-auto @xl:min-h-48 @xl:w-1/2 @xl:shrink-0" : "my-3 h-32"}`}>
       <Image
         src={car.image.src}
         alt=""
         fill
         sizes={wide ? "(min-width: 1280px) 440px, 90vw" : "(min-width: 1280px) 420px, 90vw"}
-        className="object-contain"
+        className="object-contain p-3"
       />
     </span>
   ) : null;
 
   return (
     <article
-      // Hover darkens the frame, like the extras, zone and protection cards.
-      className={`relative flex w-full rounded-card border-2 border-line bg-white p-4 transition-colors duration-200 ease-out hover:border-blue-medium/40 motion-reduce:transition-none ${
+      // The product cards' frame and hover (`productCardClass`), in this card's own layout.
+      className={`relative flex w-full rounded-card border border-line bg-white p-4 transition-colors duration-200 ease-out hover:border-blue-medium/40 motion-reduce:transition-none ${
         wide ? "flex-col gap-4 @xl:flex-row @xl:items-center @xl:p-6" : "flex-col"
       }`}
     >
@@ -122,14 +125,13 @@ function UpsellCard({
       <div className="flex min-w-0 flex-1 flex-col">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h4 className={`font-semibold text-blue-dark ${wide ? "text-xl" : ""}`}>{car.name}</h4>
-          <p className="text-xs text-muted-dark">{fill(t.orSimilar, { segment: car.segment })}</p>
+          <p className={`mb-0.5 ${PRODUCT_EYEBROW}`}>{car.segment}</p>
+          <h4 className={PRODUCT_TITLE}>{car.name}</h4>
+          <p className="text-xxs text-muted-dark">{messages.cars.orSimilar}</p>
         </div>
-        <p className="shrink-0 text-right">
-          <span className={`block font-bold text-go-strong ${wide ? "text-2xl" : "text-lg"}`}>
-            +{formatMoney(lang, option.increase)}
-          </span>
-          <span className="block text-xxs text-muted-dark">{option.unit === "month" ? t.perMonth : t.perDay}</span>
+        <p className="shrink-0 text-right text-green-dark">
+          <span className="block text-xl font-bold tracking-tight tabular-nums">+{formatMoney(lang, option.increase)}</span>
+          <span className="block text-xs font-semibold">{option.unit === "month" ? t.perMonth : t.perDay}</span>
         </p>
       </div>
       <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-blue-dark/80">

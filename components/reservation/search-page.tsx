@@ -538,7 +538,7 @@ function MonthlyHint({ lang, search }: { lang: Lang; search: ReservationSearch }
   }
   const t = getMessages(lang).booking.monthlyHint;
   return (
-    <aside className="mb-6 flex flex-col gap-4 rounded-card border-2 border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
+    <aside className="mb-6 flex flex-col gap-4 rounded-card border border-green-medium/40 bg-green-light/40 p-4 sm:flex-row sm:items-center sm:p-5">
       <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-white text-green-medium">
         <CalendarRange className="size-6" strokeWidth={1.75} aria-hidden />
       </span>

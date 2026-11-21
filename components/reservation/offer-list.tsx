@@ -4,9 +4,10 @@ import { useEffect, useId, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ToggleButton, ToggleButtonGroup } from "react-aria-components";
-import { LayoutGrid, Rows3, SlidersHorizontal, X, type LucideIcon } from "lucide-react";
+import { LayoutGrid, Rows3, SlidersHorizontal, Star, X, type LucideIcon } from "lucide-react";
 
 import { DialogHeader } from "@/components/reservation/dialog-parts";
+import { PRODUCT_BADGES, PRODUCT_EYEBROW, PRODUCT_PHOTO, PRODUCT_TITLE, ProductBadge } from "@/components/ui/product-card";
 import {
   ChooseButton,
   CompactOfferCard,
@@ -491,11 +492,11 @@ function OfferTile({
   const { cars } = useMessages();
   return (
     <article
-      className={`flex h-full flex-col overflow-hidden rounded-card border-2 bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
-        selected ? "border-green-medium" : "border-line hover:border-blue-medium/40"
+      className={`flex h-full flex-col overflow-hidden rounded-card border bg-white transition-[border-color,box-shadow] duration-200 ease-out motion-reduce:transition-none ${
+        selected ? "border-green-medium ring-1 ring-green-medium" : "border-line hover:border-blue-medium/40"
       }`}
     >
-      <div className="relative aspect-[16/10] bg-white">
+      <div className={PRODUCT_PHOTO}>
         {offer.image ? (
           <Image
             src={offer.image.src}
@@ -508,16 +509,18 @@ function OfferTile({
           />
         ) : null}
         {offer.popular ? (
-          <span className="absolute top-3 left-3 rounded-full bg-green-light px-2.5 py-1 text-xxs font-bold text-green-dark">
-            {cars.popular}
+          <span className={PRODUCT_BADGES}>
+            <ProductBadge icon={Star} tone="plain">
+              {cars.popular}
+            </ProductBadge>
           </span>
         ) : null}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-4">
         <div>
-          <p className="text-xxs font-semibold tracking-wide text-blue-medium uppercase">{offer.segment}</p>
-          <h3 className="text-lg font-semibold text-blue-dark">{offer.name}</h3>
-          <p className="text-xs text-muted-dark">{cars.orSimilar}</p>
+          <p className={`mb-0.5 ${PRODUCT_EYEBROW}`}>{offer.segment}</p>
+          <h3 className={PRODUCT_TITLE}>{offer.name}</h3>
+          <p className="text-xxs text-muted-dark">{cars.orSimilar}</p>
         </div>
         <SpecList offer={offer} />
         {/* Stacked: a four-digit total with "/ 14 dni" leaves no room for the button beside it. */}

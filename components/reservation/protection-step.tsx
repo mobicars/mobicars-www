@@ -319,8 +319,8 @@ function ProtectionTable({
                 {/* The frame is its own top layer, so the chosen column's border runs over the green tab. */}
                 <span
                   aria-hidden
-                  className={`pointer-events-none absolute inset-0 z-20 rounded-card border-2 transition-colors duration-200 ease-out motion-reduce:transition-none ${
-                    isSelected ? "border-green-medium" : option.recommended ? "border-blue-medium" : "border-transparent"
+                  className={`pointer-events-none absolute inset-0 z-20 rounded-card border transition-colors duration-200 ease-out motion-reduce:transition-none ${
+                    isSelected ? "border-green-medium ring-1 ring-green-medium" : option.recommended ? "border-blue-medium ring-1 ring-blue-medium" : "border-transparent"
                   }`}
                 />
                 <div className={`${head} relative z-10 rounded-t-card bg-white`}>
@@ -449,8 +449,8 @@ function ProtectionCard({ option, period, className }: { option: ProtectionOptio
       id={option.id}
       textValue={option.name}
       className={({ isSelected }) =>
-        `${className} relative cursor-pointer flex-col rounded-card border-2 bg-white outline-none transition-[border-color,box-shadow] duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
-          isSelected ? "border-green-medium" : option.recommended ? "border-blue-medium" : "border-line"
+        `${className} relative cursor-pointer flex-col rounded-card border bg-white outline-none transition-[border-color,box-shadow] duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+          isSelected ? "border-green-medium ring-1 ring-green-medium" : option.recommended ? "border-blue-medium ring-1 ring-blue-medium" : "border-line"
         }`
       }
     >

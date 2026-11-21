@@ -1,9 +1,8 @@
-import { Package } from "lucide-react";
+import { ChevronRight, Package } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
 import type { Lang } from "@/i18n/config";
-import { CardArrow } from "@/components/ui/surface";
 import { extrasHref } from "@/i18n/routes";
 import { EXTRA_GROUPS, type CatalogExtra, type ExtraGroup } from "@/lib/extras/catalog";
 
@@ -27,7 +26,7 @@ export function CarExtras({ extras, lang, groups }: { extras: readonly CatalogEx
               <li key={extra.id} className="flex w-36 shrink-0 snap-start sm:w-auto">
                 <Link
                   href={extrasHref(lang, extra.slug)}
-                  className="group flex min-h-14 w-full flex-col items-start gap-2 rounded-control border border-line bg-white p-2 text-sm font-semibold text-blue-dark transition-colors hover:bg-tint focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-medium motion-reduce:transition-none sm:flex-row sm:items-center sm:gap-3"
+                  className="group flex min-h-14 w-full flex-col items-start gap-2 rounded-control border border-line bg-white p-2 text-sm font-semibold text-blue-dark transition-colors hover:border-blue-medium/40 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-medium motion-reduce:transition-none sm:flex-row sm:items-center sm:gap-3"
                 >
                   <span className="relative flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-control bg-surface text-muted-dark">
                     {extra.image ? (
@@ -37,7 +36,8 @@ export function CarExtras({ extras, lang, groups }: { extras: readonly CatalogEx
                     )}
                   </span>
                   <span className="min-w-0 flex-1 text-balance">{extra.name}</span>
-                  <CardArrow className="max-sm:hidden" />
+                  {/* A row of a list: a plain chevron, as the product cards' "Szczegóły ›" (no round arrow). */}
+                  <ChevronRight className="size-4 shrink-0 text-blue-medium transition-transform duration-150 ease-out-soft group-hover:translate-x-0.5 max-sm:hidden motion-reduce:transition-none" aria-hidden />
                 </Link>
               </li>
             ))}

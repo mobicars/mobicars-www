@@ -409,8 +409,8 @@ function ZoneCard({
       id={id}
       textValue={title}
       className={({ isSelected }) =>
-        `${className} relative cursor-pointer flex-col gap-2 overflow-hidden rounded-card border-2 bg-white p-4 pt-0 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
-          isSelected ? "border-green-medium" : "border-muted-light hover:border-blue-medium/40"
+        `${className} relative cursor-pointer flex-col gap-2 overflow-hidden rounded-card border bg-white p-4 pt-0 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+          isSelected ? "border-green-medium ring-1 ring-green-medium" : "border-line hover:border-blue-medium/40"
         }`
       }
     >
@@ -474,8 +474,8 @@ function ExtraTile({
       id={item.id}
       textValue={item.name}
       // Hover darkens the frame, like the zone and protection cards.
-      className={`flex min-w-0 cursor-pointer items-start gap-3 rounded-card border-2 bg-white p-4 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
-        chosen ? "border-green-medium" : "border-line hover:border-blue-medium/40"
+      className={`flex min-w-0 cursor-pointer items-start gap-3 rounded-card border bg-white p-4 outline-none transition-colors duration-200 ease-out data-focus-visible:ring-2 data-focus-visible:ring-blue-medium data-focus-visible:ring-offset-2 motion-reduce:transition-none ${
+        chosen ? "border-green-medium ring-1 ring-green-medium" : "border-line hover:border-blue-medium/40"
       }`}
     >
       <span className="relative flex size-9 shrink-0 items-center justify-center">
