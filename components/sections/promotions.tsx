@@ -1,4 +1,4 @@
-import { BadgePercent, Info, Tag } from "lucide-react";
+import { BadgePercent, ChevronDown, Info, Tag } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
@@ -154,9 +154,14 @@ function ClassBox({
         regular={{ text: formatPrice(lang, promotion.regularPrice), label: fill(t.regular, { price: formatPrice(lang, promotion.regularPrice) }) }}
       />
 
-      <div>
-        <p className="mb-2 text-xs font-semibold text-muted-dark">{t.prices}</p>
-        <ul className="grid grid-cols-2 gap-2 min-[400px]:grid-cols-3">
+      {/* Phones: the price list folded under a 44px header, so 15 boxes stay a short scroll; from `sm` always shown
+          (`::details-content`). A `<details>`, as the footer's link groups: server markup, no script, prices in the HTML. */}
+      <details className="group/prices border-t border-line sm:border-0 sm:[&::details-content]:h-auto sm:[&::details-content]:[content-visibility:visible]">
+        <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 rounded-sm text-sm font-semibold text-blue-dark outline-none focus-visible:ring-2 focus-visible:ring-blue-medium sm:pointer-events-none sm:mb-2 sm:min-h-0 sm:text-xs sm:text-muted-dark [&::-webkit-details-marker]:hidden">
+          {t.prices}
+          <ChevronDown className="size-4 shrink-0 text-blue-medium transition-transform duration-200 group-open/prices:rotate-180 motion-reduce:transition-none sm:hidden" aria-hidden />
+        </summary>
+        <ul className="grid grid-cols-2 gap-2 pt-2 min-[400px]:grid-cols-3 sm:pt-0">
           {promotion.bands.map((band) => (
             <li key={`${band.from ?? 0}-${band.to ?? "up"}`} className="flex flex-col rounded-control bg-surface px-2.5 py-1.5">
               <span className="text-xs text-muted-dark">{bandLabel(lang, band, fleet)}</span>
@@ -168,7 +173,7 @@ function ClassBox({
             </li>
           ))}
         </ul>
-      </div>
+      </details>
     </article>
   );
 }

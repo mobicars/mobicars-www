@@ -115,7 +115,7 @@ export function Features({ section }: { section: FeaturesSection }) {
         } ${section.variant === "statements" ? `${colours.rule} lg:border-l lg:pl-6 ${ROW_START[cols]}` : ""}`}
       >
         {section.variant === "inline" ? <InlineItem item={item} heading={itemHeading} colours={colours} /> : null}
-        {section.variant === "cards" ? <CardItem item={item} heading={itemHeading} background={section.background} /> : null}
+        {section.variant === "cards" ? <CardItem item={item} heading={itemHeading} background={section.background} row={!carousel} /> : null}
         {section.variant === "statements" ? <StatementItem item={item} heading={itemHeading} colours={colours} first={index === 0} /> : null}
         {section.variant === "steps" ? (
           <StepItem
@@ -200,8 +200,30 @@ export function InlineItem({ item, heading: Title, colours }: { item: Item; head
  * The icon is outside the masked card, so the mask does not cut it. Cards
  * stay white on every background.
  */
-function CardItem({ item, heading: Title, background }: { item: Item; heading: Heading; background: FeaturesSection["background"] }) {
+function CardItem({ item, heading: Title, background, row }: { item: Item; heading: Heading; background: FeaturesSection["background"]; row: boolean }) {
   const card = background.tone === "white" ? "bg-surface" : "bg-white";
+  if (row) {
+    // A grid on phones: a row (icon on the left, as `inline`, in the card's colour) instead of a tall card,
+    // so four items take about half the height. From `sm` the card with its cut-out, as below.
+    const phone = background.tone === "white" ? "max-sm:bg-surface" : "max-sm:bg-white";
+    const desk = background.tone === "white" ? "sm:bg-surface" : "sm:bg-white";
+    return (
+      <div className={`relative flex w-full items-center gap-4 rounded-card p-4 sm:flex-col sm:items-stretch sm:gap-0 sm:rounded-none sm:p-0 sm:pb-7 ${phone}`}>
+        <div
+          className={`flex min-w-0 flex-1 flex-col gap-1 sm:gap-3 sm:rounded-card sm:px-6 sm:pt-8 sm:pb-14 sm:text-center sm:[mask-image:radial-gradient(circle_at_50%_100%,transparent_2.25rem,#000_calc(2.25rem+0.5px))] ${desk}`}
+        >
+          <Title className="text-lg leading-snug font-bold text-balance text-blue-dark sm:text-subtitle">{item.title}</Title>
+          {item.text ? <p className="text-pretty text-blue-dark/75">{item.text}</p> : null}
+        </div>
+        <span
+          aria-hidden
+          className={`order-first grid size-12 shrink-0 place-items-center rounded-full text-2xl sm:absolute sm:bottom-0 sm:left-1/2 sm:order-none sm:size-14 sm:-translate-x-1/2 sm:text-[1.75rem] ${palette(background).badge}`}
+        >
+          <Icon name={item.icon} />
+        </span>
+      </div>
+    );
+  }
   return (
     <div className="relative flex w-full flex-col pb-7">
       <div style={CUT_OUT} className={`flex flex-1 flex-col gap-3 rounded-card px-6 pt-8 pb-14 text-center ${card}`}>
