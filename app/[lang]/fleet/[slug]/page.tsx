@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 
+import { BOTTOM_BAR_LABEL, BOTTOM_BAR_VALUE } from "@/components/ui/bottom-bar";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CarExtras } from "@/components/extras/car-extras";
 import { CarGallery } from "@/components/fleet/car-gallery";
@@ -395,24 +396,19 @@ function FromPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts 
 }
 
 /** The "from" price in the phone bar: the daily price first, else the monthly one. */
+/** The bottom bar's two lines (`BOTTOM_BAR_LABEL` over `BOTTOM_BAR_VALUE`), as in the booking: the car, then its "from" price. */
 function BarPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
-  if (car.daily) {
-    return (
-      <p className={`whitespace-nowrap text-sm ${car.daily.promotional ? "text-green-dark" : "text-blue-dark"}`}>
-        {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.daily.price)}</span>{" "}
-        <span className="text-xs font-semibold">{t.perDay}</span>
-      </p>
-    );
-  }
-  if (car.monthlyFrom !== null) {
-    return (
-      <p className="whitespace-nowrap text-sm text-blue-dark">
-        {t.from} <span className="text-xl font-bold">{formatPrice(lang, car.monthlyFrom)}</span>{" "}
-        <span className="text-xs font-semibold">{t.perMonth}</span>
-      </p>
-    );
-  }
-  return <p className="truncate text-sm font-semibold text-blue-dark">{car.name}</p>;
+  const price = car.daily ? { amount: car.daily.price, unit: t.perDay } : car.monthlyFrom !== null ? { amount: car.monthlyFrom, unit: t.perMonth } : null;
+  return (
+    <>
+      <p className={BOTTOM_BAR_LABEL}>{car.name}</p>
+      {price ? (
+        <p className={`whitespace-nowrap ${BOTTOM_BAR_VALUE} ${car.daily?.promotional ? "text-green-dark!" : ""}`}>
+          <span className="text-xs font-semibold">{t.from}</span> {formatPrice(lang, price.amount)} <span className="text-xs font-semibold">{price.unit}</span>
+        </p>
+      ) : null}
+    </>
+  );
 }
 
 function KeyFacts({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {

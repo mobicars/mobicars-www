@@ -12,6 +12,7 @@ import { PromoCode } from "@/components/reservation/promo-code";
 import { QuoteLines, Spinner } from "@/components/reservation/quote-lines";
 import { ShareBooking } from "@/components/reservation/share-booking";
 import type { QuoteState } from "@/components/reservation/use-quote";
+import { BOTTOM_BAR, BOTTOM_BAR_LABEL, BOTTOM_BAR_ROW, BOTTOM_BAR_VALUE } from "@/components/ui/bottom-bar";
 import { buttonClass } from "@/components/ui/button";
 import { fill } from "@/i18n/fill";
 import type { Lang } from "@/i18n/config";
@@ -97,7 +98,8 @@ export function SummaryPanel({ trip, car, prices, action, onChangeCar, searchQue
   const disabled = !car || !action || !actionable(action) || loading;
   return (
     <aside aria-label={t.title} aria-busy={loading} className="hidden lg:block">
-      <div className="sticky top-4 flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line">
+      {/* Under the sticky header, whatever its height (`--site-header`), following it as its top bar hides and comes back. */}
+      <div className="sticky top-[calc(var(--site-header,5rem)+1rem)] flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line transition-[top] duration-300 ease-in-out motion-reduce:transition-none">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-semibold text-blue-dark">{t.title}</h2>
           {car ? <ShareBooking car={car.name} variant="text" /> : null}
@@ -348,22 +350,25 @@ export function MobileSummaryBar({
   const t = messages.summary;
   const lang = useLang();
   const [details, setDetails] = useState(false);
+  const hintId = useId();
   if (!car || !action) {
     return null;
   }
   const loading = prices?.loading ?? false;
   const canShowDetails = prices && !prices.failed && prices.lines.length > 0;
+  const disabled = !actionable(action) || loading;
+  const hint = disabled && action.hint ? action.hint : null;
   return (
     <div
       aria-busy={loading}
       // `globals.css` keeps room for this bar at the end of the page, so it never covers the footer.
       data-mobile-summary-bar
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-muted bg-white/95 px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(8,48,82,0.08)] backdrop-blur lg:hidden"
+      className={`${BOTTOM_BAR} lg:hidden`}
     >
-      <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
+      <div className={BOTTOM_BAR_ROW}>
         <div className="min-w-0">
-          <p className="line-clamp-2 text-xxs leading-tight break-words text-muted-dark">{fill(t.carOrSimilar, { name: car.name })}</p>
-          <p className="flex h-6 items-center text-base font-bold text-blue-dark">
+          <p className={`${BOTTOM_BAR_LABEL} line-clamp-1!`}>{fill(t.carOrSimilar, { name: car.name })}</p>
+          <p className={`flex h-7 items-center ${BOTTOM_BAR_VALUE}`}>
             {prices?.failed ? (
               <span className="text-xs font-semibold text-red-700">{t.noPrice}</span>
             ) : prices?.total == null ? (
@@ -395,9 +400,15 @@ export function MobileSummaryBar({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <ShareBooking car={car.name} variant="icon" />
-          <ActionButton action={action} disabled={!actionable(action) || loading} />
+          <ActionButton action={action} disabled={disabled} hintId={hint ? hintId : undefined} />
         </div>
       </div>
+      {/* Why the button is grey, under the whole bar: beside the button it squeezed the price into a narrow column. */}
+      {hint ? (
+        <p id={hintId} className="mx-auto mt-2 max-w-page text-center text-xs text-muted-dark">
+          {hint}
+        </p>
+      ) : null}
       {prices && canShowDetails ? (
         <PriceDetails
           open={details}
@@ -417,13 +428,16 @@ function ActionButton({
   action,
   disabled,
   className = "",
+  hintId: outsideHintId,
 }: {
   action: SummaryAction;
   disabled: boolean;
   className?: string;
+  /** The hint is shown by the caller (the bottom bar, under the whole bar): only point the button at it. */
+  hintId?: string;
 }) {
-  const hintId = useId();
-  const hint = disabled && action.hint ? action.hint : null;
+  const ownHintId = useId();
+  const hint = disabled && action.hint && !outsideHintId ? action.hint : null;
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
       <button
@@ -431,7 +445,7 @@ function ActionButton({
         form={action.form}
         disabled={disabled}
         onClick={action.onClick}
-        aria-describedby={hint ? hintId : undefined}
+        aria-describedby={outsideHintId ?? (hint ? ownHintId : undefined)}
         className={buttonClass("success", "md", "w-full")}
       >
         {action.label}
@@ -443,7 +457,7 @@ function ActionButton({
       </button>
       {/* Visible on every screen, so a phone shows why the button is grey too; narrow enough for the bottom bar. */}
       {hint ? (
-        <p id={hintId} className="max-w-56 self-center text-center text-xxs text-muted-dark">
+        <p id={ownHintId} className="max-w-56 self-center text-center text-xxs text-muted-dark">
           {hint}
         </p>
       ) : null}
