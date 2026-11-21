@@ -46,6 +46,9 @@ query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
       ... on ComponentSectionsExtras {
         ...ExtrasSection
       }
+      ... on ComponentSectionsPromotions {
+        ...PromotionsSection
+      }
       ... on ComponentSectionsMap {
         ...MapSection
       }
@@ -829,6 +832,26 @@ fragment ExtrasSection on ComponentSectionsExtras {
   }
   extrasWidth: width
   extrasSpacing: spacing
+}
+
+# `sections.promotions`. The promotions come from RentCarSoft's class price lists (`lib/fleet/promotions.ts`). Fields other sections have with other types are aliased.
+fragment PromotionsSection on ComponentSectionsPromotions {
+  id
+  badge
+  promotionsTitle: title
+  promotionsText: text
+  promotionsHeaderAlign: headerAlign
+  emptyTitle
+  emptyText
+  unavailableText
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  promotionsWidth: width
+  promotionsSpacing: spacing
 }
 
 # `sections.map`. The points come from RentCarSoft. Fields other sections have with other types are aliased.

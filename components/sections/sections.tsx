@@ -6,6 +6,7 @@ import { Cards } from "./cards";
 import { CarClasses } from "./car-classes";
 import { Cars } from "./cars";
 import { Extras } from "./extras";
+import { Promotions } from "./promotions";
 import { Divider } from "./divider";
 import { Faq } from "./faq";
 import { Features } from "./features";
@@ -54,6 +55,8 @@ export function Sections({ sections, lang, title, pickupId }: { sections: Sectio
             return <Cars key={`cars-${section.id}`} section={section} lang={lang} pickupId={pickupId} />;
           case "extras":
             return <Extras key={`extras-${section.id}`} section={section} lang={lang} />;
+          case "promotions":
+            return <Promotions key={`promotions-${section.id}`} section={section} lang={lang} />;
           case "car-classes":
             return <CarClasses key={`car-classes-${section.id}`} section={section} lang={lang} pickupId={pickupId} />;
           case "map":

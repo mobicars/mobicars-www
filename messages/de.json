@@ -367,6 +367,7 @@
     "perMonth": "/ Monat",
     "priceOnRequest": "Preis bei der Buchung",
     "details": "Details",
+    "seeCars": "Autos ansehen",
     "book": "Buchen",
     "popular": "Beliebt",
     "promotion": "Aktion",
@@ -1049,6 +1050,14 @@
   },
   "dates": {
     "laterReturnExtraDay": "Bei Rückgabe zu einer späteren Uhrzeit als bei der Abholung wird ein weiterer Tag berechnet."
+  },
+  "promotionsSection": {
+    "promotion": "Aktion",
+    "until": "bis {date}",
+    "from": "ab",
+    "perDay": "/ Tag",
+    "regular": "statt {price}",
+    "prices": "Preis pro Tag nach Mietdauer"
   },
   "extrasPage": {
     "breadcrumbLabel": "Brotkrumen",

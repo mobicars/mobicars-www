@@ -80,6 +80,15 @@ The type lives in `lib/fleet/cars-block.ts` until the Strapi bridge exports it (
 - Below `lg` the filters open in a bottom sheet (`components/ui/sheet.tsx`, React Aria: focus kept inside, swipe or Escape closes it) from a "Filtry" button with the number of active filters; the sheet ends with "Pokaż wyniki (n)".
 - The note "Rezerwujesz klasę samochodu…" is the old site's `infoCar.all`: a booking is for a class, "or similar".
 
+## Promotions section (`components/sections/promotions.tsx`, `promotions.ts`)
+
+`sections.promotions` (21 November 2026): the promotions running now, so no promotions page is written in code. RentCarSoft keeps them in the class price lists (`cennik[segmentId]`: name, window, a promotional price per band). `promotionClasses` reads them from the same catalog read as the fleet cards (`listPromotionClasses`, no RentCarSoft call of its own), cached with the fleet, whose life ends at the next promotion start or end, so the section switches on and off by itself.
+
+- **As RentCarSoft sends them**: a box per class, the soonest to end first (`sortPromotions`; the order is not explained on the page). No grouping by promotion name: that would be the code's invention (and RentCarSoft spells the same promotion differently, "Promocja predświąteczna" on 20 November 2026).
+- **The box** (the product card's frame, `components/ui/product-card.tsx`; no main photo, no "−X%"): the promotion's name as a green badge, the class (18px), "do 17 grudnia 2026", the class's cars as small square photos on the cards' grey, each a link to the car page (the name in its label and tooltip), "od X zł / doba" with the regular price struck through, and the price per rental length ("1 dzień", "2–3 dni", "od 30 dni"; a band from 0 days reads as the first one). Three boxes a row from `lg`, two on tablets, one on phones.
+- **Three states, never mixed up**: promotions running; none running (the CMS empty title and text); RentCarSoft not answering (the CMS unavailable text). A failure never reads as "no promotions". A state without its CMS text leaves the section out.
+- RentCarSoft names promotions in Polish only: other languages show the generic label ("Offer", "Aktion", "Акція").
+
 ## Car page
 
 In order: breadcrumbs, segment and `h1` ("Wynajem Toyota Yaris"), gallery, key facts (seats, gearbox, fuel, doors, luggage), the class note; beside them a sticky box with the "od" price and the booking widget; then the price table, long-term rental, technical data, equipment, description, and "Podobne samochody".

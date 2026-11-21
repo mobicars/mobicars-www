@@ -3,7 +3,7 @@ import type { ReservationTerm } from "@/lib/reservation/search";
 
 import { slugWords } from "@/lib/fleet/slug";
 
-import type { BlogCardFragment, BlogSectionFragment, CarClassesSectionFragment, CarCollectionFragment, ExtrasSectionFragment, CarsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
+import type { BlogCardFragment, BlogSectionFragment, CarClassesSectionFragment, CarCollectionFragment, ExtrasSectionFragment, CarsSectionFragment, PromotionsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
 import { parseBlogCard, parseCtas, parseMedia, resolveLink, sectionPostsKey, type BlogPostCard, type Cta, type Media } from "./entities";
 import { parseRichBlocks, richBlocksText, type RichBlocks } from "./rich-blocks";
 import type { PageRoute } from "./routes";
@@ -412,7 +412,7 @@ export function sectionEdgeTone(section: Section, edge: "top" | "bottom"): Divid
 /** Test page only: the name and note of the variant shown under it. */
 export type VariantLabelSection = { type: "variantLabel"; id: string; title: string; note: string | null };
 
-export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | CarClassesSection | ExtrasSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
+export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | CarClassesSection | ExtrasSection | PromotionsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
 
 type RawSection = NonNullable<NonNullable<PageQuery["page"]>["sections"]>[number];
 
@@ -457,6 +457,8 @@ export function parseSections(
         return [parseCarClassesSection(section, lang, routes)];
       case "ComponentSectionsExtras":
         return [parseExtrasSection(section, lang, routes)];
+      case "ComponentSectionsPromotions":
+        return [parsePromotionsSection(section, lang, routes)];
       case "ComponentSectionsMap":
         return [parseMapSection(section, lang, routes)];
       case "ComponentSectionsForm":
@@ -778,6 +780,47 @@ function parseExtrasSection(raw: ExtrasSectionFragment, lang: Lang, routes: read
     background: parseBackground(raw.background),
     width: raw.extrasWidth,
     spacing: raw.extrasSpacing,
+  };
+}
+
+/**
+ * Promotions (`sections.promotions`): the promotions running now, from the
+ * RentCarSoft class price lists (`lib/fleet/promotions.ts`), a box per class,
+ * the soonest to end first. The empty texts show while
+ * none runs; `unavailableText` while RentCarSoft does not answer. Without
+ * those texts the section is left out in that state.
+ */
+export type PromotionsSection = {
+  type: "promotions";
+  id: string;
+  badge: string | null;
+  title: string | null;
+  text: string | null;
+  headerAlign: "start" | "center";
+  emptyTitle: string | null;
+  emptyText: string | null;
+  unavailableText: string | null;
+  ctas: Cta[];
+  background: SectionBackground;
+  width: "full" | "boxed" | "contained";
+  spacing: "small" | "medium" | "large";
+};
+
+function parsePromotionsSection(raw: PromotionsSectionFragment, lang: Lang, routes: readonly PageRoute[]): PromotionsSection {
+  return {
+    type: "promotions",
+    id: raw.id,
+    badge: raw.badge || null,
+    title: raw.promotionsTitle || null,
+    text: raw.promotionsText || null,
+    headerAlign: raw.promotionsHeaderAlign === "start" ? "start" : "center",
+    emptyTitle: raw.emptyTitle?.trim() || null,
+    emptyText: raw.emptyText?.trim() || null,
+    unavailableText: raw.unavailableText?.trim() || null,
+    ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
+    background: parseBackground(raw.background),
+    width: raw.promotionsWidth,
+    spacing: raw.promotionsSpacing,
   };
 }
 

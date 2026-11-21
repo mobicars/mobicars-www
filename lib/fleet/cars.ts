@@ -13,6 +13,7 @@ import { toRentCarSoftDateTime } from "@/lib/reservation/search";
 
 import { bandsAt, dailyFrom, nextPriceChange, type DailyFrom } from "./daily-price";
 import { monthlyPricesFrom, type MonthlyFrom } from "./price-from";
+import { promotionClasses, type PromotionClass } from "./promotions";
 import { isBlankHtml, sanitizeDescription } from "./sanitize";
 import { carSlug } from "./slug";
 
@@ -150,19 +151,33 @@ export type FleetCar = FleetCard & {
 
 /** Every car of the daily catalog, in the API's default order. */
 export async function listFleetCars(lang: Lang): Promise<FleetCard[]> {
-  return cacheEnabled() ? cachedFleetCars(lang) : loadFleetCars(lang);
+  return (await fleetCatalog(lang)).cars;
+}
+
+/**
+ * The classes with a promotion running now (`lib/fleet/promotions.ts`), from
+ * the same catalog read as the cars: no RentCarSoft call of their own.
+ */
+export async function listPromotionClasses(lang: Lang): Promise<PromotionClass[]> {
+  return (await fleetCatalog(lang)).promotions;
+}
+
+type FleetCatalog = { cars: FleetCard[]; promotions: PromotionClass[] };
+
+function fleetCatalog(lang: Lang): Promise<FleetCatalog> {
+  return cacheEnabled() ? cachedFleetCatalog(lang) : loadFleetCatalog(lang);
 }
 
 /**
  * Cached like the catalog, but never past the next promotion start or end:
  * a promotional price must appear and disappear on time.
  */
-async function cachedFleetCars(lang: Lang): Promise<FleetCard[]> {
+async function cachedFleetCatalog(lang: Lang): Promise<FleetCatalog> {
   "use cache";
   cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
-  const { cars, changesAt } = await buildFleetCars(lang);
+  const { cars, promotions, changesAt } = await buildFleetCars(lang);
   setPriceLife(changesAt);
-  return cars;
+  return { cars, promotions };
 }
 
 /**
@@ -171,11 +186,12 @@ async function cachedFleetCars(lang: Lang): Promise<FleetCard[]> {
  * that renders the list without the cache awaits `connection()` itself
  * (`components/blocks/cars.tsx`), keeping the clock out of a prerender.
  */
-async function loadFleetCars(lang: Lang): Promise<FleetCard[]> {
-  return (await buildFleetCars(lang)).cars;
+async function loadFleetCatalog(lang: Lang): Promise<FleetCatalog> {
+  const { cars, promotions } = await buildFleetCars(lang);
+  return { cars, promotions };
 }
 
-async function buildFleetCars(lang: Lang): Promise<{ cars: FleetCard[]; changesAt: number | null }> {
+async function buildFleetCars(lang: Lang): Promise<FleetCatalog & { changesAt: number | null }> {
   const now = Date.now();
   const [offers, monthly] = await Promise.all([
     listAllOffers({ lang, term: "short", offerKeyIds: LIST_KEYS, pickUpDate: catalogPickup(now) }),
@@ -183,6 +199,7 @@ async function buildFleetCars(lang: Lang): Promise<{ cars: FleetCard[]; changesA
   ]);
   return {
     cars: offers.map((offer) => toCard(offer, monthly.get(offer.id) ?? null, now)),
+    promotions: promotionClasses(offers, now),
     changesAt: nextPriceChange(offers.map((offer) => offer.promotion), now),
   };
 }

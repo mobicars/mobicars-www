@@ -367,6 +367,7 @@
     "perMonth": "/ міс.",
     "priceOnRequest": "Ціна під час бронювання",
     "details": "Детальніше",
+    "seeCars": "Переглянути авто",
     "book": "Забронювати",
     "popular": "Популярне",
     "promotion": "Акція",
@@ -1049,6 +1050,14 @@
   },
   "dates": {
     "laterReturnExtraDay": "Якщо повернути авто пізніше, ніж о годині отримання, нараховується ще одна доба."
+  },
+  "promotionsSection": {
+    "promotion": "Акція",
+    "until": "до {date}",
+    "from": "від",
+    "perDay": "/ доба",
+    "regular": "замість {price}",
+    "prices": "Ціна за добу залежно від тривалості оренди"
   },
   "extrasPage": {
     "breadcrumbLabel": "Навігація",

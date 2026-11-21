@@ -15,14 +15,14 @@ export function formatPrice(lang: Lang, amount: number): string {
   }).format(amount);
 }
 
-/** A RentCarSoft `YYYY-MM-DD HH:mm:ss` (Warsaw wall time) as a short date, e.g. "15 gru 2026". */
-export function formatApiDate(lang: Lang, value: string): string | null {
+/** A RentCarSoft `YYYY-MM-DD HH:mm:ss` (Warsaw wall time) as a date: "15 gru 2026", "15 gru" without the year, "15 grudnia 2026" with the long month. */
+export function formatApiDate(lang: Lang, value: string, { year = true, month = "short" }: { year?: boolean; month?: "short" | "long" } = {}): string | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (!match) {
     return null;
   }
   const date = new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3])));
-  return new Intl.DateTimeFormat(intlLocales[lang], { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }).format(date);
+  return new Intl.DateTimeFormat(intlLocales[lang], { day: "numeric", month, year: year ? "numeric" : undefined, timeZone: "UTC" }).format(date);
 }
 
 /** The plural form for `count`, with `{count}` filled in. */
@@ -32,8 +32,9 @@ export function countLabel(lang: Lang, count: number, forms: PluralForms): strin
 
 export type BandTexts = { bandFirst: string; bandRange: string; bandLast: string; days: PluralForms };
 
-/** "1 doba", "2–3 doby", "od 30 dób": a price band's rental length. */
-export function bandLabel(lang: Lang, band: { from: number | null; to: number | null }, t: BandTexts): string {
+/** "1 dzień", "2–3 dni", "od 30 dni": a price band's rental length. A band from 0 days (some classes start there) reads as the first one. */
+export function bandLabel(lang: Lang, { from: start, to }: { from: number | null; to: number | null }, t: BandTexts): string {
+  const band = { from: start === 0 ? null : start, to };
   if (band.from === null && band.to !== null) {
     return band.to === 1 ? `1 ${plural(lang, 1, t.days)}` : fill(t.bandFirst, { to: band.to, days: plural(lang, band.to, t.days) });
   }

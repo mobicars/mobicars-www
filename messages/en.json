@@ -367,6 +367,7 @@
     "perMonth": "/ month",
     "priceOnRequest": "Price at booking",
     "details": "Details",
+    "seeCars": "See cars",
     "book": "Book",
     "popular": "Popular",
     "promotion": "Offer",
@@ -1049,6 +1050,14 @@
   },
   "dates": {
     "laterReturnExtraDay": "Returning later in the day than the pickup time adds another day."
+  },
+  "promotionsSection": {
+    "promotion": "Offer",
+    "until": "until {date}",
+    "from": "from",
+    "perDay": "/ day",
+    "regular": "instead of {price}",
+    "prices": "Price per day by rental length"
   },
   "extrasPage": {
     "breadcrumbLabel": "Breadcrumb",

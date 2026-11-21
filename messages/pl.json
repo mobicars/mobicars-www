@@ -367,6 +367,7 @@
     "perMonth": "/ mies.",
     "priceOnRequest": "Cena w rezerwacji",
     "details": "Szczegóły",
+    "seeCars": "Zobacz auta",
     "book": "Zarezerwuj",
     "popular": "Popularny",
     "promotion": "Promocja",
@@ -397,10 +398,10 @@
     "bandRange": "{from}–{to} {days}",
     "bandLast": "od {from} {days}",
     "days": {
-      "one": "doba",
-      "few": "doby",
-      "many": "dób",
-      "other": "doby"
+      "one": "dzień",
+      "few": "dni",
+      "many": "dni",
+      "other": "dni"
     },
     "regularPrice": "Cena regularna",
     "promotionalPrice": "Cena promocyjna",
@@ -1049,6 +1050,14 @@
   },
   "dates": {
     "laterReturnExtraDay": "Zwrot o późniejszej godzinie niż odbiór dolicza kolejną dobę."
+  },
+  "promotionsSection": {
+    "promotion": "Promocja",
+    "until": "do {date}",
+    "from": "od",
+    "perDay": "/ doba",
+    "regular": "zamiast {price}",
+    "prices": "Cena za dobę według długości najmu"
   },
   "extrasPage": {
     "breadcrumbLabel": "Ścieżka",

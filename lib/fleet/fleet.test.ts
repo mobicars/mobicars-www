@@ -53,15 +53,21 @@ describe("band labels", () => {
     bandFirst: "do {to} {days}",
     bandRange: "{from}–{to} {days}",
     bandLast: "od {from} {days}",
-    days: { one: "doba", few: "doby", many: "dób", other: "doby" },
+    days: { one: "dzień", few: "dni", many: "dni", other: "dni" },
   };
 
   it("names each band of the price list", async () => {
     const { bandLabel } = await import("./format");
-    assert.equal(bandLabel("pl", { from: null, to: 1 }, pl), "1 doba");
-    assert.equal(bandLabel("pl", { from: 2, to: 3 }, pl), "2–3 doby");
-    assert.equal(bandLabel("pl", { from: 4, to: 7 }, pl), "4–7 dób");
-    assert.equal(bandLabel("pl", { from: 30, to: null }, pl), "od 30 dób");
+    assert.equal(bandLabel("pl", { from: null, to: 1 }, pl), "1 dzień");
+    assert.equal(bandLabel("pl", { from: 2, to: 3 }, pl), "2–3 dni");
+    assert.equal(bandLabel("pl", { from: 4, to: 7 }, pl), "4–7 dni");
+    assert.equal(bandLabel("pl", { from: 30, to: null }, pl), "od 30 dni");
+  });
+
+  it("reads a band from 0 days as the first band", async () => {
+    const { bandLabel } = await import("./format");
+    assert.equal(bandLabel("pl", { from: 0, to: 1 }, pl), "1 dzień");
+    assert.equal(bandLabel("pl", { from: 0, to: 3 }, pl), "do 3 dni");
   });
 
   it("formats whole and fractional prices", async () => {
@@ -368,5 +374,55 @@ describe("car classes (menu panel, Car classes section)", () => {
       carClasses(cars, ["eco", "delivery", "small"]).map(({ id, cheapest }) => [id, cheapest.id]),
       [["eco", 4], ["small", 3]],
     );
+  });
+});
+
+describe("promotions (Promotions section)", () => {
+  const now = Date.UTC(2026, 10, 20, 12);
+  const offer = (id: number, segmentId: string, name: string | null, endsAt: string, promo: [number, number][], extra: Record<string, unknown> = {}) =>
+    ({
+      id,
+      segmentId,
+      segmentName: `Klasa ${segmentId}`,
+      rentable: true,
+      shortTerm: true,
+      promotion: { name, startsAt: "2026-11-16 00:00:00", endsAt, dailyPrice: null },
+      priceList: {
+        deposit: 0,
+        monthlyFrom: null,
+        bands: promo.map(([price, promotionalPrice], index) => ({ from: index === 0 ? null : index * 3, to: index * 3 + 2, price, promotionalPrice })),
+      },
+      ...extra,
+    }) as never;
+
+  it("takes running promotions per class: lowest promotional price and its regular price", async () => {
+    const { promotionClasses } = await import("./promotions");
+    const classes = promotionClasses(
+      [
+        offer(1, "A", "Promocja przedświąteczna", "2026-12-17 23:00:00", [[179, 161.1], [119, 95.2]]),
+        offer(2, "A", "Promocja przedświąteczna", "2026-12-17 23:00:00", [[179, 161.1], [119, 95.2]]),
+        offer(3, "B", null, "2026-11-01 00:00:00", [[139, 125.1]]),
+        offer(4, "C", "Jesień", "2026-12-15 23:55:00", [[99, 99]]),
+      ],
+      now,
+    );
+    assert.equal(classes.length, 1, "B has ended, C has no lower price");
+    assert.deepEqual(
+      { segmentId: classes[0].segmentId, price: classes[0].price, regular: classes[0].regularPrice, cars: classes[0].carIds },
+      { segmentId: "A", price: 95.2, regular: 119, cars: [1, 2] },
+    );
+  });
+
+  it("puts the soonest to end first, then the cheapest", async () => {
+    const { promotionClasses, sortPromotions } = await import("./promotions");
+    const classes = promotionClasses(
+      [
+        offer(1, "A", "Promocja przedświąteczna", "2026-12-17 23:00:00", [[100, 80]]),
+        offer(2, "B", "Jesień z Mobicars", "2026-11-25 23:55:00", [[100, 90]]),
+        offer(3, "C", "Promocja przedświąteczna", "2026-12-17 23:00:00", [[100, 70]]),
+      ],
+      now,
+    );
+    assert.deepEqual(sortPromotions(classes).map((each) => each.segmentId), ["B", "C", "A"]);
   });
 });
