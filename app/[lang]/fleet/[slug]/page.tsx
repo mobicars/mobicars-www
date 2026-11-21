@@ -178,7 +178,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
         </div>
 
         <aside className="lg:row-span-2">
-          <div className="flex flex-col gap-4 lg:sticky lg:top-24">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-[calc(var(--site-header,5rem)+1rem)] lg:transition-[top] lg:duration-300 lg:ease-in-out">
             <section
               id="book"
               aria-labelledby="book-title"

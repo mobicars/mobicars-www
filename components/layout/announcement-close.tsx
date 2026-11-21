@@ -31,7 +31,7 @@ export function AnnouncementClose({
     <button
       type="button"
       onClick={close}
-      className="absolute top-1/2 right-2 flex size-8 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white sm:right-4"
+      className="absolute top-1/2 right-1 z-10 flex size-10 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full outline-none hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-white sm:right-4"
     >
       <X className="size-4" aria-hidden />
       <span className="sr-only">{label}</span>

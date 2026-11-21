@@ -18,7 +18,8 @@ const VARIANTS: Record<Announcement["variant"], string> = {
  * did not: 2.98:1 on the promo green).
  */
 const LINK_CLASS =
-  "ml-2 inline-flex items-center gap-1 rounded-full bg-white px-3 py-0.5 align-middle text-xs font-bold whitespace-nowrap text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-blue-light focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transition-none";
+  // Phones: a round arrow at the end of the text, and the whole bar is the link (`after:`), as wide as a thumb needs.
+  "ml-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-full bg-white align-middle after:absolute after:inset-0 sm:ml-0 sm:size-auto sm:h-7 sm:gap-1 sm:pr-2.5 sm:pl-3.5 sm:after:hidden text-xs leading-none font-bold whitespace-nowrap text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-white/90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white motion-reduce:transition-none";
 
 const BAR_ID = "announcement-bar";
 /** Holds the version of the last announcement the visitor closed. */
@@ -44,21 +45,23 @@ export function AnnouncementBar({
   return (
     <>
       <section id={BAR_ID} aria-label={label} className={`relative ${VARIANTS[announcement.variant]}`}>
-        <p className="mx-auto w-full max-w-7xl px-10 py-2 text-center text-sm font-semibold text-balance sm:px-12">
-          <VariantIcon variant={announcement.variant} />
-          {announcement.text}
+        {/* Phones: the arrow ends the text's last line. From `sm`: text and button side by side, centred on one line. */}
+        <p className="mx-auto w-full max-w-7xl px-12 py-2 text-center text-[0.8125rem] leading-snug font-semibold text-balance sm:flex sm:flex-wrap sm:items-center sm:justify-center sm:gap-x-3 sm:gap-y-1.5 sm:px-12">
+          <span>
+            <VariantIcon variant={announcement.variant} />
+            {announcement.text}
+          </span>
           {link ? (
             <>
-              {" "}
               {link.newTab ? (
                 <a href={link.href} target="_blank" rel="noopener noreferrer" className={LINK_CLASS}>
-                  {link.label}
-                  <ChevronRight className="size-3.5" aria-hidden />
+                  <span className="max-sm:sr-only">{link.label}</span>
+                  <ChevronRight className="size-4 sm:size-3.5" aria-hidden />
                 </a>
               ) : (
                 <Link href={link.href} className={LINK_CLASS}>
-                  {link.label}
-                  <ChevronRight className="size-3.5" aria-hidden />
+                  <span className="max-sm:sr-only">{link.label}</span>
+                  <ChevronRight className="size-4 sm:size-3.5" aria-hidden />
                 </Link>
               )}
             </>
@@ -81,7 +84,7 @@ export function AnnouncementBar({
 
 /** The variant's icon, inline before the text so it wraps with it. */
 function VariantIcon({ variant }: { variant: Announcement["variant"] }) {
-  const className = "mr-2 inline size-4 -translate-y-px align-middle";
+  const className = "mr-1.5 inline size-4 -translate-y-px align-middle";
   switch (variant) {
     case "info":
       return <Info className={className} aria-hidden />;

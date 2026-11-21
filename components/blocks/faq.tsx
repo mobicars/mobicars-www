@@ -101,7 +101,7 @@ function FaqCategories({ block, lang, level }: { block: FaqBlock; lang: Lang; le
   return (
     <div className="flex flex-col gap-10">
       {groups.length > 1 ? (
-        <nav aria-label={t.faqCategories} className="sticky top-16 z-10 -mx-gutter bg-white/90 px-gutter py-2 backdrop-blur-sm sm:mx-0 sm:rounded-full sm:px-2">
+        <nav aria-label={t.faqCategories} className="sticky top-[var(--site-header,4rem)] z-10 transition-[top] duration-300 ease-in-out -mx-gutter bg-white/90 px-gutter py-2 backdrop-blur-sm sm:mx-0 sm:rounded-full sm:px-2">
           <ul className="flex gap-2 overflow-x-auto [scrollbar-width:none] sm:flex-wrap sm:overflow-visible">
             {groups.map((group) => (
               <li key={group.id} className="shrink-0">

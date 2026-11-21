@@ -147,7 +147,7 @@ async function ExtraDetails({ lang, extra }: { lang: Lang; extra: CatalogExtra }
         </div>
 
         <aside className="lg:row-span-2">
-          <div className="flex flex-col gap-4 lg:sticky lg:top-24">
+          <div className="flex flex-col gap-4 lg:sticky lg:top-[calc(var(--site-header,5rem)+1rem)] lg:transition-[top] lg:duration-300 lg:ease-in-out">
             <section aria-labelledby="book-title" className="rounded-card border border-line bg-white p-5 shadow-float sm:p-6">
               <p className="flex gap-2 rounded-control bg-tint px-4 py-3 text-sm text-blue-dark">
                 <Info className="mt-0.5 size-4 shrink-0" aria-hidden />

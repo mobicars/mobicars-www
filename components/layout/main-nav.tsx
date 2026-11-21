@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Menu, X } from "lucide-react";
+import { ChevronDown, TextAlignJustify, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRef, useState, type MouseEvent, type ReactNode } from "react";
@@ -19,11 +19,16 @@ import {
   type Key,
 } from "react-aria-components";
 
+import { Logo } from "@/components/layout/logo";
 import { useMessages } from "@/i18n/messages-context";
 
 export type MainNavEntry =
   | { label: string; href: string; newTab: boolean }
   | { label: string; panel: ReactNode };
+
+/** Opening and closing the phone menu: a 48px circle, the size a thumb needs (Apple and Google ask for 44–48px). */
+const iconButtonClass =
+  "flex size-12 shrink-0 cursor-pointer items-center justify-center rounded-full text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none";
 
 const itemClass =
   "flex h-10 cursor-pointer items-center gap-1 whitespace-nowrap rounded-full px-3 text-sm font-bold text-blue-dark outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
@@ -138,8 +143,8 @@ export function MainNav({
       {actions}
 
       <SheetTrigger isOpen={sheet} onOpenChange={setSheet}>
-        <Button className={`${itemClass} xl:hidden ${menuButtonClassName}`} aria-label={t.menu}>
-          <Menu className="size-5 text-blue-medium" aria-hidden />
+        <Button className={`${iconButtonClass} xl:hidden ${menuButtonClassName}`} aria-label={t.menu}>
+          <TextAlignJustify className="size-5 text-blue-medium" aria-hidden />
         </Button>
         <SheetOverlay position="end" className="z-50 xl:hidden">
           <SheetBackdrop swipeAnimation="sheet-backdrop" className="bg-blue-dark/40 backdrop-blur-[4px]" />
@@ -151,12 +156,15 @@ export function MainNav({
           <Sheet overscrollPadding className="box-content h-full w-[calc(100vw-1px)] bg-white shadow-[-1px_0_0_white] outline-none">
             <SheetContent className="flex h-full flex-col overflow-y-auto pb-[var(--sheet-scroll-padding-y)] outline-none">
               <div className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b border-line bg-white px-gutter">
-                <Heading slot="title" className="text-base font-bold text-blue-dark">
-                  {t.menu}
+                {/* The header's logo, as on the page under it; the sheet is still named "Menu" for screen readers. */}
+                <Heading slot="title" className="flex items-center">
+                  <span className="sr-only">{t.menu}</span>
+                  <span aria-hidden>
+                    <Logo className="h-6 w-auto fill-blue-medium min-[360px]:h-7 sm:h-8" />
+                  </span>
                 </Heading>
-                <Button slot="close" className={itemClass}>
+                <Button slot="close" aria-label={t.closeMenu} className={`${iconButtonClass} -mr-1`}>
                   <X className="size-5 text-blue-medium" aria-hidden />
-                  <span>{t.closeMenu}</span>
                 </Button>
               </div>
               <nav aria-label={t.mainNav} className="px-gutter py-3" onClick={closeOnLink}>

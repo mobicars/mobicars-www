@@ -83,7 +83,7 @@ export function Faq({ section, lang }: { section: FaqSection; lang: Lang }) {
  */
 function FaqMenu({ groups, label, side, surface }: { groups: FaqSection["groups"]; label: string; side: boolean; surface: string }) {
   return (
-    <nav aria-label={label} className={`mb-8 ${side ? "lg:sticky lg:top-28 lg:mb-0" : ""}`}>
+    <nav aria-label={label} className={`mb-8 ${side ? "lg:sticky lg:top-[calc(var(--site-header,5rem)+2rem)] lg:transition-[top] lg:duration-300 lg:ease-in-out lg:mb-0" : ""}`}>
       <ul
         className={`-mx-gutter flex gap-2 overflow-x-auto px-gutter pb-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 ${
           side ? `lg:flex-col lg:gap-0 lg:rounded-card lg:p-2 ${surface === "bg-surface" ? "lg:bg-surface" : "lg:bg-white"}` : ""

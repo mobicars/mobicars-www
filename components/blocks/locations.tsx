@@ -130,7 +130,7 @@ async function LocationList({
             <PointsMap
               towns={mapTowns(groups, block.id, lang, texts, links.cities)}
               caption={texts.mapCaption}
-              className="lg:sticky lg:top-24"
+              className="lg:sticky lg:top-[calc(var(--site-header,5rem)+1rem)] lg:transition-[top] lg:duration-300 lg:ease-in-out"
             />
             {list}
             <PointsMapLinks scope={`locations-${block.id}-map`} keys={groups.map((_, index) => townKey(index))} />

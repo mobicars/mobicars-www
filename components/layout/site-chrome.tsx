@@ -18,6 +18,7 @@ import { LinkGroups } from "./link-groups";
 import { MainNav, type MainNavEntry } from "./main-nav";
 import { BlogPanel, FleetPanel, LinksPanel, LocationsPanel } from "./menu-panels";
 import { SOCIAL_NAMES, SocialIcon } from "./social-icon";
+import { TopBarScroll } from "./top-bar-scroll";
 
 /**
  * Site header and footer from the CMS (`layout`, `site`, `announcement`; see
@@ -26,15 +27,22 @@ import { SOCIAL_NAMES, SocialIcon } from "./social-icon";
  * with it off they stream in per request. The logo, the language dialog and the
  * customer panel do not wait for the CMS.
  *
- * Header: sticky, 64px on phones and 80px from `lg`. Left to right: logo, menu
- * (from `xl`: five entries and the right side need ~1100px), phone (icon only
- * below `2xl`), language and "Moje rezerwacje" (from `lg`, icon only), the green
- * "Zarezerwuj" button, the menu button (below `xl`).
- * Flex `order` keeps that sequence while the CMS parts stream in separately.
+ * Header: sticky, a 36px navy top bar over the main row (64px on phones, 80px
+ * from `lg`), as on the old site, carfree.pl and carnet.pl. The bar holds the
+ * hotline (its hours from `md`, the e-mail from `lg`), the language and "Moje
+ * rezerwacje", so the main row keeps only the logo, the menu (from `xl`), the
+ * green "Zarezerwuj" button and the menu button (below `xl`).
+ * The bar hides while the page scrolls down and comes back on the way up
+ * (`TopBarScroll`). The header stays `sticky`, never `fixed`: it slides up by
+ * the bar's height with a `transform`, as carnet.pl's header does (the compositor
+ * moves it, no layout on each frame), so nothing below it moves (no layout shift).
+ * The menu sheet and the language dialog are portals, outside the moved header.
+ * The CMS announcement sits in the header above the bar and hides with it, as
+ * carnet.pl's offer bar does; `TopBarScroll` measures the two (the announcement
+ * wraps on phones, and a visitor may close it) into `--site-topbar`.
+ * `--site-header` is the header's height on screen, for anything sticky under it.
+ * Flex `order` keeps the main row's sequence while the CMS parts stream in separately.
  */
-
-const pillClass =
-  "flex h-10 items-center gap-2 whitespace-nowrap rounded-full px-3 text-sm font-bold text-blue-dark outline-none transition-colors duration-quick ease-out-soft hover:bg-blue-dark/[0.05] focus-visible:ring-2 focus-visible:ring-blue-medium motion-reduce:transition-none";
 
 // A hairline under the header once the page scrolls, without JavaScript: a
 // scroll-driven animation where supported, an always-on line elsewhere.
@@ -45,36 +53,54 @@ const HEADER_CSS = `
 }
 @supports not (animation-timeline: scroll()) {
   .site-header { border-bottom-color: var(--color-line); }
-}`;
+}
+:root { --site-topbar: 2.25rem; --site-header-row: 4rem; --site-header: calc(var(--site-header-row) + var(--site-topbar)); }
+@media (min-width: 64rem) { :root { --site-header-row: 5rem; } }
+html[data-topbar="hidden"] { --site-header: var(--site-header-row); }
+.site-header { transition: transform 300ms ease-in-out; }
+html[data-topbar="hidden"] .site-header { transform: translateY(calc(var(--site-topbar) * -1)); }
+@media (prefers-reduced-motion: reduce) { .site-header { transition: none; } }`;
 
 export function SiteHeader({ lang }: { lang: Lang }) {
   const t = getMessages(lang).layout;
   return (
-    <>
-      <Suspense fallback={null}>
-        <Announcement lang={lang} />
-      </Suspense>
-      <header className="site-header sticky top-0 z-40 border-b border-transparent bg-white">
-        <style href="site-header" precedence="default">
-          {HEADER_CSS}
-        </style>
-        <Container className="flex h-16 items-center gap-1 sm:gap-2 lg:h-20">
-          <Link href={`/${lang}`} aria-label={t.home} className="mr-auto shrink-0 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-blue-medium xl:mr-1 2xl:mr-6">
-            <Logo className="h-6 w-auto fill-blue-medium min-[360px]:h-7 sm:h-8 lg:h-10" label="MobiCars" />
-          </Link>
-          <Suspense
-            fallback={
-              <>
-                <div className="hidden flex-1 xl:block" />
-                <HeaderAccount lang={lang} />
-              </>
-            }
-          >
-            <HeaderMenu lang={lang} />
-          </Suspense>
-        </Container>
-      </header>
-    </>
+    <header className="site-header sticky top-0 z-40 border-b border-transparent bg-white">
+      <style href="site-header" precedence="default">
+        {HEADER_CSS}
+      </style>
+      <TopBarScroll />
+      {/* What hides on the way down, as on carnet.pl: the CMS announcement, then the navy bar. */}
+      <div className="site-header-hide">
+        <Suspense fallback={null}>
+          <Announcement lang={lang} />
+        </Suspense>
+        <div className="bg-blue-dark text-white">
+          <Container className="flex h-9 items-center gap-x-5 text-xs">
+            <Suspense fallback={null}>
+              <TopBarContact lang={lang} />
+            </Suspense>
+            <div className="ml-auto flex items-center gap-1">
+              <LanguageSwitcher lang={lang} />
+              <Link
+                href={accountHref(lang, "reservations")}
+                className="flex h-7 items-center gap-1.5 rounded-full px-2.5 font-bold whitespace-nowrap text-white/90 outline-none transition-colors duration-200 ease-out hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-white motion-reduce:transition-none"
+              >
+                <UserRound className="size-4 shrink-0" aria-hidden />
+                <span className="sr-only sm:not-sr-only">{t.myReservations}</span>
+              </Link>
+            </div>
+          </Container>
+        </div>
+      </div>
+      <Container className="flex h-16 items-center gap-1 sm:gap-2 lg:h-20">
+        <Link href={`/${lang}`} aria-label={t.home} className="mr-auto shrink-0 rounded-control outline-none focus-visible:ring-2 focus-visible:ring-blue-medium xl:mr-1 2xl:mr-6">
+          <Logo className="h-6 w-auto fill-blue-medium min-[360px]:h-7 sm:h-8 lg:h-10" label="MobiCars" />
+        </Link>
+        <Suspense fallback={<div className="hidden flex-1 xl:block" />}>
+          <HeaderMenu lang={lang} />
+        </Suspense>
+      </Container>
+    </header>
   );
 }
 
@@ -100,14 +126,6 @@ async function HeaderMenu({ lang }: { lang: Lang }) {
       actions={
         // In the order they are drawn: Tab follows the header from left to right.
         <>
-          {/* Below `sm` the phone lives in the menu footer: logo, the longest CTA (uk) and the menu button fit at 320 px. */}
-          {contact ? (
-            <a href={contact.phoneHref} aria-label={fill(t.callHotline, { phone: contact.phone })} className={`${pillClass} hidden sm:flex`}>
-              <Phone className="size-5 text-blue-medium" aria-hidden />
-              <span className="hidden 2xl:inline">{contact.phone}</span>
-            </a>
-          ) : null}
-          <HeaderAccount lang={lang} />
           <CtaLink link={cta} className={buttonClass("success", "sm", "whitespace-nowrap px-3 sm:ml-1 sm:px-4 lg:h-12")} />
         </>
       }
@@ -115,18 +133,29 @@ async function HeaderMenu({ lang }: { lang: Lang }) {
   );
 }
 
-/** Language and the customer's bookings, from `lg`; below that they are in the menu footer. */
-function HeaderAccount({ lang }: { lang: Lang }) {
+/** The top bar's left side: the hotline, its hours from `md`, the e-mail from `lg` (CMS `site`). */
+async function TopBarContact({ lang }: { lang: Lang }) {
   const t = getMessages(lang).layout;
+  const { contact } = await getChrome(lang);
+  if (!contact) {
+    return null;
+  }
+  const link = "flex items-center gap-1.5 whitespace-nowrap rounded-full text-white/90 outline-none hover:text-white focus-visible:ring-2 focus-visible:ring-white";
+  const hours = hoursLines(contact, lang);
   return (
     <>
-      <div className="hidden lg:block">
-        <LanguageSwitcher lang={lang} />
-      </div>
-      <Link href={accountHref(lang, "reservations")} className={`${pillClass} hidden lg:flex`}>
-        <UserRound className="size-5 text-blue-medium" aria-hidden />
-        <span className="sr-only">{t.myReservations}</span>
-      </Link>
+      <a href={contact.phoneHref} aria-label={fill(t.callHotline, { phone: contact.phone })} className={link}>
+        <Phone className="size-4 shrink-0 text-green-light" aria-hidden />
+        <span className="hidden sm:inline">{t.hotline}</span>
+        <span className="font-bold text-white">{contact.phone}</span>
+      </a>
+      {hours.length > 0 ? <p className="hidden truncate text-white/75 md:block">{hours.join(" · ")}</p> : null}
+      {contact.email ? (
+        <a href={`mailto:${contact.email}`} className={`${link} hidden lg:flex`}>
+          <Mail className="size-4 shrink-0 text-green-light" aria-hidden />
+          {contact.email}
+        </a>
+      ) : null}
     </>
   );
 }

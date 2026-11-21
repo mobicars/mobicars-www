@@ -22,8 +22,9 @@ const flags: Record<Lang, string> = { pl: pl.src, en: en.src, de: de.src, uk: uk
 const EXIT_MS = 200;
 
 const triggerClass = {
+  // The header's navy top bar (`SiteHeader`).
   header:
-    "flex h-10 cursor-pointer items-center gap-2 rounded-full px-3 text-xs font-bold text-blue-dark uppercase outline-none transition-colors duration-200 ease-out hover:bg-blue-dark/[0.05] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium motion-reduce:transition-none",
+    "flex h-7 cursor-pointer items-center gap-1.5 rounded-full px-2.5 text-xs font-bold text-white/90 uppercase outline-none transition-colors duration-200 ease-out hover:bg-white/10 hover:text-white data-focus-visible:ring-2 data-focus-visible:ring-white motion-reduce:transition-none",
   menu:
     "flex min-h-12 w-full cursor-pointer items-center gap-3 rounded-control px-3 py-2 text-left text-base font-bold text-blue-dark outline-none hover:bg-blue-dark/[0.04] data-focus-visible:ring-2 data-focus-visible:ring-blue-medium",
   footer:
@@ -63,7 +64,6 @@ export function LanguageSwitcher({ lang, variant = "header" }: { lang: Lang; var
       {/* Named by its own (hidden) text, not `aria-label`, holding what it shows ("PL" in the header) so the name and the
           visible text agree and voice control ("click PL") finds it. */}
       <Button onPress={() => setOpen(true)} className={triggerClass[variant]}>
-        {variant === "header" ? <Globe className="size-4 shrink-0" aria-hidden /> : null}
         {variant === "menu" ? <Globe className="size-5 shrink-0 text-blue-medium" aria-hidden /> : null}
         {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG flag */}
         <img src={flags[current.lang]} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover" />
