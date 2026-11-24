@@ -88,17 +88,16 @@ export async function completePasswordRecovery(input: {
 }
 
 /**
- * Sets a new password for a signed-in client.
- * The spec puts `password` in the query string; the bridge sends a JSON body
- * like the other password writes, so the password never lands in a URL log.
- * UNVERIFIED on the live API.
+ * Sets a new password for a signed-in client: `POST` with the password in a
+ * JSON body (spec 1.0.11; earlier versions said `PUT` with a query string).
+ * The live API answers `PUT` with HTTP 405 (`docs/quirks.md`).
  */
 export async function changeClientPassword(
   clientId: number,
   password: string,
 ): Promise<void> {
   await rentCarSoftRequest({
-    method: "PUT",
+    method: "POST",
     path: `/client/password/${clientId}.json`,
     body: { password },
     timeoutMs: ACCOUNT_TIMEOUT_MS,

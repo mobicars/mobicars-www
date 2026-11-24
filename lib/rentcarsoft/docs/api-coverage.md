@@ -1,6 +1,6 @@
 # API coverage
 
-Baseline: RentCarSoft OpenAPI 1.0.10 (reviewed 22 October 2026; previous baseline 1.0.8). Only operations this bridge implements are listed as implemented. “Later” means the spec has them and the current MobiCars site does not need them yet. “Out of scope” means they stay out of this package.
+Baseline: RentCarSoft OpenAPI 1.0.11 (reviewed 24 November 2026; previous baselines 1.0.10 and 1.0.8; copies in `tmp-spec/` next to the repositories). Only operations this bridge implements are listed as implemented. “Later” means the spec has them and the current MobiCars site does not need them yet. “Out of scope” means they stay out of this package.
 
 | Method | Path | Status | Bridge |
 | --- | --- | --- | --- |
@@ -36,7 +36,7 @@ Baseline: RentCarSoft OpenAPI 1.0.10 (reviewed 22 October 2026; previous baselin
 | GET | `/tpay_payment_methods.json` | later | — |
 | POST | `/clients.json` | implemented | `createClient` (UNVERIFIED live) |
 | PUT | `/client/{clientId}.json` | implemented | `updateClient` (JSON body, UNVERIFIED live) |
-| PUT | `/client/password/{clientId}.json` | implemented | `changeClientPassword` (JSON body, UNVERIFIED live) |
+| POST | `/client/password/{clientId}.json` | implemented | `changeClientPassword` (JSON body, UNVERIFIED live) |
 | GET/POST/PUT/DELETE | client drivers | later | — |
 | GET/POST/PUT/DELETE | client representatives | later | — |
 | GET | `/reservationsall.json` | out of scope | — |
@@ -54,6 +54,19 @@ Baseline: RentCarSoft OpenAPI 1.0.10 (reviewed 22 October 2026; previous baselin
 | DELETE | `/vehicle_blockade/{id}.json` | out of scope | — |
 
 Cache column for the implemented reads is in `caching.md`.
+
+## Changes from 1.0.10 to 1.0.11
+
+No new operation. One implemented operation changed, the rest is documentation catching up with the live API (`quirks.md` has the item-by-item comparison).
+
+- `/client/password/{clientId}.json` is `POST`, not `PUT`, with the password in a JSON body. The live API answers `PUT` with HTTP 405, so the bridge switched (`changeClientPassword`).
+- JSON bodies are now documented for login, the three password-recovery calls and `PUT /client/{clientId}.json`; the recovery `email` is a string; `GET /client/{clientId}.json` returns one object. The bridge already sent and read these that way.
+- Password recovery: `POST` emails a new 5-digit code that has no expiry and overwrites the previous one; a successful `PUT` clears it.
+- `/reservation_calculate.json` documents the top-level `available` (binding, only with `checkAvailable=1`) and calls `vehicle.isAvailable` a loose check. The bridge maps `vehicle.isAvailable` only, unchanged.
+- `/reservation.json` (create) documents `paymentUrl` for online methods and a new `paymentError` (reservation saved, payment link not generated: do not create it again), the `paymentMethod` and `currencyId` ids (PLN 1, EUR 9) and the date format `YYYY-MM-DD HH:MM[:SS]`. The site sends payment method 1 (no online payment), so neither payment field is read yet.
+- Reservation reads gain `identifier`, `pickupWorkerId`, `returnWorkerId` and `employees`; `pickUp.date` and `return.date` are documented as PHP DateTime objects. Not parsed.
+- `Client.discounts` gains `deposit`. Not parsed.
+- The calculate and offer-list `available` descriptions now name schedule blocks and the stock status, which answers part of the blockade question below for offers and calculate.
 
 ## Changes from 1.0.8 to 1.0.10
 
