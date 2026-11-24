@@ -41,7 +41,6 @@
     "login": "Zaloguj się",
     "topNav": "Menu dodatkowe",
     "callHotline": "Zadzwoń na infolinię {phone}",
-    "callDepartment": "Zadzwoń: {name}, {phone}",
     "footerNav": "Linki w stopce",
     "payments": "Płatności online",
     "whatsapp": "WhatsApp",
@@ -940,15 +939,7 @@
   },
   "blocks": {
     "faqTitle": "Najczęstsze pytania",
-    "heroAtGlance": "W skrócie",
-    "heroHighlights": "Nasze atuty",
     "reviewsOutOf": "{rating} na 5",
-    "reviewsCount": {
-      "one": "{count} opinia",
-      "few": "{count} opinie",
-      "many": "{count} opinii",
-      "other": "{count} opinii"
-    },
     "readMore": "Czytaj dalej",
     "reviewsListLabel": "Opinie klientów",
     "reviewsPrevious": "Poprzednia opinia",
@@ -957,8 +948,6 @@
     "carouselPrevious": "Poprzednie",
     "carouselNext": "Następne",
     "carouselGoTo": "Pozycja {index} z {count}",
-    "appStore": "Pobierz z App Store",
-    "googlePlay": "Pobierz z Google Play",
     "locations": {
       "title": "Gdzie odbierzesz auto",
       "airport": "Lotnisko",
@@ -986,17 +975,10 @@
       }
     },
     "faqCategories": "Kategorie pytań",
-    "faqOther": "Inne pytania",
     "faqSearch": "Szukaj pytania",
     "faqSearchPlaceholder": "Szukaj pytania…",
     "faqNoResults": "Nie znaleźliśmy pytań pasujących do wyszukiwania.",
-    "trustLabel": "Dlaczego MobiCars",
-    "faqMoreTitle": "Nie znalazłeś odpowiedzi?",
-    "faqMoreText": "Napisz albo zadzwoń – pomożemy wybrać auto i termin.",
     "promoCode": "Kod",
-    "promoCopy": "Kopiuj kod",
-    "promoCopied": "Skopiowano kod {code}",
-    "promoUntil": "Ważne do {date}",
     "blogBreadcrumb": "Blog",
     "readingTime": {
       "one": "{count} min czytania",
@@ -1005,9 +987,6 @@
       "other": "{count} min czytania"
     },
     "toc": "Spis treści ({count})",
-    "blogCtaTitle": "Potrzebujesz auta?",
-    "blogCtaText": "Sprawdź dostępne auta i ceny na swój termin. Bez kaucji i bez limitu kilometrów w Polsce.",
-    "blogCtaButton": "Sprawdź dostępność",
     "relatedPosts": "Przeczytaj także",
     "readArticle": "Czytaj artykuł",
     "opensInNewTab": "otwiera się w nowej karcie",

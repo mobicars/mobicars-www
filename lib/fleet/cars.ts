@@ -167,7 +167,7 @@ async function cachedFleetCatalog(lang: Lang): Promise<FleetCatalog> {
  * Without the cache the prices are read per request. No `connection()` here:
  * `generateStaticParams` reads this list too, where it is not allowed. A page
  * that renders the list without the cache awaits `connection()` itself
- * (`components/blocks/cars.tsx`), keeping the clock out of a prerender.
+ * (`components/sections/cars.tsx`), keeping the clock out of a prerender.
  */
 async function loadFleetCatalog(lang: Lang): Promise<FleetCatalog> {
   const { cars, promotions } = await buildFleetCars(lang);

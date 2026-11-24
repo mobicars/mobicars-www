@@ -1,14 +1,13 @@
-import type { Block, RichBlock, RichBlocks, RichInline } from "@/lib/strapi";
+import type { RichBlock, RichInline, Section, TextSection } from "@/lib/strapi";
 
 /**
  * The blog article page (catalog C31): what the server works out from the
- * post's blocks. Pure, for the tests.
+ * post's sections. Pure, for the tests.
  *
- * - Heading levels: editors often start sections at "Heading 3", which left
- *   the article's outline jumping from the `<h1>` to an `<h3>`/`<h4>`. The
- *   highest level used in the text becomes the first one (rendered `<h2>` in
- *   a content block without its own title), the rest keep their distance.
- * - Every first-level heading gets an `anchor` for the table of contents.
+ * - The article's text is its Text sections without a title of their own;
+ *   each renders its highest heading level as `<h2>` (`components/sections/text.tsx`).
+ * - Every heading at the highest level used in that text gets an `anchor` for
+ *   the table of contents.
  * - Reading time: words / 200, rounded up.
  */
 
@@ -53,52 +52,33 @@ export function headingSlug(text: string, used: Set<string>): string {
   return slug;
 }
 
-/** The text blocks of the article: content blocks without a title of their own. */
-function articleBodies(blocks: readonly Block[]): RichBlocks[] {
-  return blocks.flatMap((block) => (block.type === "content" && !block.title ? [block.body] : []));
+function isArticleText(section: Section): section is TextSection {
+  return section.type === "text" && !section.title;
 }
 
 /**
- * The blocks with heading levels lifted so the highest one is level 1, and an
- * `anchor` on each level-1 heading. The input is left as it is.
+ * The sections with an `anchor` on each top-level heading of the article's
+ * text, the table of contents and the reading time. The input is left as it is.
  */
-export function prepareArticle(blocks: readonly Block[]): { blocks: Block[]; toc: TocEntry[]; minutes: number } {
-  const levels = articleBodies(blocks).flatMap((body) => body.flatMap((part) => (part.type === "heading" ? [part.level] : [])));
-  const shift = levels.length > 0 ? Math.min(...levels) - 1 : 0;
+export function prepareArticle(sections: readonly Section[]): { sections: Section[]; toc: TocEntry[]; minutes: number } {
+  const levels = sections.flatMap((section) =>
+    isArticleText(section) ? section.body.flatMap((part) => (part.type === "heading" ? [part.level] : [])) : [],
+  );
+  const top = levels.length > 0 ? Math.min(...levels) : null;
   const used = new Set<string>();
   const toc: TocEntry[] = [];
   let words = 0;
-  const prepared = blocks.map((block): Block => {
-    if (block.type !== "content" || block.title) return block;
-    const body = block.body.map((part): RichBlock => {
+  const prepared = sections.map((section): Section => {
+    if (!isArticleText(section)) return section;
+    const body = section.body.map((part): RichBlock => {
       words += blockText(part).split(/\s+/).filter(Boolean).length;
-      if (part.type !== "heading") return part;
-      const level = Math.max(1, part.level - shift) as Heading["level"];
-      if (level !== 1) return { ...part, level };
+      if (part.type !== "heading" || part.level !== top) return part;
       const text = inlineText(part.children).trim();
       const anchor = headingSlug(text, used);
       toc.push({ id: anchor, text });
-      return { ...part, level, anchor } as Heading;
+      return { ...part, anchor } as Heading;
     });
-    return { ...block, body };
+    return { ...section, body };
   });
-  return { blocks: prepared, toc, minutes: Math.max(1, Math.ceil(words / WORDS_PER_MINUTE)) };
-}
-
-/**
- * Where the booking card goes: before the second first-level heading of the
- * article, else after the first content block. Returns the index of the
- * content block and of the part inside it to split at, or `null` for a post
- * without a text block.
- */
-export function ctaSplit(blocks: readonly Block[]): { block: number; part: number } | null {
-  let seen = 0;
-  for (const [index, block] of blocks.entries()) {
-    if (block.type !== "content" || block.title) continue;
-    for (const [part, item] of block.body.entries()) {
-      if (item.type === "heading" && item.level === 1 && ++seen === 2 && part > 0) return { block: index, part };
-    }
-  }
-  const first = blocks.findIndex((block) => block.type === "content" && !block.title);
-  return first === -1 ? null : { block: first, part: blocks[first].type === "content" ? (blocks[first] as { body: RichBlocks }).body.length : 0 };
+  return { sections: prepared, toc, minutes: Math.max(1, Math.ceil(words / WORDS_PER_MINUTE)) };
 }

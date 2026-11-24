@@ -2,60 +2,17 @@ import type { Metadata } from "next";
 
 import { intlLocales, langs, type Lang } from "@/i18n/config";
 import { absoluteUrl } from "@/lib/fleet/seo";
-import { getMessages } from "@/i18n/messages";
 import { getChrome, getPage, listPageRoutes, pageHref, type Media, type Page, type PageRoute } from "@/lib/strapi";
 
-import { Sections } from "@/components/sections/sections";
-
-import { Blocks } from "./blocks";
-import type { Crumb } from "./page-hero";
+import { Sections } from "./sections";
 
 /** The body of a CMS page: the home page (`app/[lang]/page.tsx`) and every other (`app/[lang]/[...slug]`). */
-export function CmsPage({ page, lang, breadcrumbs = [] }: { page: Page; lang: Lang; breadcrumbs?: Crumb[] }) {
+export function CmsPage({ page, lang }: { page: Page; lang: Lang }) {
   return (
-    // A page shown with the English text (missing in `lang`) says so to screen readers and translators.
     <main className="flex flex-1 flex-col">
-      {page.sections.length > 0 ? (
-        // The new component set replaces the old blocks page by page.
-        <Sections sections={page.sections} lang={lang} title={page.title} pickupId={page.pickupId} />
-      ) : (
-        <>
-          {/* A page that does not open with a hero still gets its one `<h1>`. */}
-          {page.blocks[0]?.type !== "hero" ? <h1 className="sr-only">{page.title}</h1> : null}
-          <Blocks blocks={page.blocks} lang={lang} pickupId={page.pickupId} breadcrumbs={breadcrumbs} />
-        </>
-      )}
+      <Sections sections={page.sections} lang={lang} title={page.title} pickupId={page.pickupId} />
     </main>
   );
-}
-
-/** Whether the page opens with the inner-page hero, the one place breadcrumbs show. */
-export function hasPageHero(page: Page): boolean {
-  const first = page.blocks[0];
-  return first?.type === "hero" && first.layout === "page";
-}
-
-/**
- * Breadcrumbs from the route: the home page, every parent path that is a page
- * of the same source (its title), then this page. A parent path without a
- * page is skipped.
- */
-export async function pageBreadcrumbs(lang: Lang, route: PageRoute, page: Page, source: PageSource = CMS_PAGES): Promise<Crumb[]> {
-  const href = source.href ?? pageHref;
-  const routes = await source.listRoutes(lang);
-  const parents = await Promise.all(
-    route.segments.slice(0, -1).map(async (_, index) => {
-      const segments = route.segments.slice(0, index + 1);
-      const parent = routes.find((each) => each.segments.join("/") === segments.join("/"));
-      const parentPage = parent ? await source.getPage(lang, parent.documentId) : null;
-      return parentPage ? { href: href(lang, segments), label: parentPage.title } : null;
-    }),
-  );
-  return [
-    { href: `/${lang}`, label: getMessages(lang).layout.breadcrumbHome },
-    ...parents.filter((crumb) => crumb !== null),
-    { href: href(lang, route.segments), label: page.title },
-  ];
 }
 
 /**
@@ -118,8 +75,8 @@ async function shareImage(lang: Lang, page: Page): Promise<Media | null> {
   if (page.seo.image) {
     return page.seo.image;
   }
-  const first = page.blocks[0];
-  if (first?.type === "hero") {
+  const first = page.sections[0];
+  if (first?.type === "hero" && first.image) {
     return first.image;
   }
   // The CMS being down must not cost the page its metadata.

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, permanentRedirect } from "next/navigation";
 
-import { CmsPage, cmsPageMetadata, hasPageHero, pageBreadcrumbs, type PageSource } from "@/components/blocks/cms-page";
+import { CmsPage, cmsPageMetadata, type PageSource } from "@/components/sections/cms-page";
 import { isLang, type Lang } from "@/i18n/config";
 import {
   findPageRoute,
@@ -75,8 +75,7 @@ export default async function CmsRoute({ params }: Props) {
   if (canonical !== pageHref(lang, slug.map(decodeURIComponent))) {
     permanentRedirect(canonical);
   }
-  const breadcrumbs = hasPageHero(found.page) ? await pageBreadcrumbs(lang, found.route, found.page, found.source) : [];
-  return <CmsPage page={found.page} lang={lang} breadcrumbs={breadcrumbs} />;
+  return <CmsPage page={found.page} lang={lang} />;
 }
 
 /** A CMS page first, then a city or local page at that path; `null` for a 404. */

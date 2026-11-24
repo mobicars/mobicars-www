@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 
-import { CtaLink } from "@/components/blocks/cta-link";
+import { CtaLink } from "@/components/sections/cta-link";
 import { PRODUCT_IMAGE, PRODUCT_PHOTO, PRODUCT_TITLE, ProductMore, ProductPrice, productCardClass } from "@/components/ui/product-card";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";

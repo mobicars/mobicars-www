@@ -2,7 +2,7 @@
 
 Server-only reads from `mobicars-cms` over GraphQL. Application code imports `@/lib/strapi`. HTTP, parsing and URL building live in `internal/` and are not a public import path. Same layout as `lib/rentcarsoft` and the same cache switch.
 
-Only the Page `blocks` zone is read. The legacy `components` / `extraComponents` zones are for `mobicars-pl`.
+Only the `sections` zone is read (pages, blog posts, cities, local pages; the same components on each). The legacy `components` / `extraComponents` zones are for `mobicars-pl`. The old `blocks` zone and the blog and FAQ categories were removed on 24 November 2026.
 
 ## Configuration
 
@@ -18,7 +18,7 @@ Server environment, never `NEXT_PUBLIC_`:
 | --- | --- |
 | `listPageRoutes(lang)` | Every routable page of a language: `{ documentId, segments }` |
 | `findPageRoute(lang, segments)` | The page at a URL, or `null` (404) |
-| `getPage(lang, documentId)` | Title, SEO and parsed `blocks`, or `null` |
+| `getPage(lang, documentId)` | Title, SEO and parsed `sections`, or `null` |
 | `pageHref(lang, segments)` | `/pl/wynajem/warszawa`, `/pl` for the home page |
 
 The URL of a page is its `slug` under its `parentPage` chain. One small list per language answers whether a URL exists, so an unknown URL costs no content query. The same list builds `generateStaticParams`, hreflang and links between pages.
@@ -40,43 +40,25 @@ A page, post, city or local page exists in a language only when the CMS has its 
 
 - `listPlaceRoutes(kind, lang)`: every entry of one type in that language. A path a CMS page uses stays the CMS page's.
 - `findPlaceRoute(lang, segments)`: asked by `app/[lang]/[...slug]` only after no CMS page matched.
-- `getPlacePage(kind, lang, documentId)`: a `Page` from the type's own `blocks` zone (the same zone as a page's, parsed by `parseBlocks`). The legacy `components` zone belongs to mobicars-pl and is never read.
+- `getPlacePage(kind, lang, documentId)`: a `Page` from the type's own `sections` zone (the same components as a page's). The legacy `components` zone belongs to mobicars-pl and is never read.
 
 They render and get their metadata like CMS pages (`CmsPage`, `cmsPageMetadata` with the place type's routes for hreflang), are listed in the sitemap, render on their first visit and are cached under `cms:city` / `cms:local-page`.
 
-## Blocks
+## Sections
 
-`Page.blocks` is a list of domain records (`Block`), not GraphQL shapes. Each has a component in `components/blocks`.
-
-| Strapi | `type` | Notes |
-| --- | --- | --- |
-| `blocks.hero` | `hero` | As the first block: the page's `<h1>`, image loaded eagerly with high priority; `layout` cover/split, up to 4 `highlights` |
-| `blocks.content` | `content` | Heading (`elements.section-header`), rich text, up to 3 buttons, `align`; left out when all empty |
-| `blocks.media-text` | `mediaText` | As content, with an image at `start` or `end`; left out without an image |
-| `blocks.reviews` | `reviews` | Newest published `rating` entries of one source (or all), up to `limit`; `summary` (average, count) over all of that source; left out with none |
-| `blocks.scenarios` | `scenarios` | Use cases as tabs (label, title, audience, text, benefits, image, link); left out without items |
-| `blocks.comparison` | `comparison` | Columns and rows; each row gets exactly one value per column (missing = empty `text` cell) |
-| `blocks.cars` | `cars` | RCS classes: `source` all/classes/category, `segmentIds` (JSON of numbers, later a custom field), `limit`, `layout` grid/row; the component reads the fleet |
-| `blocks.logos` | `logos` | Client or partner logos; logos without an image are dropped |
-| `blocks.lead-form` | `leadForm` | Copy, steps and consent of the enquiry form; phone and e-mail come from `Chrome.contact` |
-| `blocks.cta-band` | `ctaBand` | Closing call to action; left out when the primary link has nowhere to go |
-| `blocks.blog-posts` | `blogPosts` | `latest` (optionally one category) or `picked`; left out when no post is published |
-| `blocks.features` | `features` | Left out without items |
-| `blocks.faq` | `faq` | `answer` is Strapi rich text reduced to `RichBlocks` (`internal/rich-blocks.ts`) plus `answerText` for FAQPage JSON-LD; questions without an answer are dropped, then a block with none |
-
-Content, media-text, FAQ and reviews share `elements.section-header` (eyebrow, title, lead, flattened into the record; the site picks the heading level) and `elements.section` (`SectionStyle`: tone, spacing, width, anchor; CMS defaults when empty), matching `components/ui/section.tsx`.
+`Page.sections` is a list of domain records (`Section`, `internal/sections.ts`), not GraphQL shapes. Each has a component in `components/sections`, picked in `components/sections/sections.tsx`. Blog sections with the newest posts and Reviews sections with the newest reviews read those first (`modules/page-body.ts`).
 
 Rich text (`RichBlocks`) keeps paragraphs, headings, quotes, lists (nested too) and text with bold, italic, underline, strikethrough and code. Other node types (images, code blocks) are dropped, as are paragraphs without text; a link whose URL fails the `customUrl` check below keeps its text.
 
 A page that does not open with a hero renders its title as a visually hidden `<h1>`.
 
-Links (`elements.link`) resolve to an `href` in the bridge (`resolveLink`): `page` through the route list, `blog` to `/{lang}/blog/{slug}` (the old site's URLs; there is no blog route here yet), `customUrl` when it is a site path, http(s), `mailto:` or `tel:`. `localPage` and `sale` have no route here yet, so those links are left out, as is a link without a label. Only `customUrl` opens in a new tab.
+Links (`parts.link`, in the sections and in the menus, layout and announcement alike) resolve to an `href` in the bridge (`resolveLink`): `page` through the route list, `blog` to `/{lang}/blog/{slug}` (the old site's URLs), `document` to `/pl/dokumenty/{slug}` (`/{lang}/documents/{slug}` elsewhere, a redirect to the current PDF), `customUrl` when it is a site path, http(s), `mailto:` or `tel:`. `localPage` and `sale` have no route here yet, so those links are left out, as is a link without a label. Only `customUrl` opens in a new tab.
 
-Adding a block type:
+Adding a section type:
 
-1. Add the fragment to `graphql/page.graphql` and run `npm run codegen` against a CMS that has the component.
-2. Add the record to `Block` and a case to `parsePage` in `internal/entities.ts`.
-3. Add the component and a case in `components/blocks/blocks.tsx`.
+1. Add the fragment to `graphql/page.graphql` (and the same selection to `blog.graphql` and `places.graphql`) and run `npm run codegen` against a CMS that has the component.
+2. Add the record to `Section` and a case to `parseSections` in `internal/sections.ts`.
+3. Add the component and a case in `components/sections/sections.tsx`.
 
 ## Header, footer and site settings
 

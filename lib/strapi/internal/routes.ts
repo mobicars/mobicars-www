@@ -91,6 +91,14 @@ export function blogHref(lang: Lang, slug: string): string {
   return `/${lang}/blog/${encodeURIComponent(slug)}`;
 }
 
+/**
+ * A legal document (`regulation`): `/pl/dokumenty/{slug}`, `/{lang}/documents/{slug}`
+ * elsewhere, which redirect to its current PDF (`app/[lang]/dokumenty/[slug]`).
+ */
+export function documentHref(lang: Lang, slug: string): string {
+  return `/${lang}/${lang === "pl" ? "dokumenty" : "documents"}/${encodeURIComponent(slug)}`;
+}
+
 /** `/pl/wynajem/warszawa`, `/pl` for the home page. */
 export function pageHref(lang: Lang, segments: readonly string[]): string {
   return `/${[lang, ...segments.map(encodeURIComponent)].join("/")}`;

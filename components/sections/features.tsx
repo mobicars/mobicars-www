@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 
-import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
+import { CtaIcon, CtaLink } from "@/components/sections/cta-link";
 import { isDarkBackground, type FeaturesSection } from "@/lib/strapi";
 
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";

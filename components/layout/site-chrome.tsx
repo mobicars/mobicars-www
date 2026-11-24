@@ -12,7 +12,6 @@ import { accountHref } from "@/i18n/routes";
 import { formatOpeningHours, getChrome, listPlaceLinks, type Contact, type MenuItem, type NavLink } from "@/lib/strapi";
 
 import { AnnouncementBar } from "./announcement-bar";
-import { ContactTiles } from "./contact-tiles";
 import { LinkGroups } from "./link-groups";
 import { MainNav, type MainNavEntry } from "./main-nav";
 import { BlogPanel, FleetPanel, LinksPanel, LocationsPanel } from "./menu-panels";
@@ -286,16 +285,8 @@ const footerHeadingClass = "text-sm font-bold text-white";
 async function FooterContent({ lang }: { lang: Lang }) {
   const t = getMessages(lang).layout;
   const [{ footer, contact, social }, year, places] = await Promise.all([getChrome(lang), currentYear(), listPlaceLinks(lang)]);
-  const tiles = contact?.departments.some((department) => department.showInFooter) ?? false;
   return (
     <>
-      {tiles && contact ? (
-        <div className="border-b border-white/10">
-          <Container className="py-section-sm">
-            <ContactTiles lang={lang} departments={contact.departments} />
-          </Container>
-        </div>
-      ) : null}
       {/* Every city, airport and local page of this language, built from the CMS (none in a language without them). */}
       {places.cities.length + places.airports.length + places.locals.length > 0 ? (
         <div className="border-b border-white/10">

@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 
-import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
-import { RichBlocksView } from "@/components/blocks/rich-blocks";
+import { CtaIcon, CtaLink } from "@/components/sections/cta-link";
+import { RichBlocksView } from "@/components/sections/rich-blocks";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { isDarkBackground, type FaqSection } from "@/lib/strapi";

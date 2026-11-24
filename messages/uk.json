@@ -41,7 +41,6 @@
     "login": "Увійти",
     "topNav": "Додаткове меню",
     "callHotline": "Зателефонувати на гарячу лінію {phone}",
-    "callDepartment": "Зателефонувати: {name}, {phone}",
     "footerNav": "Посилання у футері",
     "payments": "Онлайн-оплата",
     "whatsapp": "WhatsApp",
@@ -940,15 +939,7 @@
   },
   "blocks": {
     "faqTitle": "Поширені запитання",
-    "heroAtGlance": "Коротко",
-    "heroHighlights": "Наші переваги",
     "reviewsOutOf": "{rating} з 5",
-    "reviewsCount": {
-      "one": "{count} відгук",
-      "few": "{count} відгуки",
-      "many": "{count} відгуків",
-      "other": "{count} відгуку"
-    },
     "readMore": "Читати далі",
     "reviewsListLabel": "Відгуки клієнтів",
     "reviewsPrevious": "Попередній відгук",
@@ -957,8 +948,6 @@
     "carouselPrevious": "Попередні",
     "carouselNext": "Наступні",
     "carouselGoTo": "Елемент {index} з {count}",
-    "appStore": "Завантажити з App Store",
-    "googlePlay": "Завантажити з Google Play",
     "locations": {
       "title": "Де забрати авто",
       "airport": "Аеропорт",
@@ -986,17 +975,10 @@
       }
     },
     "faqCategories": "Question categories",
-    "faqOther": "Other questions",
     "faqSearch": "Пошук запитань",
     "faqSearchPlaceholder": "Пошук запитань…",
     "faqNoResults": "Немає запитань, що відповідають пошуку.",
-    "trustLabel": "Why MobiCars",
-    "faqMoreTitle": "Не знайшли відповіді?",
-    "faqMoreText": "Напишіть або зателефонуйте – допоможемо обрати авто й дати.",
     "promoCode": "Код",
-    "promoCopy": "Скопіювати код",
-    "promoCopied": "Код {code} скопійовано",
-    "promoUntil": "Діє до {date}",
     "blogBreadcrumb": "Blog",
     "readingTime": {
       "one": "{count} min read",
@@ -1005,9 +987,6 @@
       "other": "{count} min read"
     },
     "toc": "Contents ({count})",
-    "blogCtaTitle": "Need a car?",
-    "blogCtaText": "See available cars and prices for your dates. No deposit and no mileage limit in Poland.",
-    "blogCtaButton": "Check availability",
     "relatedPosts": "Read also",
     "readArticle": "Читати статтю",
     "opensInNewTab": "відкривається в новій вкладці",

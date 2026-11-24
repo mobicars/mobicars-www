@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { CmsPage, cmsPageMetadata } from "@/components/blocks/cms-page";
+import { CmsPage, cmsPageMetadata } from "@/components/sections/cms-page";
 import { ResumeBooking } from "@/components/reservation/resume-booking";
 import { isLang, type Lang } from "@/i18n/config";
 import { findPageRoute, getPage } from "@/lib/strapi";

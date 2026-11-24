@@ -7,7 +7,7 @@ import { BOTTOM_BAR_LABEL, BOTTOM_BAR_VALUE } from "@/components/ui/bottom-bar";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
 import { CarExtras } from "@/components/extras/car-extras";
 import { CarGallery } from "@/components/fleet/car-gallery";
-import { FaqList } from "@/components/blocks/faq-list";
+import { FaqList } from "@/components/sections/faq-list";
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
 import { PriceTable } from "@/components/fleet/price-table";
 import { CarsCarousel } from "@/components/sections/cars";

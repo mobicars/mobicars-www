@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { getImageProps } from "next/image";
 
-import { CtaLink } from "@/components/blocks/cta-link";
+import { CtaLink } from "@/components/sections/cta-link";
 import { buttonClass } from "@/components/ui/button";
 import { ShowMore } from "@/components/ui/show-more";
 import { intlLocales, type Lang } from "@/i18n/config";

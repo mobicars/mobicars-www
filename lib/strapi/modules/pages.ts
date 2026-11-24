@@ -1,15 +1,15 @@
-import { cacheTag } from "next/cache";
+import { cacheLife, cacheTag } from "next/cache";
 import { connection } from "next/server";
 
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
 
-import { BlogCardsDocument, PageDocument, ReviewsDocument, SectionReviewsDocument } from "../generated/graphql";
+import { PageDocument } from "../generated/graphql";
 import { contentStatus } from "../internal/config";
-import { latestPostQueries, latestReviewQueries, pageNeedsReviews, parsePage, type Page } from "../internal/entities";
+import type { Page } from "../internal/entities";
 import { strapiRequest } from "../internal/http";
-import { cacheUntil } from "../internal/page-cache";
 import { CACHE_TAGS } from "../internal/tags";
+import { readPageBody } from "./page-body";
 import { listPageRoutes } from "./routes";
 
 /**
@@ -20,7 +20,7 @@ export async function getPage(lang: Lang, documentId: string): Promise<Page | nu
   return cacheEnabled() ? loadCachedPage(lang, documentId) : loadLivePage(lang, documentId);
 }
 
-/** Uncached (local, preview): request-time, as the promotions' dates are compared with the clock. */
+/** Uncached (local, preview): every request reads the CMS. */
 async function loadLivePage(lang: Lang, documentId: string): Promise<Page | null> {
   await connection();
   return loadPage(lang, documentId);
@@ -29,20 +29,11 @@ async function loadLivePage(lang: Lang, documentId: string): Promise<Page | null
 async function loadCachedPage(lang: Lang, documentId: string): Promise<Page | null> {
   "use cache";
   // `page`: the page itself and the pages its links point to. `blog` and
-  // `blog-category`: a blog block's cards, so a new post shows without a publish
-  // here; `rating` the same for a reviews block; `car-collection` for a Cars section's rules.
-  cacheTag(
-    CACHE_TAGS.all,
-    CACHE_TAGS.type("page"),
-    CACHE_TAGS.type("blog"),
-    CACHE_TAGS.type("blog-category"),
-    CACHE_TAGS.type("rating"),
-    // A Cars section's car collection: its rules are read with the page.
-    CACHE_TAGS.type("car-collection"),
-  );
-  const page = await loadPage(lang, documentId);
-  cacheUntil(page?.changesAt);
-  return page;
+  // `rating`: a Blog or Reviews section's newest entries, so a new one shows
+  // without a publish here; `car-collection` for a Cars section's rules.
+  cacheLife("max");
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.type("page"), CACHE_TAGS.type("blog"), CACHE_TAGS.type("rating"), CACHE_TAGS.type("car-collection"));
+  return loadPage(lang, documentId);
 }
 
 async function loadPage(lang: Lang, documentId: string): Promise<Page | null> {
@@ -50,32 +41,5 @@ async function loadPage(lang: Lang, documentId: string): Promise<Page | null> {
     strapiRequest(PageDocument, { documentId, locale: lang, status: contentStatus() }),
     listPageRoutes(lang),
   ]);
-  const { page } = own;
-  if (!page) {
-    return null;
-  }
-  // `latest` blog blocks list the newest posts, and reviews blocks and sections
-  // the `rating` collection: none can be selected by the page query.
-  const reviews = pageNeedsReviews(page)
-    ? strapiRequest(ReviewsDocument, { status: contentStatus() }).then(({ ratings }) => ratings)
-    : Promise.resolve([]);
-  // Reviews sections with the newest reviews read those in the page's language.
-  const latestReviews = Promise.all(
-    latestReviewQueries(page).map(async ({ sectionId, limit }) => {
-      const { ratings } = await strapiRequest(SectionReviewsDocument, { locale: lang, status: contentStatus(), limit });
-      return [sectionId, ratings] as const;
-    }),
-  );
-  const latest = await Promise.all(
-    latestPostQueries(page).map(async ({ blockId, limit, categoryId }) => {
-      const { blogs } = await strapiRequest(BlogCardsDocument, {
-        locale: lang,
-        status: contentStatus(),
-        limit,
-        filters: categoryId ? { category: { documentId: { eq: categoryId } } } : null,
-      });
-      return [blockId, blogs] as const;
-    }),
-  );
-  return parsePage(page, lang, routes, Object.fromEntries(latest), await reviews, undefined, Object.fromEntries(await latestReviews));
+  return own.page ? readPageBody(own.page, lang, routes) : null;
 }

@@ -1,6 +1,5 @@
-# One page, its `blocks` and its `sections` (the new component set, built one
-# by one; a page with sections shows them instead of its blocks). The legacy
-# `components` / `extraComponents` zones belong to mobicars-pl and are not read here.
+# One page and its `sections`. The legacy `components` / `extraComponents`
+# zones belong to mobicars-pl and are not read here.
 query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
   page(documentId: $documentId, locale: $locale, status: $status) {
     documentId
@@ -73,354 +72,10 @@ query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
         note
       }
     }
-    blocks {
-      __typename
-      ... on ComponentBlocksHero {
-        ...HeroBlock
-      }
-      ... on ComponentBlocksContent {
-        ...ContentBlock
-      }
-      ... on ComponentBlocksMediaText {
-        ...MediaTextBlock
-      }
-      ... on ComponentBlocksFeatures {
-        ...FeaturesBlock
-      }
-      ... on ComponentBlocksFaq {
-        ...FaqBlock
-      }
-      ... on ComponentBlocksReviews {
-        ...ReviewsBlock
-      }
-      ... on ComponentBlocksLocations {
-        ...LocationsBlock
-      }
-      ... on ComponentBlocksBlogPosts {
-        ...BlogPostsBlock
-      }
-      ... on ComponentBlocksScenarios {
-        ...ScenariosBlock
-      }
-      ... on ComponentBlocksComparison {
-        ...ComparisonBlock
-      }
-      ... on ComponentBlocksCars {
-        ...CarsBlock
-      }
-      ... on ComponentBlocksLogos {
-        ...LogosBlock
-      }
-      ... on ComponentBlocksLeadForm {
-        ...LeadFormBlock
-      }
-      ... on ComponentBlocksCtaBand {
-        ...CtaBandBlock
-      }
-      ... on ComponentBlocksTrustBar {
-        ...TrustBarBlock
-      }
-      ... on ComponentBlocksContact {
-        ...ContactBlock
-      }
-      ... on ComponentBlocksPromoCards {
-        ...PromoCardsBlock
-      }
-    }
   }
-}
-
-# `scenariosLayout`: `layout` has other types on cars, hero and others.
-fragment ScenariosBlock on ComponentBlocksScenarios {
-  id
-  header {
-    ...SectionHeader
-  }
-  scenariosLayout: layout
-  items {
-    label
-    title
-    audience
-    text
-    benefits {
-      text
-    }
-    image {
-      ...Media
-    }
-    imageMobile {
-      ...Media
-    }
-    cta {
-      ...Link
-    }
-  }
-  section {
-    ...Section
-  }
-}
-
-fragment ComparisonBlock on ComponentBlocksComparison {
-  id
-  header {
-    ...SectionHeader
-  }
-  columns {
-    label
-    highlighted
-  }
-  rows {
-    criterion
-    values {
-      kind
-      text
-    }
-  }
-  footnote
-  section {
-    ...Section
-  }
-}
-
-# Aliases: `source`, `category` and `layout` have other types on blog-posts and hero.
-fragment CarsBlock on ComponentBlocksCars {
-  id
-  header {
-    ...SectionHeader
-  }
-  carsSource: source
-  segmentIds
-  carsCategory: category
-  limit
-  carsLayout: layout
-  defaultCategory
-  onlyPromotions
-  carsCta: cta {
-    ...Link
-  }
-  section {
-    ...Section
-  }
-}
-
-# `logos`: `items` of features and scenarios have an optional `image`.
-fragment LogosBlock on ComponentBlocksLogos {
-  id
-  header {
-    ...SectionHeader
-  }
-  logos: items {
-    name
-    image {
-      ...Media
-    }
-  }
-  section {
-    ...Section
-  }
-}
-
-# `formVariant`: `variant` is an enum of another type on features.
-fragment LeadFormBlock on ComponentBlocksLeadForm {
-  id
-  header {
-    ...SectionHeader
-  }
-  formVariant: variant
-  contactTitle
-  contactText
-  steps {
-    text
-  }
-  consent
-  successTitle
-  successText
-  section {
-    ...Section
-  }
-}
-
-# `ctaVariant`: `variant` is an enum of another type on features; `ctaImage`:
-# `image` is required on media-text.
-fragment CtaBandBlock on ComponentBlocksCtaBand {
-  id
-  title
-  text
-  primary {
-    ...Link
-  }
-  secondary {
-    ...Link
-  }
-  tone
-  ctaVariant: variant
-  eyebrow
-  ctaImage: image {
-    ...Media
-  }
-  ctaImageMobile: imageMobile {
-    ...Media
-  }
-  media {
-    ...Media
-  }
-  showStoreBadges
 }
 
 # Also in `site.contact.departments` (chrome.graphql).
-fragment Department on ComponentElementsDepartment {
-  name
-  text
-  phone
-  email
-  hours
-  schedule {
-    days
-    from
-    to
-    closed
-  }
-  showInFooter
-  link {
-    ...Link
-  }
-}
-
-# `promos`: `items` has other types on features, scenarios and faq. Dates are
-# `YYYY-MM-DD`; `internal/entities.ts` keeps only the cards valid today.
-fragment PromoCardsBlock on ComponentBlocksPromoCards {
-  id
-  header {
-    ...SectionHeader
-  }
-  promos: items {
-    title
-    text
-    code
-    validFrom
-    validUntil
-    tone
-    image {
-      ...Media
-    }
-    imageMobile {
-      ...Media
-    }
-    link {
-      ...Link
-    }
-    termsLink {
-      ...Link
-    }
-  }
-  section {
-    ...Section
-  }
-}
-
-# `trustVariant`: `variant` is an enum of another type on features. Also inside
-# the hero (`hero.trust`).
-fragment TrustBarBlock on ComponentBlocksTrustBar {
-  id
-  trustVariant: variant
-  showRating
-  stats {
-    kind
-  }
-  claims {
-    icon
-    text
-  }
-}
-
-# `contactImage`: `image` is required on media-text.
-fragment ContactBlock on ComponentBlocksContact {
-  id
-  header {
-    ...SectionHeader
-  }
-  showCompany
-  contactImage: image {
-    ...Media
-  }
-  formTopics {
-    text
-  }
-  departments {
-    ...Department
-  }
-  section {
-    ...Section
-  }
-}
-
-fragment ContentBlock on ComponentBlocksContent {
-  id
-  header {
-    ...SectionHeader
-  }
-  body
-  align
-  collapsible
-  previewParagraphs
-  collapsedLabel
-  ctas {
-    ...Cta
-  }
-  section {
-    ...Section
-  }
-}
-
-fragment MediaTextBlock on ComponentBlocksMediaText {
-  id
-  header {
-    ...SectionHeader
-  }
-  body
-  image {
-    ...Media
-  }
-  imagePosition
-  imageStyle
-  ctas {
-    ...Cta
-  }
-  section {
-    ...Section
-  }
-}
-
-# `reviewSource`: `source` is also an enum of another type on blog-posts;
-# `reviewsLayout`: `layout` has other types on cars, hero and locations.
-fragment ReviewsBlock on ComponentBlocksReviews {
-  id
-  header {
-    ...SectionHeader
-  }
-  limit
-  reviewSource: source
-  reviewsLayout: layout
-  showSummary
-  section {
-    ...Section
-  }
-}
-
-fragment LocationsBlock on ComponentBlocksLocations {
-  id
-  header {
-    ...SectionHeader
-  }
-  locationsFilter: filter
-  locationsLayout: layout
-  city
-  showMap
-  section {
-    ...Section
-  }
-}
-
 # The newest reviews in one language, for a Reviews section with `source: latest`.
 query SectionReviews($locale: I18NLocaleCode!, $status: PublicationStatus!, $limit: Int!) {
   ratings(locale: $locale, status: $status, sort: ["date:desc", "documentId:asc"], pagination: { limit: $limit }) {
@@ -428,93 +83,8 @@ query SectionReviews($locale: I18NLocaleCode!, $status: PublicationStatus!, $lim
   }
 }
 
-# Published reviews for `blocks.reviews`. The
-# collection is small; the summary is computed over all of it.
-query Reviews($status: PublicationStatus!) {
-  ratings(status: $status, sort: ["date:desc"], pagination: { limit: 100 }) {
-    documentId
-    name
-    rate
-    text
-    date
-    source
-  }
-}
-
-# `heading`: `title` is optional here but required on the other blocks, and
-# GraphQL refuses one field name with two types in the same union selection.
-fragment FeaturesBlock on ComponentBlocksFeatures {
-  id
-  heading: title
-  variant
-  items {
-    title
-    text
-    icon
-    tone
-    image {
-      ...Media
-    }
-    imageMobile {
-      ...Media
-    }
-    link {
-      ...Link
-    }
-  }
-}
-
-# `answer` is CKEditor HTML (or older blocks JSON); `internal/rich-blocks.ts`
-# keeps what the site can render. `faqCta`: `cta` is a button on blog-posts.
-fragment FaqBlock on ComponentBlocksFaq {
-  id
-  header {
-    ...SectionHeader
-  }
-  items {
-    question
-    answer
-    category {
-      documentId
-      name
-      slug
-      icon
-      order
-    }
-  }
-  structuredData
-  groupByCategory
-  faqCta: cta {
-    ...Link
-  }
-  section {
-    ...Section
-  }
-}
-
-fragment SectionHeader on ComponentElementsSectionHeader {
-  eyebrow
-  title
-  lead
-}
-
-fragment Section on ComponentElementsSection {
-  tone
-  spacing
-  width
-  anchor
-  background
-  backgroundImage {
-    ...Media
-  }
-  backgroundImageMobile {
-    ...Media
-  }
-  ornament
-}
-
-# Newest posts for a `blocks.blog-posts` block or a `sections.blog` section with `source: latest`,
-# optionally of one category (`filters: { category: { documentId: { eq } } }`). By `createdAt`, the date
+# Newest posts for a `sections.blog` section with `source: latest`, or a post's
+# related posts (`filters` leaves the post out). By `createdAt`, the date
 # shown on the cards: Strapi resets `publishedAt` on every publish.
 query BlogCards(
   $locale: I18NLocaleCode!
@@ -540,31 +110,8 @@ fragment BlogCard on Blog {
   excerpt
   publishedAt
   createdAt
-  category {
-    documentId
-    name
-    color
-  }
   coverImage {
     ...Media
-  }
-}
-
-fragment BlogPostsBlock on ComponentBlocksBlogPosts {
-  id
-  badge
-  title
-  subtitle
-  source
-  limit
-  category {
-    documentId
-  }
-  posts {
-    ...BlogCard
-  }
-  cta {
-    ...Cta
   }
 }
 
@@ -1010,7 +557,7 @@ fragment PartCard on ComponentPartsCard {
   pattern
 }
 
-# `parts.cta` and `parts.link`: the new sections' own copies of `elements.cta` / `elements.link` (same fields).
+# `parts.cta` and `parts.link`: the buttons and links of the sections, menus, layout and announcement.
 fragment PartLink on ComponentPartsLink {
   label
   linkType
@@ -1020,6 +567,9 @@ fragment PartLink on ComponentPartsLink {
     documentId
   }
   blog {
+    slug
+  }
+  document {
     slug
   }
 }
@@ -1038,59 +588,4 @@ fragment Media on UploadFile {
   width
   height
   alternativeText
-}
-
-fragment Link on ComponentElementsLink {
-  label
-  linkType
-  customUrl
-  newTab
-  page {
-    documentId
-  }
-  blog {
-    slug
-  }
-}
-
-fragment Cta on ComponentElementsCta {
-  variant
-  icon
-  link {
-    ...Link
-  }
-}
-
-fragment HeroBlock on ComponentBlocksHero {
-  id
-  badge
-  title
-  subtitle
-  ctas {
-    ...Cta
-  }
-  backgroundImage {
-    ...Media
-  }
-  backgroundImageMobile {
-    ...Media
-  }
-  backgroundVideo {
-    ...Media
-  }
-  overlay
-  height
-  reservationLayout
-  reservationDefaultTerm
-  highlights {
-    icon
-    text
-  }
-  heroLayout: layout
-  searchSide
-  focalPoint
-  breadcrumbLabel
-  trust {
-    ...TrustBarBlock
-  }
 }

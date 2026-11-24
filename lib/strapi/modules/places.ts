@@ -4,20 +4,18 @@ import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
 
 import {
-  BlogCardsDocument,
   CityDocument,
   CityRoutesDocument,
   LocalPageDocument,
   LocalPageRoutesDocument,
-  ReviewsDocument,
   type CityQuery,
 } from "../generated/graphql";
 import { contentStatus } from "../internal/config";
-import { latestPostQueries, pageNeedsReviews, parsePage, type Page } from "../internal/entities";
+import type { Page } from "../internal/entities";
 import { strapiRequest } from "../internal/http";
-import { cacheUntil } from "../internal/page-cache";
 import { findRoute, type PageRoute } from "../internal/routes";
 import { CACHE_TAGS } from "../internal/tags";
+import { readPageBody } from "./page-body";
 import { listPageRoutes } from "./routes";
 
 /**
@@ -25,7 +23,7 @@ import { listPageRoutes } from "./routes";
  * local pickup pages (`local-page`,
  * `/pl/lokalna-wypozyczalnia-samochodow/warszawa-bemowo`), at the old site's
  * URLs so links and search results carry over. They render like CMS pages
- * (`Page`), from their own `blocks`. An entry with no version in a language
+ * (`Page`), from their own `sections`. An entry with no version in a language
  * has no URL there (404).
  */
 export type PlaceKind = "city" | "local";
@@ -85,18 +83,10 @@ export async function getPlacePage(kind: PlaceKind, lang: Lang, documentId: stri
 
 async function loadCachedPlacePage(kind: PlaceKind, lang: Lang, documentId: string): Promise<Page | null> {
   "use cache";
-  // As `getPage`: the pages its links point to, and the blog and review cards its blocks list.
-  cacheTag(
-    CACHE_TAGS.all,
-    CACHE_TAGS.type(TYPES[kind]),
-    CACHE_TAGS.type("page"),
-    CACHE_TAGS.type("blog"),
-    CACHE_TAGS.type("blog-category"),
-    CACHE_TAGS.type("rating"),
-  );
-  const page = await loadPlacePage(kind, lang, documentId);
-  cacheUntil(page?.changesAt);
-  return page;
+  // As `getPage`: the pages its links point to, and the blog and review cards its sections list.
+  cacheLife("max");
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.type(TYPES[kind]), CACHE_TAGS.type("page"), CACHE_TAGS.type("blog"), CACHE_TAGS.type("rating"), CACHE_TAGS.type("car-collection"));
+  return loadPlacePage(kind, lang, documentId);
 }
 
 async function loadPlacePage(kind: PlaceKind, lang: Lang, documentId: string): Promise<Page | null> {
@@ -104,23 +94,8 @@ async function loadPlacePage(kind: PlaceKind, lang: Lang, documentId: string): P
   if (!raw) {
     return null;
   }
-  const page = { documentId: raw.documentId, title: raw.title, seo: raw.seo, blocks: raw.blocks, pickupPoint: raw.pickupPoint };
-  // As in `getPage`: `latest` blog blocks and reviews blocks read their own collections.
-  const reviews = pageNeedsReviews(page)
-    ? strapiRequest(ReviewsDocument, { status: contentStatus() }).then(({ ratings }) => ratings)
-    : Promise.resolve([]);
-  const latest = await Promise.all(
-    latestPostQueries(page).map(async ({ blockId, limit, categoryId }) => {
-      const { blogs } = await strapiRequest(BlogCardsDocument, {
-        locale: lang,
-        status: contentStatus(),
-        limit,
-        filters: categoryId ? { category: { documentId: { eq: categoryId } } } : null,
-      });
-      return [blockId, blogs] as const;
-    }),
-  );
-  return parsePage(page, lang, routes, Object.fromEntries(latest), await reviews);
+  const page = { documentId: raw.documentId, title: raw.title, seo: raw.seo, sections: raw.sections, pickupPoint: raw.pickupPoint };
+  return readPageBody(page, lang, routes);
 }
 
 type RawPlace = Omit<NonNullable<CityQuery["city"]>, "__typename">;

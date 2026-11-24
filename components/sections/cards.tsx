@@ -1,7 +1,7 @@
 import { ChevronRight } from "lucide-react";
 import { getImageProps } from "next/image";
 
-import { CtaIcon, CtaLink } from "@/components/blocks/cta-link";
+import { CtaIcon, CtaLink } from "@/components/sections/cta-link";
 import { buttonClass } from "@/components/ui/button";
 import { isDarkBackground, type Card, type CardsSection, type Media } from "@/lib/strapi";
 

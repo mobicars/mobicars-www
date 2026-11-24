@@ -7,10 +7,11 @@ export function PreviewBanner() {
   if (!contentPreview()) return null;
 
   return (
+    // Sticky, not fixed: at the end of the page it stands under the footer, so nothing is covered.
     // Fixed height: the phone's booking bar sits right above it (`globals.css`).
     <div
       data-preview-banner
-      className="fixed bottom-0 left-0 right-0 z-50 flex h-11 items-center justify-center gap-4 overflow-hidden bg-red-700 px-4 text-xs font-normal text-white shadow-lg"
+      className="sticky bottom-0 z-50 flex h-11 items-center justify-center gap-4 overflow-hidden bg-red-700 px-4 text-xs font-normal text-white shadow-lg"
     >
       <AlertTriangle className="size-6 shrink-0 animate-pulse" />
       <div>

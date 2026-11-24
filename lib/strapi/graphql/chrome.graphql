@@ -5,27 +5,27 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
       label
       submenu
       link {
-        ...Link
+        ...PartLink
       }
       links {
-        ...Link
+        ...PartLink
       }
     }
     footerGroups {
       title
       links {
-        ...Link
+        ...PartLink
       }
     }
     headerCta {
-      ...Link
+      ...PartLink
     }
     topLinks {
-      ...Link
+      ...PartLink
     }
     footerText
     legalLinks {
-      ...Link
+      ...PartLink
     }
     paymentMethods {
       method
@@ -40,7 +40,7 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
     text
     variant
     link {
-      ...Link
+      ...PartLink
     }
     startsAt
     endsAt
@@ -69,9 +69,6 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
       regon
       krs
       mapUrl
-      departments {
-        ...Department
-      }
     }
     appStoreUrl
     googlePlayUrl
@@ -99,10 +96,10 @@ query LatestPosts($locale: I18NLocaleCode!, $status: PublicationStatus!, $limit:
   }
 }
 
-fragment Seo on ComponentElementsSeo {
+fragment Seo on ComponentPartsSeo {
   metaTitle
   metaDescription
-  keywords
+  metaKeywords
   noIndex
   noFollow
   shareImage {

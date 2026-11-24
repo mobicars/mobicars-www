@@ -1,7 +1,7 @@
 import { getImageProps } from "next/image";
 import { Suspense } from "react";
 
-import { CtaLink } from "@/components/blocks/cta-link";
+import { CtaLink } from "@/components/sections/cta-link";
 import { ReservationPicker } from "@/components/reservation/picker";
 import type { Lang } from "@/i18n/config";
 import { listServicePoints } from "@/lib/rentcarsoft";

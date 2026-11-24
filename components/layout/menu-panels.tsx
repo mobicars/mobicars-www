@@ -3,7 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { connection } from "next/server";
 
-import { CtaIcon } from "@/components/blocks/cta-link";
+import { CtaIcon } from "@/components/sections/cta-link";
 import type { Lang } from "@/i18n/config";
 import { fill, getMessages } from "@/i18n/messages";
 import { fleetHref, reservationHref } from "@/i18n/routes";

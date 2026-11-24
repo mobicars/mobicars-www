@@ -1,43 +1,10 @@
-import { Children, type ReactNode } from "react";
-
-import { Carousel } from "./carousel";
+import type { ReactNode } from "react";
 
 /**
- * The small shared pieces every block builds its cards and bands from, so a
- * card, a label or a photo overlay looks the same wherever it appears
+ * Small shared pieces, so an icon badge, a photo overlay or line art looks the
+ * same wherever it appears
  * (`redesign/component-catalog.md`, P1–P8). Server markup only.
  */
-
-/** P1 – the one card surface. `interactive` lifts it on hover (a card that is a link). */
-export function cardClass(tone: "light" | "dark" = "light", interactive = false, extra = ""): string {
-  const base =
-    tone === "dark" ? "rounded-card bg-blue-dark text-white ring-1 ring-white/10" : "rounded-card bg-white text-blue-dark shadow-card ring-1 ring-line";
-  const hover = interactive
-    ? "transition-[box-shadow,transform] duration-250 ease-out-soft hover:-translate-y-0.5 hover:shadow-lift motion-reduce:transition-none motion-reduce:hover:translate-y-0"
-    : "";
-  return `${base} ${hover} ${extra}`.trim();
-}
-
-export type PillTone = "neutral" | "go" | "brand" | "glass" | "outline";
-
-const PILLS: Record<PillTone, string> = {
-  neutral: "bg-blue-light text-blue-dark",
-  go: "bg-green-light text-green-dark",
-  brand: "bg-blue-dark text-white",
-  // On a photo: near-opaque white keeps the label readable on any frame.
-  glass: "bg-white/90 text-blue-dark",
-  outline: "ring-1 ring-current",
-};
-
-/** P2 – a short label: a blog category, a rental length, an FAQ category. */
-export function Pill({ tone = "neutral", icon, className = "", children }: { tone?: PillTone; icon?: ReactNode; className?: string; children: ReactNode }) {
-  return (
-    <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${PILLS[tone]} ${className}`.trim()}>
-      {icon ? <span aria-hidden className="flex [&>svg]:size-3.5">{icon}</span> : null}
-      {children}
-    </span>
-  );
-}
 
 const BADGES = {
   light: "bg-white text-blue-dark",
@@ -130,32 +97,4 @@ export function roundIconClass(active = false): string {
     ? "bg-blue-dark text-white ring-blue-dark"
     : "text-blue-dark ring-line-strong group-hover:bg-blue-dark group-hover:text-white group-hover:ring-blue-dark";
   return `flex size-9 shrink-0 items-center justify-center rounded-full ring-1 transition-colors duration-150 ease-out-soft motion-reduce:transition-none ${state}`;
-}
-
-/**
- * P8 – a row of cards that swipes on phones (a peek of the next one) and
- * becomes a grid from `lg`. Use `RailItem` for each card. Below `lg` it is a
- * `Carousel`: native scroll-snap at first, then Embla with drag, momentum
- * and dots once the row nears the screen; from `lg` no script runs.
- */
-export function Rail({ label, columns = 3, className = "", children }: { label: string; columns?: 3 | 4; className?: string; children: ReactNode }) {
-  return (
-    <Carousel
-      label={label}
-      count={Children.toArray(children).length}
-      gridFrom="lg"
-      className="-mx-gutter snap-x snap-mandatory scroll-px-gutter overflow-x-auto px-gutter [scrollbar-width:none] lg:mx-0 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
-    >
-      {/* Named by the carousel region around it. */}
-      <ul
-        className={`flex gap-4 pb-2 lg:grid lg:gap-6 lg:pb-0 ${columns === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"} ${className}`.trim()}
-      >
-        {children}
-      </ul>
-    </Carousel>
-  );
-}
-
-export function RailItem({ className = "", children }: { className?: string; children: ReactNode }) {
-  return <li className={`flex w-[78%] max-w-80 shrink-0 snap-start sm:w-[45%] lg:w-auto lg:max-w-none ${className}`.trim()}>{children}</li>;
 }

@@ -30,11 +30,24 @@ import { VariantLabel } from "./variant-label";
  * A divider is told the colours at its neighbours' edges, for a slant: the
  * white header above the first section, the navy footer below the last.
  */
-export function Sections({ sections, lang, title, pickupId }: { sections: Section[]; lang: Lang; title: string; pickupId: number | null }) {
+export function Sections({
+  sections,
+  lang,
+  title,
+  pickupId,
+  titled = false,
+}: {
+  sections: Section[];
+  lang: Lang;
+  title: string;
+  pickupId: number | null;
+  /** The page shows its own `<h1>` (a blog post's header): no hidden one here. */
+  titled?: boolean;
+}) {
   const firstHero = sections.findIndex((section) => section.type === "hero");
   return (
     <>
-      {firstHero === -1 ? <h1 className="sr-only">{title}</h1> : null}
+      {firstHero === -1 && !titled ? <h1 className="sr-only">{title}</h1> : null}
       {sections.map((section, index) => {
         switch (section.type) {
           case "hero":

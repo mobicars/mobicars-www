@@ -10,7 +10,7 @@ import { SectionHeading, SectionShell } from "./section-shell";
  * Form (`sections.form`): the chosen form, for now the contact form (the old
  * site's fields, sent by email with a copy to the customer), under the
  * section's heading. `narrow`: one column as wide as a text; `wide`: the
- * fields in pairs on desktops. The company data and departments are built
+ * fields in pairs on desktops. The company data and contact details are built
  * beside it from Cards or Features, not here.
  */
 export async function FormBlock({ section, lang }: { section: FormSection; lang: Lang }) {

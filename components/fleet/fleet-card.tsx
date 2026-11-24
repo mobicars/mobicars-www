@@ -16,7 +16,7 @@ export type FleetTexts = Messages["fleet"];
 
 /**
  * The one car card of the site: the fleet list, "Podobne samochody" and the
- * CMS cars block (`components/blocks/cars.tsx`). Server-safe markup; the one
+ * CMS Cars section (`components/sections/cars.tsx`). Server-safe markup; the one
  * client part is "Rezerwuj". The card is a link to the car page (the name is
  * the link, stretched over the card; "Szczegóły ›" at the bottom is part of it),
  * and "Rezerwuj" above it opens the short-term search for this car

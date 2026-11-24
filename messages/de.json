@@ -41,7 +41,6 @@
     "login": "Anmelden",
     "topNav": "Weitere Links",
     "callHotline": "Hotline anrufen: {phone}",
-    "callDepartment": "Anrufen: {name}, {phone}",
     "footerNav": "Links in der Fußzeile",
     "payments": "Online-Zahlung",
     "whatsapp": "WhatsApp",
@@ -940,15 +939,7 @@
   },
   "blocks": {
     "faqTitle": "Häufige Fragen",
-    "heroAtGlance": "Auf einen Blick",
-    "heroHighlights": "Unsere Vorteile",
     "reviewsOutOf": "{rating} von 5",
-    "reviewsCount": {
-      "one": "{count} Bewertung",
-      "few": "{count} Bewertungen",
-      "many": "{count} Bewertungen",
-      "other": "{count} Bewertungen"
-    },
     "readMore": "Weiterlesen",
     "reviewsListLabel": "Kundenbewertungen",
     "reviewsPrevious": "Vorherige Bewertung",
@@ -957,8 +948,6 @@
     "carouselPrevious": "Zurück",
     "carouselNext": "Weiter",
     "carouselGoTo": "Element {index} von {count}",
-    "appStore": "Laden im App Store",
-    "googlePlay": "Jetzt bei Google Play",
     "locations": {
       "title": "Wo Sie Ihr Auto abholen",
       "airport": "Flughafen",
@@ -986,17 +975,10 @@
       }
     },
     "faqCategories": "Question categories",
-    "faqOther": "Other questions",
     "faqSearch": "Fragen durchsuchen",
     "faqSearchPlaceholder": "Fragen durchsuchen…",
     "faqNoResults": "Keine Fragen passen zu Ihrer Suche.",
-    "trustLabel": "Why MobiCars",
-    "faqMoreTitle": "Keine Antwort gefunden?",
-    "faqMoreText": "Schreiben oder rufen Sie uns an – wir helfen bei Auto und Termin.",
     "promoCode": "Code",
-    "promoCopy": "Code kopieren",
-    "promoCopied": "Code {code} kopiert",
-    "promoUntil": "Gültig bis {date}",
     "blogBreadcrumb": "Blog",
     "readingTime": {
       "one": "{count} min read",
@@ -1005,9 +987,6 @@
       "other": "{count} min read"
     },
     "toc": "Contents ({count})",
-    "blogCtaTitle": "Need a car?",
-    "blogCtaText": "See available cars and prices for your dates. No deposit and no mileage limit in Poland.",
-    "blogCtaButton": "Check availability",
     "relatedPosts": "Read also",
     "readArticle": "Artikel lesen",
     "opensInNewTab": "öffnet in einem neuen Tab",

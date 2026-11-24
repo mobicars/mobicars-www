@@ -3,19 +3,19 @@ import { cacheLife, cacheTag } from "next/cache";
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
 
-import { BlogCardsDocument, BlogPostDocument, BlogRoutesDocument, ReviewsDocument, type BlogCardFragment } from "../generated/graphql";
+import { BlogCardsDocument, BlogPostDocument, BlogRoutesDocument, type BlogCardFragment } from "../generated/graphql";
 import { contentStatus } from "../internal/config";
-import { latestPostQueries, pageNeedsReviews, parseBlogCard, parsePage, type BlogPostCard, type Page } from "../internal/entities";
+import { parseBlogCard, type BlogPostCard, type Page } from "../internal/entities";
 import { strapiRequest } from "../internal/http";
-import { cacheUntil } from "../internal/page-cache";
 import { findRoute, type PageRoute } from "../internal/routes";
 import { CACHE_TAGS } from "../internal/tags";
+import { readPageBody } from "./page-body";
 import { listPageRoutes } from "./routes";
 
 /**
  * Blog posts (`blog`) at the old site's URLs, `/{lang}/blog/{slug}`
  * (`blogHref`), so links and search results carry over. A post renders like a
- * CMS page from its own `blocks`, under its title, date and cover. A post with
+ * CMS page from its own `sections`, under its title, date and cover. A post with
  * no version in a language has no URL there (404).
  */
 export type BlogPost = {
@@ -23,13 +23,14 @@ export type BlogPost = {
   card: BlogPostCard;
   /** ISO date of the last change, for `dateModified`. */
   updatedAt: string | null;
-  /** Up to 3 newest posts of the same category, without this one; empty without a category. */
+  /** Up to 4 newest posts, without this one. */
   related: BlogPostCard[];
 };
 
-const RELATED = 3;
+/** A row of the Blog section's grid. */
+const RELATED = 4;
 
-/** The related cards from a category's newest posts: this post left out, at most 3. */
+/** The related cards from the newest posts: this post left out, at most 4. */
 export function relatedCards(posts: readonly (BlogCardFragment | null)[], documentId: string, lang: Lang): BlogPostCard[] {
   return posts
     .flatMap((post) => (post && post.documentId !== documentId ? [parseBlogCard(post, lang)] : []))
@@ -57,11 +58,10 @@ export async function getBlogPost(lang: Lang, documentId: string): Promise<BlogP
 
 async function loadCachedPost(lang: Lang, documentId: string): Promise<BlogPost | null> {
   "use cache";
-  // As `getPage`: the post, the pages its links point to, and the cards and reviews its blocks list.
-  cacheTag(CACHE_TAGS.all, CACHE_TAGS.type("blog"), CACHE_TAGS.type("blog-category"), CACHE_TAGS.type("page"), CACHE_TAGS.type("rating"));
-  const post = await loadPost(lang, documentId);
-  cacheUntil(post?.page.changesAt);
-  return post;
+  // As `getPage`: the post, the pages its links point to, and the cards and reviews its sections list.
+  cacheLife("max");
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.type("blog"), CACHE_TAGS.type("page"), CACHE_TAGS.type("rating"), CACHE_TAGS.type("car-collection"));
+  return loadPost(lang, documentId);
 }
 
 async function loadPost(lang: Lang, documentId: string): Promise<BlogPost | null> {
@@ -72,34 +72,12 @@ async function loadPost(lang: Lang, documentId: string): Promise<BlogPost | null
   if (!raw) {
     return null;
   }
-  const page = { documentId: raw.documentId, title: raw.title, seo: raw.seo, blocks: raw.blocks };
-  // As in `getPage`: `latest` blog blocks and reviews blocks read their own collections.
-  const reviews = pageNeedsReviews(page)
-    ? strapiRequest(ReviewsDocument, { status: contentStatus() }).then(({ ratings }) => ratings)
-    : Promise.resolve([]);
   // One more than shown, in case this post is among the newest.
-  const categoryId = raw.category?.documentId ?? null;
-  const related = categoryId
-    ? strapiRequest(BlogCardsDocument, {
-        locale: lang,
-        status: contentStatus(),
-        limit: RELATED + 1,
-        filters: { category: { documentId: { eq: categoryId } } },
-      }).then(({ blogs }) => relatedCards(blogs, raw.documentId, lang))
-    : Promise.resolve([]);
-  const latest = await Promise.all(
-    latestPostQueries(page).map(async ({ blockId, limit, categoryId }) => {
-      const { blogs } = await strapiRequest(BlogCardsDocument, {
-        locale: lang,
-        status: contentStatus(),
-        limit,
-        filters: categoryId ? { category: { documentId: { eq: categoryId } } } : null,
-      });
-      return [blockId, blogs] as const;
-    }),
+  const related = strapiRequest(BlogCardsDocument, { locale: lang, status: contentStatus(), limit: RELATED + 1, filters: null }).then(({ blogs }) =>
+    relatedCards(blogs, raw.documentId, lang),
   );
   return {
-    page: parsePage(page, lang, routes, Object.fromEntries(latest), await reviews),
+    page: await readPageBody({ documentId: raw.documentId, title: raw.title, seo: raw.seo, sections: raw.sections }, lang, routes),
     // The card's link is the post in the URL's language: its own slug, or the English one.
     card: parseBlogCard(raw, lang),
     updatedAt: typeof raw.updatedAt === "string" ? raw.updatedAt : null,

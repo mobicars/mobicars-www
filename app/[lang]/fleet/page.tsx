@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { CmsPage, cmsPageMetadata } from "@/components/blocks/cms-page";
+import { CmsPage, cmsPageMetadata } from "@/components/sections/cms-page";
 import { isLang, type Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { fleetHref } from "@/i18n/routes";
@@ -11,9 +11,8 @@ import { getPage, listPageRoutes, pageHref, type Page, type PageRoute } from "@/
 /**
  * The fleet: `/pl/flota`, `/en/fleet`, `/de/flotte`, `/uk/avtopark`. The page
  * is the CMS page at that path in this language (hero, the Cars section with the
- * `full` layout, or the old `cars` block with `catalog`, content, FAQ…). A
- * language whose CMS has no such page, or a page with neither sections nor
- * blocks, answers 404. See `lib/fleet/README.md`.
+ * `full` layout, content, FAQ…). A language whose CMS has no such page, or a
+ * page with no sections, answers 404. See `lib/fleet/README.md`.
  */
 /**
  * Allowed to block, like the CMS pages and the car page: the CMS page is read
@@ -57,9 +56,9 @@ export default async function FleetPage({ params }: PageProps<"/[lang]/fleet">) 
   );
 }
 
-/** The CMS page at this language's fleet path (`servedByApp`: this route serves it), when it has sections or blocks. */
+/** The CMS page at this language's fleet path (`servedByApp`: this route serves it), when it has sections. */
 async function fleetCmsPage(lang: Lang): Promise<{ route: PageRoute; page: Page } | null> {
   const route = (await listPageRoutes(lang)).find((each) => pageHref(lang, each.segments) === fleetHref(lang));
   const page = route ? await getPage(lang, route.documentId) : null;
-  return route && page && (page.sections.length > 0 || page.blocks.length > 0) ? { route, page } : null;
+  return route && page && page.sections.length > 0 ? { route, page } : null;
 }

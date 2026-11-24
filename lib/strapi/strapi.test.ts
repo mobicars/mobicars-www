@@ -1,29 +1,25 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import type { FeaturesBlockFragment } from "./generated/graphql";
 import { fleetCollectionHref, parseFleetCollections } from "./modules/fleet-collections";
 import { placeKindOf, placeSegments } from "./modules/places";
 import { relatedCards } from "./modules/blog";
 import { StrapiError } from "./internal/errors";
 import { isTransient, withRetry } from "./internal/http";
 import {
-  DEFAULT_SECTION,
-  faqGroups,
   latestPostQueries,
   latestReviewQueries,
   nextAnnouncementChange,
-  pageNeedsReviews,
   parseChrome,
   parsePage,
-  type HeroBlock,
+  resolveLink,
   type OpeningHours,
 } from "./internal/entities";
 import { formatDays, formatOpeningHours, openingHoursSpecification } from "./internal/opening-hours";
 import { parseRichBlocks, richBlocksText } from "./internal/rich-blocks";
 import { buildRoutes, findRoute, pageHref, type RouteNode } from "./internal/routes";
 import { tagsForWebhook } from "./internal/tags";
-import { sectionEdgeTone } from "./internal/sections";
+import { sectionEdgeTone, type TextSection } from "./internal/sections";
 
 const node = (documentId: string, slug: string, parentDocumentId: string | null = null): RouteNode => ({
   documentId,
@@ -186,6 +182,7 @@ describe("page parsing", () => {
     newTab: false,
     page: null,
     blog: null,
+    document: null,
     ...overrides,
   });
   const page = parsePage(
@@ -193,27 +190,21 @@ describe("page parsing", () => {
       documentId: "home",
       title: "Strona główna",
       seo: null,
-      blocks: [
+      sections: [
         { __typename: "Error" },
         {
-          __typename: "ComponentBlocksHero",
+          __typename: "ComponentSectionsText",
           id: "1",
           badge: "",
-          title: "Wynajem aut",
-          subtitle: null,
-          overlay: "medium",
-          height: "default",
-          reservationLayout: "horizontal",
-          reservationDefaultTerm: "longTerm",
-          highlights: [{ icon: "check", text: " Bez kaucji " }, { icon: null, text: " " }, null],
-          heroLayout: "split",
-          searchSide: null,
-          focalPoint: null,
-          breadcrumbLabel: null,
-          trust: null,
-          backgroundImage: image,
-          backgroundImageMobile: null,
-          backgroundVideo: null,
+          textTitle: "Wynajem aut",
+          body: "<p>Tekst</p>",
+          textAlign: "start",
+          textWidth: "narrow",
+          collapsible: false,
+          previewParagraphs: null,
+          background: null,
+          textFrameWidth: "full",
+          textSpacing: "medium",
           ctas: [
             { variant: "primary", icon: "arrow-right", link: link({ linkType: "page", page: { documentId: "rent" } }) },
             { variant: "secondary", icon: null, link: link({ customUrl: "https://example.com", newTab: true }) },
@@ -224,20 +215,20 @@ describe("page parsing", () => {
           ],
         },
       ],
-    },
+    } as unknown as Parameters<typeof parsePage>[0],
     "pl",
     [{ documentId: "rent", segments: ["wynajem"] }],
   );
-  const hero = page.blocks[0] as HeroBlock;
+  const text = page.sections[0] as TextSection;
 
-  it("skips blocks it does not know", () => {
-    assert.equal(page.blocks.length, 1);
-    assert.equal(hero.type, "hero");
+  it("skips sections it does not know", () => {
+    assert.equal(page.sections.length, 1);
+    assert.equal(text.type, "text");
   });
 
   it("resolves links and drops unsafe or unroutable ones", () => {
     assert.deepEqual(
-      hero.ctas.map((cta) => [cta.href, cta.newTab]),
+      text.ctas.map((cta) => [cta.href, cta.newTab]),
       [
         ["/pl/wynajem", false],
         ["https://example.com", true],
@@ -245,16 +236,15 @@ describe("page parsing", () => {
     );
   });
 
-  it("maps media, empty strings and the booking form", () => {
-    assert.equal(hero.image?.url, "http://localhost:1337/uploads/hero.jpg");
-    assert.equal(hero.image?.alt, "");
-    assert.equal(hero.searchSide, "start");
-    assert.equal(hero.focalPoint, "center");
-    assert.equal(hero.trust, null);
-    assert.equal(hero.badge, null);
-    assert.deepEqual(hero.reservation, { layout: "horizontal", defaultTerm: "long" });
-    assert.deepEqual(hero.highlights, [{ icon: "check", text: "Bez kaucji" }]);
-    assert.equal(hero.layout, "split");
+  it("links a document to its redirect, per language, and drops one without a document", () => {
+    const doc = link({ linkType: "document", document: { slug: "regulamin" } });
+    assert.equal(resolveLink(doc, "pl", [])?.href, "/pl/dokumenty/regulamin");
+    assert.equal(resolveLink(doc, "en", [])?.href, "/en/documents/regulamin");
+    assert.equal(resolveLink(link({ linkType: "document" }), "pl", []), null);
+  });
+
+  it("maps empty strings and the SEO fields", () => {
+    assert.equal(text.badge, null);
     assert.deepEqual(page.seo, { title: null, description: null, noIndex: false, noFollow: false, image: null });
   });
 
@@ -264,8 +254,8 @@ describe("page parsing", () => {
         documentId: "home",
         title: "Strona główna",
         seo: { metaTitle: "Tytuł", metaDescription: null, noIndex: null, noFollow: null, shareImage: { ...image, url: "/uploads/og.jpg" } },
-        blocks: [],
-      },
+        sections: [],
+      } as unknown as Parameters<typeof parsePage>[0],
       "pl",
       [],
     );
@@ -282,6 +272,7 @@ describe("chrome parsing", () => {
     newTab: false,
     page: { documentId: "rent" },
     blog: null,
+    document: null,
     ...overrides,
   });
   const raw = (announcement: object | null) => ({
@@ -337,19 +328,6 @@ describe("chrome parsing", () => {
         regon: null,
         krs: " ",
         mapUrl: "http://maps.example",
-        departments: [
-          {
-            name: " Biuro rezerwacji ",
-            text: null,
-            phone: "+48 881 328 328",
-            email: null,
-            hours: "24/7",
-            schedule: [{ days: ["sat", "sun"], from: "09:00:00.000", to: "17:00:00.000", closed: false }],
-            showInFooter: true,
-            link: null,
-          },
-          { name: " ", text: null, phone: null, email: null, hours: null, schedule: [], showInFooter: false, link: null },
-        ],
       },
       appStoreUrl: "https://apps.apple.com/pl/app/mobicars",
       googlePlayUrl: "javascript:alert(1)",
@@ -388,19 +366,6 @@ describe("chrome parsing", () => {
     assert.equal(chrome.contact?.whatsappHref, "https://wa.me/48881328328");
     assert.equal(chrome.contact?.chatUrl, null);
     assert.equal(chrome.contact?.mapUrl, null);
-    assert.deepEqual(chrome.contact?.departments, [
-      {
-        name: "Biuro rezerwacji",
-        text: null,
-        phone: "+48 881 328 328",
-        phoneHref: "tel:+48881328328",
-        email: null,
-        hours: "24/7",
-        schedule: [{ days: ["sat", "sun"], opens: "09:00", closes: "17:00", closed: false }],
-        showInFooter: true,
-        link: null,
-      },
-    ]);
     assert.deepEqual(chrome.contact?.company, { legalName: "MobiCars Sp. z o.o. Sp. k.", nip: "5272887600", regon: null, krs: null });
     assert.equal(chrome.appStoreUrl, "https://apps.apple.com/pl/app/mobicars");
     assert.equal(chrome.googlePlayUrl, null);
@@ -452,431 +417,14 @@ describe("chrome parsing", () => {
   }
 });
 
-describe("blog posts block", () => {
-  const card = (id: string, overrides: object = {}) => ({
-    documentId: id,
-    title: `Wpis ${id}`,
-    slug: `wpis-${id}`,
-    excerpt: "  Zajawka  ",
-    publishedAt: "2026-11-01T10:00:00.000Z",
-    createdAt: "2026-10-30T10:00:00.000Z",
-    category: { documentId: "porady", name: "Porady", color: null },
-    coverImage: { url: `/uploads/${id}.jpg`, mime: "image/jpeg", width: 800, height: 450, alternativeText: null },
-    ...overrides,
-  });
-  const block = (id: string, overrides: object = {}) => ({
-    __typename: "ComponentBlocksBlogPosts" as const,
-    id,
-    badge: "BLOG",
-    title: "Z bloga",
-    subtitle: null,
-    source: "latest" as const,
-    limit: 4,
-    category: null,
-    posts: [],
-    cta: null,
-    ...overrides,
-  });
-  const raw = {
-    documentId: "home",
-    title: "Strona",
-    seo: null,
-    blocks: [
-      block("1", { category: { documentId: "tips" }, limit: 2 }),
-      block("2", { source: "picked" as const, posts: [card("b"), null, card("c", { publishedAt: null, category: null })] }),
-      block("3"),
-    ],
-  };
-
-  it("lists what to read for latest blocks", () => {
-    assert.deepEqual(latestPostQueries(raw), [
-      { blockId: "1", limit: 2, categoryId: "tips" },
-      { blockId: "3", limit: 4, categoryId: null },
-    ]);
-  });
-
-  it("maps latest and picked posts and leaves out empty blocks", () => {
-    const page = parsePage(raw, "pl", [], { "1": [card("a")], "3": [] });
-    assert.deepEqual(
-      page.blocks.map((b) => [b.type, b.id]),
-      [
-        ["blogPosts", "1"],
-        ["blogPosts", "2"],
-      ],
-    );
-    const [latest, picked] = page.blocks;
-    assert.ok(latest.type === "blogPosts" && picked.type === "blogPosts");
-    assert.deepEqual(latest.posts[0], {
-      id: "a",
-      title: "Wpis a",
-      href: "/pl/blog/wpis-a",
-      excerpt: "Zajawka",
-      category: "Porady",
-      categoryColor: null,
-      publishedAt: "2026-10-30T10:00:00.000Z",
-      image: { url: "http://localhost:1337/uploads/a.jpg", mime: "image/jpeg", width: 800, height: 450, alt: "" },
-    });
-    assert.deepEqual(
-      picked.posts.map((post) => [post.id, post.category, post.publishedAt]),
-      [
-        ["b", "Porady", "2026-10-30T10:00:00.000Z"],
-        ["c", null, "2026-10-30T10:00:00.000Z"],
-      ],
-    );
-  });
-});
-
-describe("features block", () => {
-  type Item = NonNullable<FeaturesBlockFragment["items"][number]>;
-  const item = (overrides: Partial<Item>): Item => ({ title: "Brak kaucji", text: "  ", icon: "shield-check", tone: null, image: null, imageMobile: null, link: null, ...overrides });
-  const page = (items: Item[]) =>
-    parsePage(
-      {
-        documentId: "home",
-        title: "Strona",
-        seo: null,
-        blocks: [{ __typename: "ComponentBlocksFeatures", id: "9", heading: " Dlaczego my ", variant: "cards", items }],
-      },
-      "pl",
-      [{ documentId: "rent", segments: ["wynajem"] }],
-    );
-
-  it("maps items and falls back to the item title for an empty link label", () => {
-    const [block] = page([
-      item({ link: { label: null, linkType: "page", customUrl: null, newTab: false, page: { documentId: "rent" }, blog: null } }),
-      item({ icon: null, image: { url: "/uploads/a.png", mime: "image/png", width: 64, height: 64, alternativeText: null } }),
-    ]).blocks;
-    assert.ok(block.type === "features");
-    assert.equal(block.title, "Dlaczego my");
-    assert.deepEqual(block.items[0].link, { label: "Brak kaucji", href: "/pl/wynajem", newTab: false });
-    assert.equal(block.items[0].text, null);
-    assert.equal(block.items[1].image?.url, "http://localhost:1337/uploads/a.png");
-    assert.equal(block.items[0].tone, "photo");
-    assert.equal(block.items[0].imageMobile, null);
-  });
-
-  it("leaves out a block without items", () => {
-    assert.equal(page([]).blocks.length, 0);
-  });
-});
-
-describe("faq block", () => {
-  const text = (value: string, marks: object = {}) => ({ type: "text", text: value, ...marks });
-  const paragraph = (...children: object[]) => ({ type: "paragraph", children });
-  const page = (items: { question: string; answer: unknown }[]) =>
-    parsePage(
-      {
-        documentId: "faq",
-        title: "FAQ",
-        seo: null,
-        blocks: [
-          {
-            __typename: "ComponentBlocksFaq",
-            id: "5",
-            header: { eyebrow: null, title: " Pytania ", lead: "  " },
-            structuredData: null,
-            section: null,
-            // GraphQL types the answer as the editor's HTML string; the parser also reads blocks JSON.
-            groupByCategory: null,
-            faqCta: null,
-            items: [null, ...(items as { question: string; answer: string }[]).map((item) => ({ ...item, category: null }))],
-          },
-        ],
-      },
-      "pl",
-      [],
-    );
-
-  it("keeps the rich text the site renders and drops the rest", () => {
-    const [block] = page([
-      {
-        question: " Czy potrzebuję kaucji? ",
-        answer: [
-          paragraph(text("Nie", { bold: true, color: "red" }), text(", "), {
-            type: "link",
-            url: "/pl/dokumenty",
-            children: [text("zobacz dokumenty")],
-          }),
-          paragraph(text("")),
-          { type: "image", image: { url: "/a.png" } },
-          paragraph({ type: "link", url: "javascript:alert(1)", children: [text("tekst zostaje")] }),
-          {
-            type: "list",
-            format: "ordered",
-            children: [
-              { type: "list-item", children: [text("Prawo jazdy")] },
-              { type: "list", format: "unordered", children: [{ type: "list-item", children: [text("kategoria B")] }] },
-              { type: "list-item", children: [text(" ")] },
-            ],
-          },
-          { type: "heading", level: 9, children: [text("Uwaga")] },
-          { type: "quote", children: [text("Cytat")] },
-        ],
-      },
-    ]).blocks;
-    assert.ok(block.type === "faq");
-    assert.equal(block.title, "Pytania");
-    assert.equal(block.lead, null);
-    assert.equal(block.structuredData, true);
-    assert.deepEqual(block.section, DEFAULT_SECTION);
-    const [item] = block.items;
-    assert.equal(item.question, "Czy potrzebuję kaucji?");
-    assert.deepEqual(item.answer[0], {
-      type: "paragraph",
-      children: [
-        { type: "text", text: "Nie", bold: true },
-        { type: "text", text: ", " },
-        { type: "link", href: "/pl/dokumenty", children: [{ type: "text", text: "zobacz dokumenty" }] },
-      ],
-    });
-    assert.deepEqual(item.answer[1], { type: "paragraph", children: [{ type: "text", text: "tekst zostaje" }] });
-    assert.deepEqual(item.answer[2], {
-      type: "list",
-      format: "ordered",
-      children: [
-        { type: "list-item", children: [{ type: "text", text: "Prawo jazdy" }] },
-        { type: "list", format: "unordered", children: [{ type: "list-item", children: [{ type: "text", text: "kategoria B" }] }] },
-      ],
-    });
-    assert.deepEqual(item.answer[3], { type: "heading", level: 2, children: [{ type: "text", text: "Uwaga" }] });
-    assert.equal(item.answer.length, 5);
-    assert.equal(item.answerText, "Nie, zobacz dokumenty tekst zostaje Prawo jazdy kategoria B Uwaga Cytat");
-  });
-
-  it("drops questions without an answer and then the block", () => {
-    assert.equal(page([{ question: "Pusta?", answer: [paragraph(text("  "))] }, { question: " ", answer: [paragraph(text("Tak"))] }]).blocks.length, 0);
-    assert.equal(page([{ question: "Zły JSON?", answer: 42 }]).blocks.length, 0);
-    assert.equal(page([{ question: "Pusty HTML?", answer: "<p>&nbsp;</p>" }]).blocks.length, 0);
-  });
-});
-
-describe("content, media-text and reviews blocks", () => {
-  const paragraph = (value: string) => [{ type: "paragraph", children: [{ type: "text", text: value }] }];
-  const header = { eyebrow: " O nas ", title: "Dlaczego MobiCars", lead: null };
-  const section = { tone: "tint" as const, spacing: null, width: "reading" as const, anchor: " o-nas " };
-  const rating = (documentId: string, date: string, rate: number, source = "Google") => ({
-    documentId,
-    name: " Anna ",
-    rate,
-    text: " Polecam ",
-    date,
-    source,
-  });
-  const page = (blocks: object[], reviews: unknown[] = []) =>
-    parsePage(
-      { documentId: "p", title: "Strona", seo: null, blocks } as Parameters<typeof parsePage>[0],
-      "pl",
-      [{ documentId: "rent", segments: ["wynajem"] }],
-      {},
-      reviews as Parameters<typeof parsePage>[4],
-    ).blocks;
-
-  it("maps content with its heading, section and buttons", () => {
-    const [block] = page([
-      {
-        __typename: "ComponentBlocksContent",
-        id: "1",
-        header,
-        body: paragraph("Tekst"),
-        align: "center",
-        section,
-        ctas: [{ variant: "primary", icon: null, link: { label: "Wynajem", linkType: "page", customUrl: null, newTab: false, page: { documentId: "rent" }, blog: null } }],
-      },
-    ]);
-    assert.ok(block.type === "content");
-    assert.equal(block.eyebrow, "O nas");
-    assert.equal(block.align, "center");
-    assert.deepEqual(block.section, { ...DEFAULT_SECTION, tone: "tint", width: "reading", anchor: "o-nas" });
-    assert.equal(block.ctas[0].href, "/pl/wynajem");
-  });
-
-  it("leaves out empty content and media-text without an image", () => {
-    assert.deepEqual(
-      page([
-        { __typename: "ComponentBlocksContent", id: "1", header: null, body: [], align: null, section: null, ctas: [] },
-        { __typename: "ComponentBlocksMediaText", id: "2", header, body: null, image: null, imagePosition: "end", section: null, ctas: [] },
-      ]),
-      [],
-    );
-  });
-
-  it("lists the newest reviews of one source with a summary over all of them", () => {
-    const reviews = [
-      rating("a", "2026-01-01", 4),
-      rating("b", "2026-03-01", 5),
-      rating("c", "2026-02-01", 5, "Facebook"),
-      { ...rating("d", "2026-04-01", 3), text: " " },
-      null,
-    ];
-    const [block] = page(
-      [{ __typename: "ComponentBlocksReviews", id: "3", header: null, limit: 1, reviewSource: "google", showSummary: true, section: null }],
-      reviews,
-    );
-    assert.ok(block.type === "reviews");
-    assert.deepEqual(block.reviews, [{ id: "b", author: "Anna", rating: 5, text: "Polecam", date: "2026-03-01", source: "Google" }]);
-    assert.deepEqual(block.summary, { average: 4.5, count: 2, source: "Google" });
-    assert.equal(block.layout, "cards");
-    const none = page(
-      [{ __typename: "ComponentBlocksReviews", id: "3", header: null, limit: 9, reviewSource: "facebook", showSummary: false, section: null }],
-      [rating("a", "2026-01-01", 4)],
-    );
-    assert.equal(none.length, 0);
-  });
-});
-
-describe("business blocks", () => {
-  const link = (overrides: object) => ({
-    label: "Zapytaj",
-    linkType: "customUrl",
-    customUrl: "/pl/dla-firm#formularz",
-    newTab: false,
-    page: null,
-    blog: null,
-    ...overrides,
-  });
-  const page = (blocks: object[]) =>
-    parsePage({ documentId: "b2b", title: "Dla firm", seo: null, blocks } as Parameters<typeof parsePage>[0], "pl", []).blocks;
-
-  it("maps scenarios, dropping empty benefits and unroutable links", () => {
-    const [block] = page([
-      {
-        __typename: "ComponentBlocksScenarios",
-        id: "1",
-        header: { eyebrow: null, title: "Dla kogo", lead: null },
-        section: null,
-        items: [
-          null,
-          {
-            label: "Flota",
-            title: " Auta dla floty ",
-            audience: " ",
-            text: "Tekst",
-            benefits: [{ text: "Faktura VAT" }, { text: " " }, null],
-            image: null,
-            cta: link({ customUrl: "javascript:alert(1)" }),
-          },
-        ],
-      },
-    ]);
-    assert.ok(block.type === "scenarios");
-    assert.deepEqual(block.items, [
-      { label: "Flota", title: "Auta dla floty", audience: null, text: "Tekst", benefits: ["Faktura VAT"], image: null, imageMobile: null, cta: null },
-    ]);
-  });
-
-  it("gives every comparison row one value per column", () => {
-    const [block] = page([
-      {
-        __typename: "ComponentBlocksComparison",
-        id: "2",
-        header: null,
-        footnote: " ",
-        section: null,
-        columns: [
-          { label: "MobiCars", highlighted: true },
-          { label: "Leasing", highlighted: null },
-        ],
-        rows: [
-          { criterion: "Bez wkładu", values: [{ kind: "yes", text: null }] },
-          { criterion: "Serwis", values: [{ kind: "partial", text: " w cenie " }, { kind: "no", text: null }, { kind: "yes", text: null }] },
-        ],
-      },
-    ]);
-    assert.ok(block.type === "comparison");
-    assert.deepEqual(block.columns, [
-      { label: "MobiCars", highlighted: true },
-      { label: "Leasing", highlighted: false },
-    ]);
-    assert.deepEqual(block.rows[0].values, [
-      { kind: "yes", text: null },
-      { kind: "text", text: null },
-    ]);
-    assert.deepEqual(block.rows[1].values, [
-      { kind: "partial", text: "w cenie" },
-      { kind: "no", text: null },
-    ]);
-    assert.equal(block.footnote, null);
-  });
-
-  it("reads car segment ids and an empty limit", () => {
-    const [block] = page([
-      {
-        __typename: "ComponentBlocksCars",
-        id: "3",
-        header: null,
-        section: null,
-        carsSource: "classes",
-        segmentIds: [3, "7", 4.5, 12],
-        carsCategory: null,
-        limit: 0,
-        carsLayout: "grid",
-        onlyPromotions: true,
-        carsCta: null,
-      },
-    ]);
-    assert.ok(block.type === "cars");
-    assert.deepEqual(block.segmentIds, [3, 12]);
-    assert.equal(block.limit, null);
-    assert.equal(block.onlyPromotions, true);
-    assert.equal(block.cta, null);
-  });
-
-  it("maps locations; a city filter without a city waits for the page's pickup point", () => {
-    const blocks = page([
-      { __typename: "ComponentBlocksLocations", id: "8", header: null, section: null, locationsFilter: "city", city: " Kraków ", showMap: null },
-      { __typename: "ComponentBlocksLocations", id: "9", header: null, section: null, locationsFilter: "airports", city: "Kraków", showMap: false },
-      { __typename: "ComponentBlocksLocations", id: "10", header: null, section: null, locationsFilter: "city", city: "  ", showMap: true },
-    ]);
-    assert.deepEqual(
-      blocks.map((block) => block.type === "locations" && [block.filter, block.city, block.showMap]),
-      [
-        ["city", "Kraków", true],
-        ["airports", null, false],
-        ["city", null, true],
-      ],
-    );
-  });
-
-  it("maps the lead form, logos and the closing band", () => {
-    const blocks = page([
-      {
-        __typename: "ComponentBlocksLeadForm",
-        id: "4",
-        header: null,
-        section: null,
-        formVariant: "business",
-        contactTitle: null,
-        contactText: null,
-        steps: [{ text: "Oddzwonimy w 24 h" }],
-        consent: [{ type: "paragraph", children: [{ type: "text", text: "Zgoda" }] }],
-        successTitle: " Dziękujemy ",
-        successText: null,
-      },
-      { __typename: "ComponentBlocksLogos", id: "5", header: null, section: null, logos: [{ name: "Firma", image: null }] },
-      { __typename: "ComponentBlocksCtaBand", id: "6", title: "Porozmawiajmy", text: null, primary: link({}), secondary: null, tone: "dark" },
-      { __typename: "ComponentBlocksCtaBand", id: "7", title: "Bez linku", text: null, primary: link({ customUrl: null }), secondary: null, tone: "tint" },
-    ]);
-    assert.deepEqual(
-      blocks.map((block) => block.type),
-      ["leadForm", "ctaBand"],
-    );
-    const [form, band] = blocks;
-    assert.ok(form.type === "leadForm" && band.type === "ctaBand");
-    assert.equal(form.successTitle, "Dziękujemy");
-    assert.deepEqual(form.steps, ["Oddzwonimy w 24 h"]);
-    assert.equal(form.consent.length, 1);
-    assert.deepEqual(band.primary, { label: "Zapytaj", href: "/pl/dla-firm#formularz", newTab: false });
-  });
-});
-
 describe("page pickup point", () => {
-  const raw = (pickupPoint?: number | null) => ({ documentId: "c", title: "Kraków", seo: null, blocks: [], ...(pickupPoint === undefined ? {} : { pickupPoint }) });
+  const raw = (pickupPoint?: number | null) => ({ documentId: "c", title: "Kraków", seo: null, sections: [], ...(pickupPoint === undefined ? {} : { pickupPoint }) });
 
   it("keeps the point of a city or local page and nothing for other pages", () => {
-    assert.equal(parsePage(raw(490), "pl", []).pickupId, 490);
-    assert.equal(parsePage(raw(null), "pl", []).pickupId, null);
-    assert.equal(parsePage(raw(0), "pl", []).pickupId, null);
-    assert.equal(parsePage(raw(), "pl", []).pickupId, null);
+    assert.equal(parsePage(raw(490) as never, "pl", []).pickupId, 490);
+    assert.equal(parsePage(raw(null) as never, "pl", []).pickupId, null);
+    assert.equal(parsePage(raw(0) as never, "pl", []).pickupId, null);
+    assert.equal(parsePage(raw() as never, "pl", []).pickupId, null);
   });
 });
 
@@ -898,190 +446,6 @@ describe("city and local page paths", () => {
   });
 });
 
-describe("design catalog fields", () => {
-  const media = (name: string) => ({ url: `/uploads/${name}`, mime: "image/jpeg", width: 800, height: 600, alternativeText: null });
-  const link = { label: "Więcej", linkType: "customUrl", customUrl: "https://example.com", newTab: false, page: null, blog: null };
-  const rating = (documentId: string, rate: number) => ({ documentId, name: "Ola", rate, text: "Super", date: "2026-01-01", source: "Google" });
-  const hero = (overrides: object) => ({
-    __typename: "ComponentBlocksHero",
-    id: "h",
-    badge: null,
-    title: "Kontakt",
-    subtitle: null,
-    ctas: [],
-    backgroundImage: null,
-    backgroundImageMobile: null,
-    backgroundVideo: null,
-    overlay: "none",
-    height: "compact",
-    reservationLayout: "default",
-    reservationDefaultTerm: "shortTerm",
-    highlights: [],
-    heroLayout: "page",
-    searchSide: "end",
-    focalPoint: "left",
-    breadcrumbLabel: " Kontakt ",
-    trust: null,
-    ...overrides,
-  });
-  const page = (blocks: object[], reviews: unknown[] = []) =>
-    parsePage(
-      { documentId: "p", title: "Strona", seo: null, blocks } as Parameters<typeof parsePage>[0],
-      "pl",
-      [],
-      {},
-      reviews as Parameters<typeof parsePage>[4],
-    ).blocks;
-
-  it("keeps a page hero without a photo and drops a cover hero without one", () => {
-    const [block, ...rest] = page([hero({}), hero({ id: "c", heroLayout: "cover" })]);
-    assert.equal(rest.length, 0);
-    assert.ok(block.type === "hero" && block.layout === "page");
-    assert.equal(block.image, null);
-    assert.equal(block.breadcrumbLabel, "Kontakt");
-    assert.equal(block.searchSide, "end");
-    assert.equal(block.focalPoint, "left");
-    // `default` in Strapi is the vertical form.
-    assert.deepEqual(block.reservation, { layout: "vertical", defaultTerm: "short" });
-  });
-
-  it("builds a trust bar with the rating of every review, figures once each and at most 4 claims", () => {
-    const trust = {
-      id: "t",
-      trustVariant: "inline",
-      showRating: true,
-      stats: [{ kind: "points" }, { kind: "points" }, { kind: "airports" }, null],
-      claims: ["a", "b", " ", "c", "d", "e"].map((text) => ({ icon: null, text })),
-    };
-    const raw = { documentId: "p", title: "Strona", seo: null, blocks: [hero({ heroLayout: "cover", backgroundImage: media("h.jpg"), trust })] };
-    assert.equal(pageNeedsReviews(raw as Parameters<typeof pageNeedsReviews>[0]), true);
-    const [block] = page(raw.blocks, [rating("a", 5), rating("b", 4)]);
-    assert.ok(block.type === "hero");
-    assert.deepEqual(block.trust, {
-      type: "trustBar",
-      id: "t",
-      variant: "inline",
-      rating: { average: 4.5, count: 2, source: "Google" },
-      stats: ["points", "airports"],
-      claims: ["a", "b", "c", "d"].map((text) => ({ icon: null, text })),
-    });
-    const empty = { __typename: "ComponentBlocksTrustBar", ...trust, showRating: false, stats: [], claims: [] };
-    assert.deepEqual(page([empty], [rating("a", 5)]), []);
-  });
-
-  it("reads section backdrops and falls back from a photo without an image", () => {
-    const content = (section: object) => ({ __typename: "ComponentBlocksContent", id: "1", header: { eyebrow: null, title: "T", lead: null }, body: [], align: null, ctas: [], section });
-    const base = { tone: null, spacing: null, width: null, anchor: null, backgroundImageMobile: null };
-    const [photo, missing] = page([
-      content({ ...base, background: "photo", backgroundImage: media("bg.jpg"), ornament: null }),
-      content({ ...base, background: "photo", backgroundImage: null, ornament: "road" }),
-    ]);
-    assert.ok(photo.type === "content" && missing.type === "content");
-    assert.equal(photo.section.background, "photo");
-    assert.equal(photo.section.backgroundImage?.url, "http://localhost:1337/uploads/bg.jpg");
-    assert.equal(photo.section.ornament, "none");
-    assert.equal(missing.section.background, "none");
-    assert.equal(missing.section.ornament, "road");
-  });
-
-  it("maps the cta band variants and needs an image for the photo card", () => {
-    const band = (overrides: object) => ({
-      __typename: "ComponentBlocksCtaBand",
-      id: "b",
-      title: "Aplikacja",
-      text: null,
-      primary: link,
-      secondary: null,
-      tone: "dark",
-      ctaVariant: "photo",
-      eyebrow: " Nowość ",
-      ctaImage: null,
-      ctaImageMobile: null,
-      media: null,
-      showStoreBadges: true,
-      ...overrides,
-    });
-    const [plain, photo] = page([band({}), band({ id: "p", ctaImage: media("card.jpg"), media: media("phones.png") })]);
-    assert.ok(plain.type === "ctaBand" && photo.type === "ctaBand");
-    assert.equal(plain.variant, "band");
-    assert.equal(plain.eyebrow, "Nowość");
-    assert.equal(plain.showStoreBadges, true);
-    assert.equal(photo.variant, "photo");
-    assert.equal(photo.media?.url, "http://localhost:1337/uploads/phones.png");
-  });
-
-  it("groups FAQ questions by category order, the rest last", () => {
-    const category = (documentId: string, name: string, order: number | null) => ({ documentId, name, slug: documentId, icon: null, order });
-    const [block] = page([
-      {
-        __typename: "ComponentBlocksFaq",
-        id: "f",
-        header: null,
-        structuredData: true,
-        groupByCategory: true,
-        faqCta: link,
-        section: null,
-        items: [
-          { question: "Q1", answer: "<p>A</p>", category: null },
-          { question: "Q2", answer: "<p>A</p>", category: category("pay", "Płatności", 2) },
-          { question: "Q3", answer: "<p>A</p>", category: category("doc", "Dokumenty", 1) },
-          { question: "Q4", answer: "<p>A</p>", category: category("pay", "Płatności", 2) },
-        ],
-      },
-    ]);
-    assert.ok(block.type === "faq");
-    assert.equal(block.groupByCategory, true);
-    assert.equal(block.cta?.href, "https://example.com");
-    assert.deepEqual(
-      faqGroups(block.items).map((group) => [group.category?.slug ?? null, group.items.map((item) => item.question)]),
-      [
-        ["doc", ["Q3"]],
-        ["pay", ["Q2", "Q4"]],
-        [null, ["Q1"]],
-      ],
-    );
-  });
-
-  it("maps the contact block and its departments", () => {
-    const [block] = page([
-      {
-        __typename: "ComponentBlocksContact",
-        id: "k",
-        header: { eyebrow: null, title: "Napisz do nas", lead: null },
-        showCompany: null,
-        contactImage: null,
-        formTopics: [{ text: " Rezerwacja " }, { text: " " }],
-        departments: [
-          { name: " Flota ", text: null, phone: "+48 881 328 328", email: "flota@mobicars.pl", hours: " pn–pt 8–16 ", link: null },
-          { name: " ", text: null, phone: null, email: null, hours: null, link: null },
-        ],
-        section: null,
-      },
-    ]);
-    assert.ok(block.type === "contact");
-    assert.equal(block.showCompany, true);
-    assert.deepEqual(block.topics, ["Rezerwacja"]);
-    assert.deepEqual(block.departments, [
-      { name: "Flota", text: null, phone: "+48 881 328 328", phoneHref: "tel:+48881328328", email: "flota@mobicars.pl", hours: "pn–pt 8–16", schedule: [], showInFooter: false, link: null },
-    ]);
-  });
-
-  it("reads the locations, reviews and media-text layouts", () => {
-    const blocks = page(
-      [
-        { __typename: "ComponentBlocksLocations", id: "l", header: null, locationsFilter: "all", locationsLayout: "compact", city: null, showMap: null, section: null },
-        { __typename: "ComponentBlocksReviews", id: "r", header: null, limit: 3, reviewSource: "all", reviewsLayout: "spotlight", showSummary: true, section: null },
-        { __typename: "ComponentBlocksMediaText", id: "m", header: null, body: null, image: media("car.png"), imagePosition: "start", imageStyle: "cutout", section: null, ctas: [] },
-      ],
-      [rating("a", 5)],
-    );
-    assert.deepEqual(
-      blocks.map((block) => (block.type === "locations" || block.type === "reviews" ? block.layout : block.type === "mediaText" ? block.imageStyle : null)),
-      ["compact", "spotlight", "cutout"],
-    );
-  });
-});
-
 describe("opening hours", () => {
   const rows: OpeningHours[] = [
     { days: ["mon", "tue", "wed", "thu", "fri"], opens: "07:00", closes: "20:00", closed: false },
@@ -1099,111 +463,6 @@ describe("opening hours", () => {
       [5, "07:00", "20:00"],
       [2, "08:00", "18:00"],
     ]);
-  });
-});
-
-describe("round 4 catalog fields", () => {
-  const link = { label: "Więcej", linkType: "customUrl", customUrl: "https://example.com", newTab: false, page: null, blog: null };
-  const media = { url: "/uploads/p.jpg", mime: "image/jpeg", width: 800, height: 500, alternativeText: null };
-  const promo = (overrides: object) => ({
-    title: " Rabat w aplikacji ",
-    text: null,
-    code: " MOBI10 ",
-    validFrom: null,
-    validUntil: null,
-    tone: "photo",
-    image: null,
-    imageMobile: null,
-    link,
-    termsLink: null,
-    ...overrides,
-  });
-  const raw = (blocks: object[]) => ({ documentId: "p", title: "Strona", seo: null, blocks }) as Parameters<typeof parsePage>[0];
-  // 2026-11-13 12:00 in Warsaw (UTC+1 in November).
-  const now = new Date("2026-11-13T11:00:00Z");
-  const promos = (items: object[]) => [{ __typename: "ComponentBlocksPromoCards", id: "pc", header: null, promos: items, section: null }];
-
-  it("keeps only promotion cards valid today, Polish time, and knows the next change", () => {
-    const page = parsePage(
-      raw(
-        promos([
-          promo({}),
-          promo({ title: "Ends today", validUntil: "2026-11-13", tone: "go" }),
-          promo({ title: "Ended", validUntil: "2026-11-12" }),
-          promo({ title: "Starts tomorrow", validFrom: "2026-11-14" }),
-        ]),
-      ),
-      "pl",
-      [],
-      {},
-      [],
-      now,
-    );
-    const [block] = page.blocks;
-    assert.ok(block.type === "promoCards");
-    assert.deepEqual(block.items.map((item) => [item.title, item.tone, item.code]), [
-      ["Rabat w aplikacji", "brand", "MOBI10"],
-      ["Ends today", "go", "MOBI10"],
-    ]);
-    // Midnight of 14 November in Warsaw: the last card ends, the next one starts.
-    assert.equal(page.changesAt, "2026-11-13T23:00:00.000Z");
-    assert.equal(parsePage(raw(promos([promo({ validUntil: "2026-11-12" })])), "pl", [], {}, [], now).blocks.length, 0);
-    assert.equal(parsePage(raw([]), "pl", [], {}, [], now).changesAt, null);
-  });
-
-  it("uses the summer offset for dates in summer", () => {
-    const page = parsePage(raw(promos([promo({ validFrom: "2027-07-01", image: media })])), "pl", [], {}, [], now);
-    assert.equal(page.changesAt, "2027-06-30T22:00:00.000Z");
-  });
-
-  it("reads the scenarios panel, the folded content and the cars tabs", () => {
-    const blocks = parsePage(
-      raw([
-        {
-          __typename: "ComponentBlocksScenarios",
-          id: "s",
-          header: null,
-          scenariosLayout: "panel",
-          items: [{ label: "Weekend", title: "Na weekend", audience: null, text: null, benefits: [], image: media, imageMobile: media, cta: null }],
-          section: null,
-        },
-        {
-          __typename: "ComponentBlocksContent",
-          id: "c",
-          header: { eyebrow: null, title: "SEO", lead: null },
-          body: "<p>A</p><p>B</p><p>C</p>",
-          align: null,
-          collapsible: true,
-          previewParagraphs: null,
-          collapsedLabel: " ",
-          ctas: [],
-          section: null,
-        },
-        {
-          __typename: "ComponentBlocksCars",
-          id: "k",
-          header: null,
-          carsSource: "all",
-          segmentIds: null,
-          carsCategory: null,
-          limit: null,
-          carsLayout: "tabs",
-          defaultCategory: "delivery",
-          onlyPromotions: null,
-          carsCta: null,
-          section: null,
-        },
-      ]),
-      "pl",
-      [],
-    ).blocks;
-    const [scenarios, content, cars] = blocks;
-    assert.ok(scenarios.type === "scenarios" && content.type === "content" && cars.type === "cars");
-    assert.equal(scenarios.layout, "panel");
-    assert.equal(scenarios.items[0].imageMobile?.url, "http://localhost:1337/uploads/p.jpg");
-    assert.deepEqual(content.collapsible, { previewParagraphs: 2, label: null });
-    assert.equal(cars.layout, "tabs");
-    assert.equal(cars.defaultCategory, "delivery");
   });
 });
 
@@ -1230,11 +489,11 @@ describe("reviews and image sections", () => {
     ...overrides,
   });
   const page = (sections: unknown[], latestReviews: Record<string, unknown[]> = {}) =>
-    parsePage({ documentId: "p", title: "Strona", seo: null, blocks: [], sections } as unknown as Parameters<typeof parsePage>[0], "pl", [], {}, [], new Date(), latestReviews as never).sections;
+    parsePage({ documentId: "p", title: "Strona", seo: null, sections } as unknown as Parameters<typeof parsePage>[0], "pl", [], {}, latestReviews as never).sections;
 
   it("reads the newest reviews for a latest section, up to its limit, without leading star emoji", () => {
     const raw = reviews({});
-    assert.deepEqual(latestReviewQueries({ documentId: "p", title: "Strona", seo: null, blocks: [], sections: [raw] } as never), [{ sectionId: "7", limit: 2 }]);
+    assert.deepEqual(latestReviewQueries({ documentId: "p", title: "Strona", seo: null, sections: [raw] } as never), [{ sectionId: "7", limit: 2 }]);
     const [section] = page([raw], { "7": [rating("a", "⭐️⭐️⭐️⭐️⭐️\nŚwietna obsługa"), null, rating("b", "Polecam", 4), rating("c", "Trzecia")] });
     assert.equal(section.type, "reviews");
     assert.deepEqual(section.type === "reviews" ? section.reviews : null, [
@@ -1266,21 +525,21 @@ describe("reviews and image sections", () => {
 describe("blog listing", () => {
   const blog = (blogSource: string) => ({ __typename: "ComponentSectionsBlog", id: "5", badge: null, blogTitle: "Blog", blogText: null, blogHeaderAlign: "center", blogSource, blogLayout: "featured", posts: [], ctas: [], background: null, blogWidth: "full", blogSpacing: "medium" });
   const post = (n: number) => ({ documentId: `b${n}`, title: `Wpis ${n}`, slug: `wpis-${n}`, excerpt: null, publishedAt: null, createdAt: null, category: null, coverImage: null });
-  const raw = (section: unknown) => ({ documentId: "p", title: "Strona", seo: null, blocks: [], sections: [section] }) as never;
+  const raw = (section: unknown) => ({ documentId: "p", title: "Strona", seo: null, sections: [section] }) as never;
 
   it("reads every post for an `all` section and keeps them all", () => {
-    assert.deepEqual(latestPostQueries(raw(blog("all"))), [{ blockId: "section-5", limit: 1000, categoryId: null }]);
+    assert.deepEqual(latestPostQueries(raw(blog("all"))), [{ blockId: "section-5", limit: 1000 }]);
     const posts = Array.from({ length: 30 }, (_, n) => post(n));
-    const [section] = parsePage(raw(blog("all")), "pl", [], { "section-5": posts as never }, [], new Date()).sections;
+    const [section] = parsePage(raw(blog("all")), "pl", [], { "section-5": posts as never }).sections;
     assert.deepEqual(section.type === "blog" ? [section.listing, section.posts.length] : null, [true, 30]);
-    const [latest] = parsePage(raw(blog("latest")), "pl", [], { "section-5": posts as never }, [], new Date()).sections;
+    const [latest] = parsePage(raw(blog("latest")), "pl", [], { "section-5": posts as never }).sections;
     assert.deepEqual(latest.type === "blog" ? [latest.listing, latest.posts.length] : null, [false, 4]);
   });
 });
 
 describe("divider section", () => {
   const page = (sections: unknown[]) =>
-    parsePage({ documentId: "p", title: "Strona", seo: null, blocks: [], sections } as unknown as Parameters<typeof parsePage>[0], "pl", [], {}, [], new Date()).sections;
+    parsePage({ documentId: "p", title: "Strona", seo: null, sections } as unknown as Parameters<typeof parsePage>[0], "pl", []).sections;
   const text = (id: string, tone: string, width = "full") => ({ __typename: "ComponentSectionsText", id, textTitle: "T", body: "<p>Tekst</p>", textAlign: "center", textWidth: "narrow", collapsible: false, previewParagraphs: 2, ctas: [], background: { tone }, textFrameWidth: width, textSpacing: "small" });
 
   it("reads the divider, a missing direction falling to the right", () => {
@@ -1305,17 +564,17 @@ describe("related blog posts", () => {
     excerpt: null,
     publishedAt: null,
     createdAt: "2026-10-01T10:00:00.000Z",
-    category: { documentId: "porady", name: "Porady", color: "blue" as const },
     coverImage: { url: "/uploads/a.jpg", mime: "image/jpeg", width: 800, height: 450, alternativeText: null },
   });
 
-  it("leaves out the post itself and shows at most three", () => {
+  it("leaves out the post itself and shows at most four", () => {
     assert.deepEqual(
-      relatedCards([card("a"), null, card("self"), card("b"), card("c"), card("d")], "self", "pl").map((post) => [post.id, post.href, post.categoryColor]),
+      relatedCards([card("a"), null, card("self"), card("b"), card("c"), card("d"), card("e")], "self", "pl").map((post) => [post.id, post.href]),
       [
-        ["a", "/pl/blog/wpis-a", "blue"],
-        ["b", "/pl/blog/wpis-b", "blue"],
-        ["c", "/pl/blog/wpis-c", "blue"],
+        ["a", "/pl/blog/wpis-a"],
+        ["b", "/pl/blog/wpis-b"],
+        ["c", "/pl/blog/wpis-c"],
+        ["d", "/pl/blog/wpis-d"],
       ],
     );
     assert.deepEqual(relatedCards([], "self", "pl"), []);

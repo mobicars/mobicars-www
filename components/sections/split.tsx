@@ -1,8 +1,8 @@
 import { getImageProps } from "next/image";
 
-import { CtaLink } from "@/components/blocks/cta-link";
-import { FaqList } from "@/components/blocks/faq-list";
-import { RichBlocksView } from "@/components/blocks/rich-blocks";
+import { CtaLink } from "@/components/sections/cta-link";
+import { FaqList } from "@/components/sections/faq-list";
+import { RichBlocksView } from "@/components/sections/rich-blocks";
 import type { Lang } from "@/i18n/config";
 import { isDarkBackground, type Media, type SplitSection } from "@/lib/strapi";
 

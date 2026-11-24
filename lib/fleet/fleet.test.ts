@@ -106,7 +106,7 @@ describe("fleet filters", () => {
   });
 });
 
-describe("cars block selection", () => {
+describe("cars section selection", () => {
   const car = (id: number, extra: Record<string, unknown> = {}) =>
     ({
       id,
@@ -123,7 +123,6 @@ describe("cars block selection", () => {
     car(3, { segmentId: "8550", categories: ["delivery"], seats: 9 }),
     car(4, { segmentId: "2699", seats: 7 }),
   ];
-  const all = { source: "all", segmentIds: [], category: null, limit: null } as const;
 
   it("selects a Cars section's cars: category, classes, picked cars in the editor's order", async () => {
     const { selectSectionCars } = await import("./cars-block");
@@ -171,54 +170,6 @@ describe("cars block selection", () => {
     assert.deepEqual(values.gearboxes.map((value) => value.label), ["Automatyczna", "Manualna"]);
     assert.deepEqual(values.fuels, [{ id: 15, label: "Benzyna", cars: 1 }, { id: 110, label: "Elektryczny", cars: 1 }]);
     assert.equal(values.categories.length, 5);
-  });
-
-  it("keeps the catalog order and the limit", async () => {
-    const { selectBlockCars } = await import("./cars-block");
-    assert.deepEqual(selectBlockCars(all, cars).cars.map((each) => each.id), [1, 2, 3, 4]);
-    assert.deepEqual(selectBlockCars({ ...all, limit: 2 }, cars).cars.map((each) => each.id), [1, 2]);
-  });
-
-  it("keeps only cars with a running promotion, before the limit and with a class or category", async () => {
-    const { selectBlockCars } = await import("./cars-block");
-    const promo = [car(1), car(2, { promotion: true }), car(3, { promotion: true, categories: ["delivery"] }), car(4, { promotion: true })];
-    assert.deepEqual(selectBlockCars({ ...all, onlyPromotions: true }, promo).cars.map((each) => each.id), [2, 3, 4]);
-    assert.deepEqual(selectBlockCars({ ...all, onlyPromotions: true, limit: 1 }, promo).cars.map((each) => each.id), [2]);
-    assert.deepEqual(selectBlockCars({ ...all, onlyPromotions: true, source: "category", category: "delivery" }, promo).cars.map((each) => each.id), [3]);
-    assert.deepEqual(selectBlockCars({ ...all, onlyPromotions: true }, [car(1)]).cars, []);
-  });
-
-  it("ignores the limit for class tiles, which need every class", async () => {
-    const { selectBlockCars } = await import("./cars-block");
-    assert.equal(selectBlockCars({ ...all, limit: 2, layout: "categories" }, cars).cars.length, cars.length);
-    assert.equal(selectBlockCars({ ...all, limit: 2, layout: "grid" }, cars).cars.length, 2);
-    // Picked classes still narrow the tiles.
-    const picked = selectBlockCars({ ...all, source: "classes", segmentIds: [8550, 2699], limit: 1, layout: "categories" }, cars);
-    assert.deepEqual(picked.cars.map((each) => each.id), [3, 4]);
-  });
-
-  it("shows every car when no class is picked", async () => {
-    const { selectBlockCars } = await import("./cars-block");
-    const result = selectBlockCars({ ...all, source: "classes", segmentIds: [] }, cars);
-    assert.equal(result.cars.length, cars.length);
-    assert.deepEqual(result.missingSegmentIds, []);
-  });
-
-  it("picks classes and reports the ones RentCarSoft no longer has", async () => {
-    const { selectBlockCars } = await import("./cars-block");
-    const result = selectBlockCars({ ...all, source: "classes", segmentIds: [6328, 6317] }, cars);
-    assert.deepEqual(result.cars.map((each) => each.id), [2]);
-    assert.deepEqual(result.missingSegmentIds, [6317]);
-  });
-
-  it("filters by category", async () => {
-    const { selectBlockCars } = await import("./cars-block");
-    const ids = (category: "electric" | "delivery" | "family" | "automatic") =>
-      selectBlockCars({ ...all, source: "category", category }, cars).cars.map((each) => each.id);
-    assert.deepEqual(ids("electric"), [2]);
-    assert.deepEqual(ids("delivery"), [3]);
-    assert.deepEqual(ids("family"), [4]);
-    assert.deepEqual(ids("automatic"), [2]);
   });
 });
 

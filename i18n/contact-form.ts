@@ -1,8 +1,8 @@
 import type { Lang } from "./config";
 
 /**
- * Interface texts of the contact block (`components/blocks/contact.tsx`): the
- * company card, the departments and the contact form. Headings, topics and
+ * Interface texts of the contact form (`components/sections/contact-form.tsx`): the
+ * company card, the departments and the form. Headings, topics and
  * departments come from the CMS, company data from `site.contact`.
  */
 export type ContactCopy = {

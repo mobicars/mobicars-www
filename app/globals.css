@@ -232,8 +232,13 @@ body {
     scroll-padding-bottom: 7rem;
   }
 
+  /* With the (sticky) preview banner the bar's room goes above the banner, which ends the page. */
   body:has([data-preview-banner]):has([data-mobile-summary-bar]) {
-    padding-bottom: 8.75rem;
+    padding-bottom: 0;
+  }
+
+  body:has([data-mobile-summary-bar]) [data-preview-banner] {
+    margin-top: 6rem;
   }
 }
 

@@ -1,4 +1,4 @@
-import { CtaLink } from "@/components/blocks/cta-link";
+import { CtaLink } from "@/components/sections/cta-link";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { listServicePoints } from "@/lib/rentcarsoft";

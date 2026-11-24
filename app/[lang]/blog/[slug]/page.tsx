@@ -1,30 +1,27 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
-import { ChevronRight, ChevronDown } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
-import { Blocks } from "@/components/blocks/blocks";
-import { cmsPageMetadata, type PageSource } from "@/components/blocks/cms-page";
-import { CATEGORY_TONE, PostCard } from "@/components/blocks/blog-posts";
+import { Blog } from "@/components/sections/blog";
+import { cmsPageMetadata, type PageSource } from "@/components/sections/cms-page";
+import { Sections } from "@/components/sections/sections";
 import { Breadcrumbs } from "@/components/ui/breadcrumbs";
-import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/section";
-import { Ornament, Pill, Rail, RailItem } from "@/components/ui/surface";
 import { intlLocales, isLang, type Lang } from "@/i18n/config";
 import { fill, getMessages } from "@/i18n/messages";
 import { plural } from "@/i18n/plural";
-import { reservationHref } from "@/i18n/routes";
-import { ctaSplit, prepareArticle } from "@/lib/blog/article";
+import { prepareArticle } from "@/lib/blog/article";
 import { absoluteUrl } from "@/lib/fleet/seo";
-import { blogHref, findBlogRoute, getBlogPost, listBlogRoutes, type Block, type BlogPost } from "@/lib/strapi";
+import { blogHref, findBlogRoute, getBlogPost, listBlogRoutes, type BlogPost } from "@/lib/strapi";
 
 type Props = PageProps<"/[lang]/blog/[slug]">;
 
 /**
  * One blog post at the old site's URL, `/pl/blog/{slug}`. The list itself,
  * `/pl/blog`, is a CMS page (`app/[lang]/[...slug]`). A post renders its
- * `blocks` like a CMS page, under a header with its category, date and cover.
+ * `sections` like a CMS page, under a header with its date and cover, and ends
+ * with the newest posts as a Blog section.
  * A post missing in `lang` is shown with the English text at its English slug,
  * `noindex` with an English canonical (`lib/strapi/modules/blog.ts`).
  */
@@ -84,10 +81,8 @@ export default async function BlogPostRoute({ params }: Props) {
   const { page, card } = found.post;
   const t = getMessages(lang);
   const date = card.publishedAt ? new Date(card.publishedAt) : null;
-  const article = prepareArticle(page.blocks);
-  const split = ctaSplit(article.blocks);
-  const [before, after] = split ? splitAt(article.blocks, split) : [article.blocks, []];
-  const related = found.post.related.slice(0, 3);
+  const article = prepareArticle(page.sections);
+  const related = found.post.related;
   return (
     // A post shown with the English text (missing in `lang`) says so to screen readers and translators.
     <main className="flex flex-1 flex-col">
@@ -104,7 +99,6 @@ export default async function BlogPostRoute({ params }: Props) {
               ]}
             />
             <p className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-dark">
-              {card.category ? <Pill tone={CATEGORY_TONE[card.categoryColor ?? "blue"]}>{card.category}</Pill> : null}
               {date ? (
                 <time dateTime={card.publishedAt ?? undefined}>
                   {new Intl.DateTimeFormat(intlLocales[lang], { day: "numeric", month: "long", year: "numeric" }).format(date)}
@@ -145,59 +139,30 @@ export default async function BlogPostRoute({ params }: Props) {
             ) : null}
           </Container>
         </header>
-        <Blocks blocks={before} lang={lang} />
-        {split ? <BookingCard lang={lang} /> : null}
-        {after.length > 0 ? <Blocks blocks={after} lang={lang} /> : null}
+        <Sections sections={article.sections} lang={lang} title={page.title} pickupId={null} titled />
       </article>
       {related.length > 0 ? (
-        <section aria-labelledby="related-title" className="border-t border-line bg-surface py-section-sm">
-          <Container className="flex flex-col gap-6">
-            <h2 id="related-title" className="text-title text-blue-dark">
-              {t.blocks.relatedPosts}
-            </h2>
-            <Rail label={t.blocks.relatedPosts}>
-              {related.map((post) => (
-                <RailItem key={post.id}>
-                  <PostCard post={post} lang={lang} readMore={t.blocks.readMore} />
-                </RailItem>
-              ))}
-            </Rail>
-          </Container>
-        </section>
+        // The Blog section's grid and cards, as on the CMS pages.
+        <Blog
+          lang={lang}
+          section={{
+            type: "blog",
+            id: "related",
+            badge: null,
+            title: t.blocks.relatedPosts,
+            text: null,
+            headerAlign: "start",
+            posts: related,
+            listing: false,
+            layout: "grid",
+            ctas: [],
+            background: { tone: "light" },
+            width: "full",
+            spacing: "medium",
+          }}
+        />
       ) : null}
     </main>
-  );
-}
-
-/** Splits the article's blocks at the booking card: the content block in two, its second half with no title of its own. */
-function splitAt(blocks: Block[], at: { block: number; part: number }): [Block[], Block[]] {
-  const target = blocks[at.block];
-  if (target.type !== "content") return [blocks, []];
-  const head = { ...target, body: target.body.slice(0, at.part), ctas: [] };
-  const tail = { ...target, id: `${target.id}-rest`, body: target.body.slice(at.part) };
-  return [
-    [...blocks.slice(0, at.block), head],
-    [...(tail.body.length > 0 ? [tail] : []), ...blocks.slice(at.block + 1)],
-  ];
-}
-
-/** Catalog C31: the way from an article to a booking, inside the text. */
-function BookingCard({ lang }: { lang: Lang }) {
-  const t = getMessages(lang).blocks;
-  return (
-    <aside className="px-gutter">
-      <div className="relative isolate mx-auto flex max-w-reading flex-col gap-4 overflow-hidden rounded-card bg-blue-dark p-6 text-white sm:flex-row sm:items-center sm:justify-between sm:p-8">
-        <Ornament kind="road" className="text-white/15" />
-        <div className="flex flex-col gap-1">
-          <p className="text-subtitle">{t.blogCtaTitle}</p>
-          <p className="text-sm text-pretty text-white/85">{t.blogCtaText}</p>
-        </div>
-        <Link href={reservationHref(lang, "short")} className={buttonClass("success", "md", "shrink-0")}>
-          {t.blogCtaButton}
-          <ChevronRight className="size-4" aria-hidden />
-        </Link>
-      </div>
-    </aside>
   );
 }
 

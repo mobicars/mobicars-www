@@ -1,6 +1,6 @@
 # City and airport pages (`city`) and local pickup pages (`local-page`), served at
 # the old site's URLs. See `modules/places.ts`. The legacy `components` zone
-# belongs to mobicars-pl and is not read here; `blocks` is the same zone as a page's.
+# belongs to mobicars-pl and is not read here; `sections` is the same zone as a page's.
 query CityRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: Int!, $pageSize: Int!) {
   cities_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
     nodes {
@@ -44,58 +44,63 @@ query City($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
         ...Media
       }
     }
-    blocks {
+    sections {
       __typename
-      ... on ComponentBlocksHero {
-        ...HeroBlock
+      ... on ComponentSectionsHero {
+        ...HeroSection
       }
-      ... on ComponentBlocksContent {
-        ...ContentBlock
+      ... on ComponentSectionsFeatures {
+        ...FeaturesSection
       }
-      ... on ComponentBlocksMediaText {
-        ...MediaTextBlock
+      ... on ComponentSectionsText {
+        ...TextSection
       }
-      ... on ComponentBlocksFeatures {
-        ...FeaturesBlock
+      ... on ComponentSectionsFaq {
+        ...FaqSection
       }
-      ... on ComponentBlocksFaq {
-        ...FaqBlock
+      ... on ComponentSectionsCards {
+        ...CardsSection
       }
-      ... on ComponentBlocksReviews {
-        ...ReviewsBlock
+      ... on ComponentSectionsBlog {
+        ...BlogSection
       }
-      ... on ComponentBlocksLocations {
-        ...LocationsBlock
+      ... on ComponentSectionsSocial {
+        ...SocialSection
       }
-      ... on ComponentBlocksBlogPosts {
-        ...BlogPostsBlock
+      ... on ComponentSectionsCars {
+        ...CarsSection
       }
-      ... on ComponentBlocksScenarios {
-        ...ScenariosBlock
+      ... on ComponentSectionsCarClasses {
+        ...CarClassesSection
       }
-      ... on ComponentBlocksComparison {
-        ...ComparisonBlock
+      ... on ComponentSectionsExtras {
+        ...ExtrasSection
       }
-      ... on ComponentBlocksCars {
-        ...CarsBlock
+      ... on ComponentSectionsPromotions {
+        ...PromotionsSection
       }
-      ... on ComponentBlocksLogos {
-        ...LogosBlock
+      ... on ComponentSectionsMap {
+        ...MapSection
       }
-      ... on ComponentBlocksLeadForm {
-        ...LeadFormBlock
+      ... on ComponentSectionsSplit {
+        ...SplitSection
       }
-      ... on ComponentBlocksCtaBand {
-        ...CtaBandBlock
+      ... on ComponentSectionsForm {
+        ...FormSection
       }
-      ... on ComponentBlocksTrustBar {
-        ...TrustBarBlock
+      ... on ComponentSectionsReviews {
+        ...ReviewsSection
       }
-      ... on ComponentBlocksContact {
-        ...ContactBlock
+      ... on ComponentSectionsImage {
+        ...ImageSection
       }
-      ... on ComponentBlocksPromoCards {
-        ...PromoCardsBlock
+      ... on ComponentSectionsDivider {
+        ...DividerSection
+      }
+      ... on ComponentSectionsVariantLabel {
+        id
+        title
+        note
       }
     }
   }
@@ -115,58 +120,63 @@ query LocalPage($documentId: ID!, $locale: I18NLocaleCode!, $status: Publication
         ...Media
       }
     }
-    blocks {
+    sections {
       __typename
-      ... on ComponentBlocksHero {
-        ...HeroBlock
+      ... on ComponentSectionsHero {
+        ...HeroSection
       }
-      ... on ComponentBlocksContent {
-        ...ContentBlock
+      ... on ComponentSectionsFeatures {
+        ...FeaturesSection
       }
-      ... on ComponentBlocksMediaText {
-        ...MediaTextBlock
+      ... on ComponentSectionsText {
+        ...TextSection
       }
-      ... on ComponentBlocksFeatures {
-        ...FeaturesBlock
+      ... on ComponentSectionsFaq {
+        ...FaqSection
       }
-      ... on ComponentBlocksFaq {
-        ...FaqBlock
+      ... on ComponentSectionsCards {
+        ...CardsSection
       }
-      ... on ComponentBlocksReviews {
-        ...ReviewsBlock
+      ... on ComponentSectionsBlog {
+        ...BlogSection
       }
-      ... on ComponentBlocksLocations {
-        ...LocationsBlock
+      ... on ComponentSectionsSocial {
+        ...SocialSection
       }
-      ... on ComponentBlocksBlogPosts {
-        ...BlogPostsBlock
+      ... on ComponentSectionsCars {
+        ...CarsSection
       }
-      ... on ComponentBlocksScenarios {
-        ...ScenariosBlock
+      ... on ComponentSectionsCarClasses {
+        ...CarClassesSection
       }
-      ... on ComponentBlocksComparison {
-        ...ComparisonBlock
+      ... on ComponentSectionsExtras {
+        ...ExtrasSection
       }
-      ... on ComponentBlocksCars {
-        ...CarsBlock
+      ... on ComponentSectionsPromotions {
+        ...PromotionsSection
       }
-      ... on ComponentBlocksLogos {
-        ...LogosBlock
+      ... on ComponentSectionsMap {
+        ...MapSection
       }
-      ... on ComponentBlocksLeadForm {
-        ...LeadFormBlock
+      ... on ComponentSectionsSplit {
+        ...SplitSection
       }
-      ... on ComponentBlocksCtaBand {
-        ...CtaBandBlock
+      ... on ComponentSectionsForm {
+        ...FormSection
       }
-      ... on ComponentBlocksTrustBar {
-        ...TrustBarBlock
+      ... on ComponentSectionsReviews {
+        ...ReviewsSection
       }
-      ... on ComponentBlocksContact {
-        ...ContactBlock
+      ... on ComponentSectionsImage {
+        ...ImageSection
       }
-      ... on ComponentBlocksPromoCards {
-        ...PromoCardsBlock
+      ... on ComponentSectionsDivider {
+        ...DividerSection
+      }
+      ... on ComponentSectionsVariantLabel {
+        id
+        title
+        note
       }
     }
   }

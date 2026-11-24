@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { connection } from "next/server";
 
-import { CtaLink } from "@/components/blocks/cta-link";
+import { CtaLink } from "@/components/sections/cta-link";
 import { FleetCard } from "@/components/fleet/fleet-card";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";

@@ -4,7 +4,7 @@ import { Search, X } from "lucide-react";
 import { useDeferredValue, useState, type ReactNode } from "react";
 import { Button, Input, Label, SearchField } from "react-aria-components";
 
-import { FaqList } from "@/components/blocks/faq-list";
+import { FaqList } from "@/components/sections/faq-list";
 
 type Group = {
   anchor: string;

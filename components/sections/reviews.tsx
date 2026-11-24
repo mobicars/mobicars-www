@@ -1,7 +1,7 @@
 import { Star } from "lucide-react";
 
-import { CtaLink } from "@/components/blocks/cta-link";
-import { ReviewText } from "@/components/blocks/reviews";
+import { CtaLink } from "@/components/sections/cta-link";
+import { ReviewText } from "@/components/sections/review-text";
 import { IconSymbols, UseIcon } from "@/components/ui/icon-symbols";
 import { intlLocales, type Lang } from "@/i18n/config";
 import { fill } from "@/i18n/fill";
