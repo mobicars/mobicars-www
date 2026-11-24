@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { connection } from "next/server";
 
 import { CtaLink } from "@/components/blocks/cta-link";
@@ -67,24 +68,14 @@ export async function Cars({ section, lang, pickupId }: { section: CarsSection; 
     );
   } else if (section.layout === "carousel") {
     list = (
-      <Carousel
+      <CarsCarousel
         label={label}
-        count={cars.length + (more ? 1 : 0)}
         tone={isDarkBackground(section.background) ? "dark" : "light"}
-        align="center"
-        spotlight
-        bleed
-        className="snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <ul className="flex gap-6 pb-2">
-          {cars.map((car) => (
-            <li key={car.id} className={SLIDE}>
-              {card(car, slideSizes)}
-            </li>
-          ))}
-          {more ? <li className={SLIDE}>{more}</li> : null}
-        </ul>
-      </Carousel>
+        slides={[
+          ...cars.map((car) => ({ key: String(car.id), node: card(car, slideSizes) })),
+          ...(more ? [{ key: "more", node: more }] : []),
+        ]}
+      />
     );
   } else {
     list = (
@@ -109,6 +100,42 @@ export async function Cars({ section, lang, pickupId }: { section: CarsSection; 
         </div>
       ) : null}
     </SectionShell>
+  );
+}
+
+/**
+ * The Cars section's carousel: centred, the slides beside the one in view
+ * dimmed (`spotlight`) and visible in the page margins (`bleed`). Also the car
+ * page's "Podobne samochody", so both rows move and look the same. Put it in a
+ * box that clips at the screen edge (`overflow-clip`, as `SectionShell`).
+ */
+export function CarsCarousel({
+  label,
+  slides,
+  tone = "light",
+}: {
+  label: string;
+  slides: { key: string; node: ReactNode }[];
+  tone?: "light" | "dark";
+}) {
+  return (
+    <Carousel
+      label={label}
+      count={slides.length}
+      tone={tone}
+      align="center"
+      spotlight
+      bleed
+      className="snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      <ul className="flex gap-6 pb-2">
+        {slides.map((slide) => (
+          <li key={slide.key} className={SLIDE}>
+            {slide.node}
+          </li>
+        ))}
+      </ul>
+    </Carousel>
   );
 }
 

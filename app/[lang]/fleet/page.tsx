@@ -10,9 +10,10 @@ import { getPage, listPageRoutes, pageHref, type Page, type PageRoute } from "@/
 
 /**
  * The fleet: `/pl/flota`, `/en/fleet`, `/de/flotte`, `/uk/avtopark`. The page
- * is the CMS page at that path in this language (hero, a `cars` block with the
- * `catalog` layout, content, FAQ…). A language whose CMS has no such page, or
- * a page with no blocks, answers 404. See `lib/fleet/README.md`.
+ * is the CMS page at that path in this language (hero, the Cars section with the
+ * `full` layout, or the old `cars` block with `catalog`, content, FAQ…). A
+ * language whose CMS has no such page, or a page with neither sections nor
+ * blocks, answers 404. See `lib/fleet/README.md`.
  */
 /**
  * Allowed to block, like the CMS pages and the car page: the CMS page is read
@@ -56,9 +57,9 @@ export default async function FleetPage({ params }: PageProps<"/[lang]/fleet">) 
   );
 }
 
-/** The CMS page at this language's fleet path (`servedByApp`: this route serves it), when it has blocks. */
+/** The CMS page at this language's fleet path (`servedByApp`: this route serves it), when it has sections or blocks. */
 async function fleetCmsPage(lang: Lang): Promise<{ route: PageRoute; page: Page } | null> {
   const route = (await listPageRoutes(lang)).find((each) => pageHref(lang, each.segments) === fleetHref(lang));
   const page = route ? await getPage(lang, route.documentId) : null;
-  return route && page && page.blocks.length > 0 ? { route, page } : null;
+  return route && page && (page.sections.length > 0 || page.blocks.length > 0) ? { route, page } : null;
 }

@@ -10,7 +10,8 @@ import { CarGallery } from "@/components/fleet/car-gallery";
 import { FaqList } from "@/components/blocks/faq-list";
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
 import { PriceTable } from "@/components/fleet/price-table";
-import { Rail, RailItem } from "@/components/ui/surface";
+import { CarsCarousel } from "@/components/sections/cars";
+import { cardSizes } from "@/components/sections/image-sizes";
 import { BookCarButton } from "@/components/fleet/book-car-button";
 import { StickyBookBar } from "@/components/fleet/sticky-book-bar";
 import { buttonClass } from "@/components/ui/button";
@@ -272,7 +273,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
       </Container>
 
       {similar.length > 0 ? (
-        <section aria-labelledby="similar-title" className="border-t border-line bg-canvas py-section-sm">
+        <section aria-labelledby="similar-title" className="overflow-clip border-t border-line bg-canvas py-section-sm">
           <Container className="flex flex-col gap-6">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <h2 id="similar-title" className="text-title text-blue-dark">
@@ -286,13 +287,14 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
                 {t.backToFleet}
               </Link>
             </div>
-            <Rail label={t.similarTitle} columns={4}>
-              {similar.map((other) => (
-                <RailItem key={other.id}>
-                  <FleetCard car={other} lang={lang} t={t} headingLevel="h3" sizes="(min-width: 1280px) 300px, (min-width: 1024px) 23vw, (min-width: 640px) 45vw, 78vw" />
-                </RailItem>
-              ))}
-            </Rail>
+            {/* The Cars section's carousel (`sections.cars`), so this row moves and looks as it does on the CMS pages. */}
+            <CarsCarousel
+              label={t.similarTitle}
+              slides={similar.map((other) => ({
+                key: String(other.id),
+                node: <FleetCard car={other} lang={lang} t={t} headingLevel="h3" sizes={cardSizes("full", { desktop: 3, slide: true })} />,
+              }))}
+            />
           </Container>
         </section>
       ) : null}
