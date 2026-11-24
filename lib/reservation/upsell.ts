@@ -1,7 +1,7 @@
 import type { OfferCard } from "./offers";
 
 /**
- * "Potrzebujesz większego komfortu?" on the extras step: a few cars from
+ * "Potrzebujesz większego komfortu?" at the bottom of the protection and extras steps: a few cars from
  * higher classes than the chosen one. Every rule works on fields the API
  * sends, so a new class or car needs no code change:
  *

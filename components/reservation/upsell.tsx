@@ -20,7 +20,7 @@ import type { UpsellOption } from "@/lib/reservation/upsell";
 
 /**
  * "Potrzebujesz większego komfortu?": dearer classes next to the chosen car
- * (rules in `lib/reservation/upsell.ts`), at the top of the protection step.
+ * (rules in `lib/reservation/upsell.ts`), at the bottom of the protection and extras steps.
  * Picking one asks first; then the car changes and the step starts over with
  * the new class's packages.
  */

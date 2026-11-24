@@ -629,8 +629,8 @@
     "next": "Next: your details",
     "groups": {
       "kids": "For children",
-      "multimedia": "Multimedia and app",
-      "other": "Other"
+      "multimedia": "On the road and leisure",
+      "other": "Comfort"
     },
     "borderTitle": "Travelling abroad",
     "borderAsk": "Planning to travel abroad?",
@@ -1069,8 +1069,8 @@
       "protection": "Protection",
       "border": "Travel abroad",
       "kids": "For children",
-      "multimedia": "Multimedia and app",
-      "other": "Other"
+      "multimedia": "On the road and leisure",
+      "other": "Comfort"
     },
     "howTo": "You add it while booking, at the “Extras” step. The exact price depends on the car and the dates.",
     "bookTitle": "Book a car",

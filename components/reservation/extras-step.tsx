@@ -69,7 +69,7 @@ export function ExtrasStep({
   trip: TripSummary;
   /** Choices from the URL that this car (segment) or these dates no longer offer. */
   droppedCount?: number;
-  /** Dearer classes to suggest, see `lib/reservation/upsell.ts`. At the bottom, as on the protection step's top. */
+  /** Dearer classes to suggest, see `lib/reservation/upsell.ts`. At the bottom, under the longer rental. */
   upsell?: UpsellOption[];
   /** "Weź 4 dni zamiast 3", when the next price band is close (`extensionHint`). At the bottom, over the upsell. */
   extension?: Promise<ExtensionHint | null> | null;
@@ -231,7 +231,7 @@ export function ExtrasStep({
           </p>
         ) : null}
 
-        {/* Once more under all the extras, in the protection step's order: a longer rental, then a bigger car. */}
+        {/* Under all the extras: a longer rental, then a bigger car. */}
         {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} /> : null}
         <Upsell options={upsell} />
       </section>

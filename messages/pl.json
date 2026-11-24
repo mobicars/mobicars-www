@@ -629,8 +629,8 @@
     "next": "Dalej: Twoje dane",
     "groups": {
       "kids": "Dla dzieci",
-      "multimedia": "Multimedia i aplikacja",
-      "other": "Pozostałe"
+      "multimedia": "W trasie i wypoczynek",
+      "other": "Wygoda"
     },
     "borderTitle": "Wyjazd za granicę",
     "borderAsk": "Planujesz wyjazd za granicę?",
@@ -1069,8 +1069,8 @@
       "protection": "Ochrona",
       "border": "Wyjazd za granicę",
       "kids": "Dla dzieci",
-      "multimedia": "Multimedia i aplikacja",
-      "other": "Pozostałe"
+      "multimedia": "W trasie i wypoczynek",
+      "other": "Wygoda"
     },
     "howTo": "Dodasz go podczas rezerwacji, w kroku „Dodatki”. Dokładna cena zależy od auta i terminu.",
     "bookTitle": "Zarezerwuj auto",

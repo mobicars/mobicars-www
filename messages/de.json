@@ -629,8 +629,8 @@
     "next": "Weiter: Ihre Daten",
     "groups": {
       "kids": "Für Kinder",
-      "multimedia": "Multimedia und App",
-      "other": "Sonstiges"
+      "multimedia": "Unterwegs und Freizeit",
+      "other": "Komfort"
     },
     "borderTitle": "Fahrten ins Ausland",
     "borderAsk": "Planen Sie eine Fahrt ins Ausland?",
@@ -1069,8 +1069,8 @@
       "protection": "Schutz",
       "border": "Fahrten ins Ausland",
       "kids": "Für Kinder",
-      "multimedia": "Multimedia und App",
-      "other": "Sonstiges"
+      "multimedia": "Unterwegs und Freizeit",
+      "other": "Komfort"
     },
     "howTo": "Sie fügen es bei der Buchung im Schritt „Extras“ hinzu. Der genaue Preis hängt vom Fahrzeug und vom Zeitraum ab.",
     "bookTitle": "Auto buchen",

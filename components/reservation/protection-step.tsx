@@ -144,9 +144,8 @@ export function ProtectionStep({
             {t.dropped}
           </p>
         ) : null}
-        {/* A longer rental, then a bigger car, come first, above the packages: the step every customer sees whole, on phones too. */}
+        {/* A longer rental comes first, above the packages: the step every customer sees whole, on phones too. */}
         {extension ? <ExtendHintSlot hint={extension} currentDays={car.days} className="mb-6" /> : null}
-        <Upsell options={upsell} className="mb-6" />
         {options.length === 0 ? (
           <p className="rounded-card bg-white p-6 text-sm text-blue-dark ring-1 ring-line">
             {t.none}
@@ -184,6 +183,8 @@ export function ProtectionStep({
             </div>
           </>
         )}
+        {/* A bigger car last, under the packages. */}
+        <Upsell options={upsell} className="mt-8" />
       </section>
       <SummaryPanel
         trip={trip}

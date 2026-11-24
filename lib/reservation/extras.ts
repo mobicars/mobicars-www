@@ -88,7 +88,7 @@ export function toExtrasView(addons: Extra[], accessories: Extra[], unit: PriceU
   };
 }
 
-/** Kids and multimedia by type; any other type, known or new, goes to "Pozostałe". */
+/** Kids and multimedia by type; any other type, known or new, goes to "Wygoda". */
 function groupOf(type: number | null): ExtraGroupId {
   return GROUPS.find((group) => group.type === type)?.id ?? "other";
 }
