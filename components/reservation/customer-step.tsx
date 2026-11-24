@@ -3,7 +3,7 @@
 import { startTransition, useActionState, useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Banknote, Car, MailCheck, MapPin, Package, ShieldCheck, Wallet } from "lucide-react";
+import { ChevronLeft, Banknote, Car, MapPin, Package, ShieldCheck } from "lucide-react";
 import { FieldError, Label, TextArea, TextField as AriaTextField } from "react-aria-components";
 import { toast } from "sonner";
 
@@ -511,16 +511,7 @@ export function CustomerStep({
             ) : null}
           </fieldset>
 
-          <div className="flex flex-col gap-3 border-t border-muted-light pt-5">
-            {/* Moved here from above the car list (client feedback): what happens after sending, as a benefit. */}
-            <p className="flex items-start gap-2 text-xs text-muted-dark">
-              <MailCheck className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-              {t.afterSubmit.confirm}
-            </p>
-            <p className="flex items-start gap-2 text-xs text-muted-dark">
-              <Wallet className="size-4 shrink-0 text-blue-medium" strokeWidth={1.75} aria-hidden />
-              {t.afterSubmit.payment}
-            </p>
+          <div className="flex flex-col gap-3 lg:border-t lg:border-muted-light lg:pt-5">
             {state ? (
               <div role="alert" className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">
                 {t.submitErrors[state.error]}

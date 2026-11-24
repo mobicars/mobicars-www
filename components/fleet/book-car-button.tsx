@@ -9,6 +9,7 @@ import { WidgetModal } from "@/components/reservation/dialog-parts";
 import { DialogLoading } from "@/components/reservation/lazy-dialog";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
+import type { ReservationTerm } from "@/lib/reservation/search";
 
 const loadDialog = () => import("@/components/fleet/book-car-dialog");
 const BookCarDialog = dynamic(() => loadDialog().then((module) => module.BookCarDialog), {
@@ -17,21 +18,24 @@ const BookCarDialog = dynamic(() => loadDialog().then((module) => module.BookCar
 });
 
 /**
- * The car card's "Rezerwuj": opens the short-term search for this car in a
- * dialog; its "Rezerwuj" goes straight to the booking's next step with the car
- * chosen. The dialog's module and the pickup points load together on the first
+ * "Rezerwuj" on the car cards and the car page: opens the search for this car
+ * in a dialog (short-term on the cards); its "Rezerwuj" goes straight to the
+ * booking's next step with the car chosen. The dialog's module and the pickup points load together on the first
  * hover, touch or focus of the button, so the cards cost the page nothing and
  * the dialog opens with its form.
  */
 export function BookCarButton({
   offerId,
   name,
+  term = "short",
   title,
   lead,
   className,
 }: {
   offerId: number;
   name: string;
+  /** The search's only term; `null` offers both (the car page of a car rented both ways). */
+  term?: ReservationTerm | null;
   /** The dialog's heading and line under the name (`fleet` texts, which the browser does not get on every page). */
   title: string;
   lead: string;
@@ -58,7 +62,7 @@ export function BookCarButton({
         onOpenChange={setOpen}
         className="max-h-[calc(100dvh-1rem)] w-full max-sm:mt-auto max-sm:mb-0 max-sm:rounded-t-card max-sm:pb-[env(safe-area-inset-bottom)] sm:max-h-[calc(100dvh-3rem)] sm:w-[min(30rem,calc(100%-2rem))] sm:rounded-card sm:shadow-float"
       >
-        {open ? <BookCarDialog offerId={offerId} name={name} title={title} lead={lead} /> : null}
+        {open ? <BookCarDialog offerId={offerId} name={name} term={term} title={title} lead={lead} /> : null}
       </WidgetModal>
     </>
   );

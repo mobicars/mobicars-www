@@ -35,7 +35,7 @@ What the undated catalog carries (checked on the live API on 12 November 2026, 3
 | `cennik[segmentId].monthly_price` | Not shown. It is not a bookable price (1500 against a quoted 1900 for the Aygo on 13 November 2026); the monthly "from" comes from the calculator, see below. |
 | `cennik[segmentId].kaucja`, `deposit` | Shown only when above 0 (0 for every car on that date), like the reservation cards. |
 | `minPrice`, `maxPrice` | Fallback for "od X zł / doba" when there are no bands. |
-| `details` | Free-text equipment lines. Polish only, so only the Polish page lists them. |
+| `details` | Free-text equipment lines, listed under the equipment tiles (as on the old site, 24 November 2026). Polish only, shown as they are on every language's page. |
 | `gallery[].urls.original` | The large gallery photo (`OfferImage.largeWebp`). The 512 px size is the thumbnail and the card photo. |
 
 `GET /offer/{id}` has no `segmentId`; its `cennik` has exactly one segment key, which the bridge takes as the offer's own.
@@ -46,11 +46,11 @@ What the undated catalog carries (checked on the live API on 12 November 2026, 3
 
 **Monthly price** (`price-from.ts`). The client's rule: "od" is the lowest price a customer can actually book. `monthlyPricesFrom(lang)` asks the long-term calculator once per rental length the site offers (`longTermMonthCounts`, 9 lists) with the smallest kilometre package (`kilometerLimits`, 1000 km) and keeps each car's lowest monthly price with its length; `FleetCard.monthlyFrom` and `monthlyTerms` come from it. The car page shows the monthly "od" without its terms (decided 19 November 2026). A car with no quote for any length (the Yaris on 13 November 2026) shows no monthly price. The result is cached like the catalog (`rcs:catalog`, `hours`) in `lib/fleet`, so the bridge's 2-minute quote cache stays as it is. With the cache off (local, preview) every page render makes these 9 requests: the list page takes 10–15 s locally.
 
-**Which cars.** The list is the daily catalog in the API's order ("Polecane"), including the two cars with `rentable: false` (the old site listed them too). Long-term-only offers (`1224 Skoda Octavia OLD`, `1231`, `5000`) are not on the list, but their pages render if linked: the page works for any id the API knows. The booking widget on such a page is locked to its only term.
+**Which cars.** The list is the daily catalog in the API's order ("Polecane"), including the two cars with `rentable: false` (the old site listed them too). Long-term-only offers (`1224 Skoda Octavia OLD`, `1231`, `5000`) are not on the list, but their pages render if linked: the page works for any id the API knows. The booking dialog on such a page is locked to its only term.
 
 **Translations.** Select values (gearbox, fuel, body) and `segment` come translated by the API. Key names do not, so spec labels are ours (`messages/*.json` → `fleet.specs`, `fleet.features`). Text keys fall back to Polish silently (`lib/rentcarsoft/docs/quirks.md`); on a non-Polish page `getFleetCar` also reads keys 10, 79 and 80 in Polish and drops any text equal to it. The English page then falls back to the legacy English description (key 133). German and Ukrainian pages without a translation show no description and use the generated meta title and description.
 
-**Equipment.** Select keys with a "No" / "None" value (ids in `NO_VALUES`) are left out; "Tak" shows the feature name alone, other values follow it ("Kamera cofania: 360 °").
+**Equipment.** First five select keys as tiles, the old site's keys with its values, "Nie" included: reversing camera, parking sensors, air conditioning, Android Auto / Apple CarPlay, cruise control (`FEATURE_KEYS`; a shorter last row stretches). Then the `details` lines, in two columns filled top to bottom (24 November 2026).
 
 **Description HTML.** Offer key 10 is HTML typed in RentCarSoft. `sanitize.ts` keeps text formatting only (an allowlist of tags, no attributes except a safe `href`), strips scripts and handlers, and moves headings one level down: the texts start with their own `<h1>`, and the page already has one. Tested in `fleet.test.ts`.
 
@@ -91,7 +91,7 @@ The type lives in `lib/fleet/cars-block.ts` until the Strapi bridge exports it (
 
 ## Car page
 
-In order: breadcrumbs, segment and `h1` ("Wynajem Toyota Yaris"), gallery, key facts (seats, gearbox, fuel, doors, luggage), the class note; beside them a sticky box with the "od" price and the booking widget; then the price table, long-term rental, technical data, equipment, description, and "Podobne samochody".
+In order (24 November 2026): breadcrumbs, segment and `h1` ("Wynajem auta Toyota Yaris"), gallery, section links; beside them a sticky box styled as the booking's summary panel, with the "od" price, what is included and "Rezerwuj", which opens the search in a dialog as on the car cards (`BookCarButton`; the phone bar has the same button); then technical data (fuel, gearbox and seats as tiles over the table, in `SPEC_KEYS` order), equipment, the car's extras, the price table, long-term rental (only with a monthly price), rental terms, description, and "Podobne samochody". The section links follow the same order and leave out the terms and the description.
 
 - **Phone bar.** Below `lg` a bar at the bottom shows the "od" price and "Sprawdź dostępność", a link down to the booking box (`#book`). It moves out of the way while the booking box is on screen (`sticky-book-bar.tsx`, an `IntersectionObserver`) and uses the booking flow's `data-mobile-summary-bar`, so `globals.css` keeps room for it at the page end and above the preview banner.
 - **Booking.** The box holds the homepage widget (`ReservationPicker`) with `offerId`: "Szukaj" opens the reservation page with this car chosen and the next step open (`offer=<id>&step=protection`), for daily and monthly rental alike. If the car is not in the list for the chosen place and dates, the reservation page falls back to the car list with "Wybrane auto nie jest dostępne…" (`lib/reservation/README.md`). The widget starts on the visitor's last search, so a car with both terms can open on the monthly tab.

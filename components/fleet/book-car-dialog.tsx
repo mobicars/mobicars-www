@@ -10,13 +10,26 @@ import { ReservationPicker } from "@/components/reservation/picker";
 import { useLang } from "@/i18n/lang-context";
 import { useMessages } from "@/i18n/messages-context";
 import type { PickupPlace } from "@/lib/reservation/places";
+import type { ReservationTerm } from "@/lib/reservation/search";
 
 /**
- * The dialog of the car card's "Rezerwuj" (`BookCarButton`): the car's name
- * and the short-term search, locked to days, for this car (`offerId`), so its
- * "Rezerwuj" opens the booking on the protection step.
+ * The dialog of "Rezerwuj" (`BookCarButton`): the car's name and the search
+ * for this car (`offerId`), locked to `term` when it is set, so its
+ * "Rezerwuj" opens the booking on the car's next step.
  */
-export function BookCarDialog({ offerId, name, title, lead }: { offerId: number; name: string; title: string; lead: string }) {
+export function BookCarDialog({
+  offerId,
+  name,
+  term,
+  title,
+  lead,
+}: {
+  offerId: number;
+  name: string;
+  term: ReservationTerm | null;
+  title: string;
+  lead: string;
+}) {
   const titleId = useId();
   const lang = useLang();
   const messages = useMessages();
@@ -44,7 +57,7 @@ export function BookCarDialog({ offerId, name, title, lead }: { offerId: number;
         <p className="text-center text-sm font-semibold text-blue-medium">{name}</p>
         <p className="mt-1 mb-5 text-center text-sm text-muted-dark">{lead}</p>
         {places ? (
-          <ReservationPicker lang={lang} places={places} term="short" offerId={offerId} />
+          <ReservationPicker lang={lang} places={places} term={term ?? undefined} offerId={offerId} />
         ) : (
           <div className="flex min-h-40 items-center justify-center">
             <LoaderCircle className="size-6 animate-spin text-blue-medium motion-reduce:animate-none" aria-hidden />

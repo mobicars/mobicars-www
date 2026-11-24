@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Check, DoorOpen, Fuel, Info, Luggage, Settings2, Users, type LucideIcon } from "lucide-react";
+import { AirVent, Camera, ChevronLeft, ChevronRight, Check, CircleParking, Fuel, Gauge, Info, MonitorSmartphone, Settings2, Users, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
@@ -11,21 +11,20 @@ import { FaqList } from "@/components/blocks/faq-list";
 import { FleetCard, type FleetTexts } from "@/components/fleet/fleet-card";
 import { PriceTable } from "@/components/fleet/price-table";
 import { Rail, RailItem } from "@/components/ui/surface";
+import { BookCarButton } from "@/components/fleet/book-car-button";
 import { StickyBookBar } from "@/components/fleet/sticky-book-bar";
+import { buttonClass } from "@/components/ui/button";
 import { Container } from "@/components/ui/section";
-import { ReservationPicker } from "@/components/reservation/picker";
 import { isLang, type Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
 import { extrasHref, fleetHref, reservationHref } from "@/i18n/routes";
 import { listCatalogExtras, segmentExtras } from "@/lib/extras/catalog";
-import { getFleetCar, listFleetCars, similarCars, type FleetCar, type SpecKey } from "@/lib/fleet/cars";
+import { getFleetCar, listFleetCars, similarCars, type FeatureKey, type FleetCar, type SpecKey } from "@/lib/fleet/cars";
 import { fill } from "@/i18n/fill";
 import { countLabel, formatPrice } from "@/lib/fleet/format";
 import { absoluteUrl, alternates, jsonLd } from "@/lib/fleet/seo";
 import { offerIdFromSlug } from "@/lib/fleet/slug";
-import { listServicePoints } from "@/lib/rentcarsoft";
 import { getChrome } from "@/lib/strapi";
-import { toPickupPlace } from "@/lib/reservation/places";
 
 type Props = PageProps<"/[lang]/fleet/[slug]">;
 
@@ -122,9 +121,8 @@ export default async function CarPage({ params }: Props) {
 }
 
 async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
-  const [cars, points, catalog] = await Promise.all([
+  const [cars, catalog] = await Promise.all([
     listFleetCars(lang),
-    listServicePoints({ lang }),
     // Without the add-ons the car page still stands: the section is left out.
     listCatalogExtras(lang).catch((error: unknown) => {
       console.error(`[fleet] car ${car.id} add-ons unavailable, the section is left out`, error);
@@ -136,14 +134,13 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
   const t = messages.fleet;
   // `GET /offer/{id}` has no `segmentId`; the car's card in the cached catalog list has it.
   const extras = segmentExtras(catalog, car.segmentId ?? cars.find((each) => each.id === car.id)?.segmentId ?? null);
-  const places = points.map(toPickupPlace);
   const similar = similarCars(car, cars);
   // A car rented only by the day or only by the month books on that term alone.
   const term = car.shortTerm && !car.longTerm ? "short" : car.longTerm && !car.shortTerm ? "long" : undefined;
 
   return (
     <>
-      <Container className="grid gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_25rem] lg:gap-10 lg:py-10">
+      <Container className="grid gap-6 py-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:py-10">
         <div className="flex min-w-0 flex-col gap-6">
           <Breadcrumbs
             label={t.breadcrumbLabel}
@@ -156,48 +153,76 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
           <header className="flex flex-col gap-2">
             <p className="text-eyebrow text-green-dark uppercase">{car.segment}</p>
             <h1 className="text-title text-balance text-blue-dark">{fill(t.carTitle, { name: car.name })}</h1>
-            <p className="text-sm text-muted-dark">
-              {car.name} {t.orSimilar}
-            </p>
           </header>
           <CarGallery images={car.gallery} name={car.name} t={t} />
-          <KeyFacts car={car} lang={lang} t={t} />
           <SectionLinks
             label={t.sectionsLabel}
             links={[
-              car.priceBands.length > 0 ? { href: "#prices", label: t.pricesTitle } : null,
-              car.specs.length > 0 ? { href: "#specs", label: t.specsTitle } : null,
-              car.features.length > 0 || (lang === "pl" && car.equipment.length > 0) ? { href: "#equipment", label: t.featuresTitle } : null,
+              hasSpecs(car) ? { href: "#specs", label: t.specsTitle } : null,
+              car.features.length > 0 || car.equipment.length > 0 ? { href: "#equipment", label: t.featuresTitle } : null,
               extras.length > 0 ? { href: "#extras", label: t.extrasTitle } : null,
-              { href: "#terms", label: t.termsTitle },
+              car.priceBands.length > 0 ? { href: "#prices", label: t.pricesTitle } : null,
+              car.monthlyFrom !== null ? { href: "#monthly", label: t.monthlyTitle } : null,
             ]}
           />
-          <p className="flex gap-2 rounded-control bg-tint px-4 py-3 text-sm text-blue-dark">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
-            {t.classNote}
-          </p>
         </div>
 
+        {/* As the booking's summary panel: a white card with a line frame, under the sticky header; "Rezerwuj" opens the search in a dialog, as on the car cards. */}
         <aside className="lg:row-span-2">
-          <div className="flex flex-col gap-4 lg:sticky lg:top-[calc(var(--site-header,5rem)+1rem)] lg:transition-[top] lg:duration-300 lg:ease-in-out">
-            <section
-              id="book"
-              aria-labelledby="book-title"
-              className="scroll-mt-20 rounded-card border border-line bg-white p-5 shadow-float sm:p-6"
-            >
-              <FromPrice car={car} lang={lang} t={t} />
-              <Included t={t} />
-              <h2 id="book-title" className="mt-5 border-t border-line pt-5 text-subtitle text-blue-dark">
-                {t.bookTitle}
-              </h2>
-              <p className="mb-4 text-sm text-muted-dark">{t.bookLead}</p>
-              <ReservationPicker lang={lang} places={places} term={term} offerId={car.id} />
-            </section>
-          </div>
+          <section
+            id="book"
+            aria-labelledby="book-title"
+            className="flex flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line lg:sticky lg:top-[calc(var(--site-header,5rem)+1rem)] lg:transition-[top] lg:duration-300 lg:ease-in-out motion-reduce:transition-none"
+          >
+            <h2 id="book-title" className="text-lg font-semibold text-blue-dark">
+              {t.bookTitle}
+            </h2>
+            <FromPrice car={car} lang={lang} t={t} />
+            <Included t={t} />
+            <BookCarButton
+              offerId={car.id}
+              name={car.name}
+              term={term ?? null}
+              title={t.bookTitle}
+              lead={t.bookLead}
+              className={buttonClass("success", "md", "w-full")}
+            />
+          </section>
         </aside>
 
         <div className="flex min-w-0 flex-col gap-6">
           {car.partial ? <DetailsUnavailable lang={lang} t={t} /> : null}
+          <Specs car={car} lang={lang} t={t} />
+
+          {car.features.length > 0 || car.equipment.length > 0 ? (
+            <Section title={t.featuresTitle} id="equipment">
+              <FeatureTiles car={car} t={t} />
+              {/* The `details` lines as RentCarSoft has them (Polish in every language), filled top to bottom. */}
+              <ul className="text-sm text-blue-dark sm:columns-2 sm:gap-x-6">
+                {car.equipment.map((line) => (
+                  <li key={line} className="flex break-inside-avoid gap-2 py-1">
+                    <Check className="mt-0.5 size-4 shrink-0 text-green-medium" aria-hidden />
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          ) : null}
+
+          {extras.length > 0 ? (
+            <Section title={t.extrasTitle} id="extras">
+              <p className="text-sm text-muted-dark">{t.extrasLead}</p>
+              <CarExtras extras={extras} lang={lang} groups={messages.extrasPage.groups} />
+              <Link
+                href={extrasHref(lang)}
+                className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
+              >
+                {t.extrasAll}
+                <ChevronRight className="size-4" aria-hidden />
+              </Link>
+            </Section>
+          ) : null}
+
           {car.priceBands.length > 0 ? (
             <Section title={t.pricesTitle} id="prices">
               <p className="text-sm text-muted-dark">{t.pricesLead}</p>
@@ -219,47 +244,6 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
                 className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
               >
                 {t.monthlyLink}
-                <ChevronRight className="size-4" aria-hidden />
-              </Link>
-            </Section>
-          ) : null}
-
-          <Specs car={car} lang={lang} t={t} />
-
-          {car.features.length > 0 || (lang === "pl" && car.equipment.length > 0) ? (
-            <Section title={t.featuresTitle} id="equipment">
-              <ul className="grid gap-x-6 gap-y-2 text-sm text-blue-dark sm:grid-cols-2">
-                {car.features.map((feature) => (
-                  <li key={feature.key} className="flex gap-2">
-                    <Check className="mt-0.5 size-4 shrink-0 text-green-medium" aria-hidden />
-                    <span>
-                      {t.features[feature.key]}
-                      {isYes(feature.value) ? null : <span className="text-muted-dark">: {feature.value}</span>}
-                    </span>
-                  </li>
-                ))}
-                {/* `details` are Polish free text in RentCarSoft; other languages leave them out. */}
-                {lang === "pl"
-                  ? car.equipment.map((line) => (
-                      <li key={line} className="flex gap-2">
-                        <Check className="mt-0.5 size-4 shrink-0 text-green-medium" aria-hidden />
-                        <span>{line}</span>
-                      </li>
-                    ))
-                  : null}
-              </ul>
-            </Section>
-          ) : null}
-
-          {extras.length > 0 ? (
-            <Section title={t.extrasTitle} id="extras">
-              <p className="text-sm text-muted-dark">{t.extrasLead}</p>
-              <CarExtras extras={extras} lang={lang} groups={messages.extrasPage.groups} />
-              <Link
-                href={extrasHref(lang)}
-                className="inline-flex items-center gap-1 self-start text-sm font-bold text-blue-medium underline-offset-4 hover:underline"
-              >
-                {t.extrasAll}
                 <ChevronRight className="size-4" aria-hidden />
               </Link>
             </Section>
@@ -313,7 +297,19 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
         </section>
       ) : null}
 
-      <StickyBookBar targetId="book" label={t.checkAvailability}>
+      <StickyBookBar
+        targetId="book"
+        action={
+          <BookCarButton
+            offerId={car.id}
+            name={car.name}
+            term={term ?? null}
+            title={t.bookTitle}
+            lead={t.bookLead}
+            className={buttonClass("success", "md", "px-4")}
+          />
+        }
+      >
         <BarPrice car={car} lang={lang} t={t} />
       </StickyBookBar>
 
@@ -325,7 +321,7 @@ async function CarDetails({ lang, car }: { lang: Lang; car: FleetCar }) {
 /** Catalog C28: what every rental includes, only what the terms confirm. */
 function Included({ t }: { t: FleetTexts }) {
   return (
-    <div className="mt-4 rounded-control bg-tint px-4 py-3">
+    <div className="rounded-control bg-tint px-4 py-3">
       <p className="text-sm font-bold text-blue-dark">{t.includedTitle}</p>
       <ul className="mt-2 flex flex-col gap-1.5 text-sm text-blue-dark">
         {t.included.map((item) => (
@@ -365,7 +361,7 @@ function SectionLinks({ label, links }: { label: string; links: ({ href: string;
 
 function Section({ title, id, children }: { title: string; id: string; children: React.ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="flex scroll-mt-32 flex-col gap-4 rounded-card border border-line bg-white p-5 sm:p-7">
+    <section id={id} aria-labelledby={`${id}-title`} className="flex scroll-mt-32 flex-col gap-4 rounded-card bg-white p-5 ring-1 ring-line sm:p-6">
       <h2 id={`${id}-title`} className="text-subtitle text-blue-dark">
         {title}
       </h2>
@@ -411,29 +407,67 @@ function BarPrice({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }
   );
 }
 
+type Fact = { icon: LucideIcon; label: string; value: string };
+
+/** Fuel, gearbox and seats as tiles, at the top of the specs section. */
 function KeyFacts({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
-  const facts: { icon: LucideIcon; label: string; value: string }[] = [];
-  if (car.seats) facts.push({ icon: Users, label: t.specs.seats, value: countLabel(lang, car.seats, t.seatCount) });
-  if (car.transmission) facts.push({ icon: Settings2, label: t.specs.transmission, value: car.transmission });
+  const facts: Fact[] = [];
   if (car.fuel) facts.push({ icon: Fuel, label: t.specs.fuel, value: car.fuel.label });
-  if (car.doors) facts.push({ icon: DoorOpen, label: t.specs.doors, value: countLabel(lang, car.doors, t.doorCount) });
-  if (car.suitcases.large !== null || car.suitcases.small !== null) {
-    facts.push({
-      icon: Luggage,
-      label: t.suitcases,
-      value: fill(t.suitcasesValue, { large: car.suitcases.large ?? 0, small: car.suitcases.small ?? 0 }),
-    });
-  }
+  if (car.transmission) facts.push({ icon: Settings2, label: t.specs.transmission, value: car.transmission });
+  if (car.seats) facts.push({ icon: Users, label: t.specs.seats, value: countLabel(lang, car.seats, t.seatCount) });
+  // One row of three.
+  return <FactTiles facts={facts} className="grid-cols-3" />;
+}
+
+const FEATURE_ICONS: Record<FeatureKey, LucideIcon> = {
+  rearCamera: Camera,
+  parkingSensors: CircleParking,
+  airConditioningType: AirVent,
+  androidAuto: MonitorSmartphone,
+  cruiseControl: Gauge,
+};
+
+/**
+ * The equipment select keys as tiles, over the `details` list: two per row on
+ * phones (their values run long), three from `sm`. A shorter last row stretches
+ * across the full width (six tracks: three tiles take two each, two take three).
+ */
+function FeatureTiles({ car, t }: { car: FleetCar; t: FleetTexts }) {
+  const facts = car.features.map((feature) => ({ icon: FEATURE_ICONS[feature.key], label: t.features[feature.key], value: feature.value }));
+  const count = facts.length;
+  const lastRow = count % 3;
+  const span = (index: number) => {
+    const phone = count % 2 === 1 && index === count - 1 ? "col-span-2" : "";
+    const inLastRow = lastRow > 0 && index >= count - lastRow;
+    const wide = !inLastRow ? "sm:col-span-2" : lastRow === 2 ? "sm:col-span-3" : "sm:col-span-6";
+    return `${phone} ${wide}`;
+  };
+  return <FactTiles facts={facts} className="grid-cols-2 sm:grid-cols-6" itemClassName={span} />;
+}
+
+/** Tiles with an icon, a grey label and a navy value: on phones the icon sits over the text, from `sm` beside it. */
+function FactTiles({
+  facts,
+  className,
+  itemClassName = () => "",
+}: {
+  facts: Fact[];
+  className: string;
+  itemClassName?: (index: number) => string;
+}) {
   if (facts.length === 0) {
     return null;
   }
   return (
-    <dl className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
-      {facts.map((fact) => (
+    <dl className={`grid gap-2 sm:gap-3 ${className}`}>
+      {facts.map((fact, index) => (
         // `dt` and `dd` sit right in the group (a `dl` allows nothing else there); the icon rides in the `dt`.
-        <div key={fact.label} className="relative flex min-h-16 flex-col justify-center rounded-control border border-line bg-white py-3 pr-3 pl-16">
+        <div
+          key={fact.label}
+          className={`relative flex min-w-0 flex-col items-center justify-center rounded-control border border-line bg-white px-2 pt-14 pb-3 text-center sm:min-h-16 sm:items-start sm:py-3 sm:pr-3 sm:pl-16 sm:text-left ${itemClassName(index)}`}
+        >
           <dt className="text-xs text-muted-dark">
-            <span aria-hidden className="absolute top-1/2 left-3 flex size-10 -translate-y-1/2 items-center justify-center rounded-full bg-tint text-blue-medium">
+            <span aria-hidden className="absolute top-3 left-1/2 flex size-10 -translate-x-1/2 items-center justify-center rounded-full bg-tint text-blue-medium sm:top-1/2 sm:left-3 sm:translate-x-0 sm:-translate-y-1/2">
               <fact.icon className="size-5" strokeWidth={1.75} />
             </span>
             {fact.label}
@@ -447,23 +481,27 @@ function KeyFacts({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }
 
 const UNIT_KEYS = new Set<SpecKey>(["power", "trunk", "acceleration", "maxSpeed"]);
 
-function Specs({ car, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
-  const rows = [
-    { label: t.specs.segment, value: car.segment },
-    ...(car.transmission ? [{ label: t.specs.transmission, value: car.transmission }] : []),
-    ...(car.fuel ? [{ label: t.specs.fuel, value: car.fuel.label }] : []),
-    ...car.specs.map((spec) => ({
-      label: t.specs[spec.key],
-      value: UNIT_KEYS.has(spec.key) && /^[\d.,\s]+$/.test(spec.value)
-        ? fill(t.units[spec.key as keyof FleetTexts["units"]], { value: spec.value })
-        : spec.value,
-    })),
-  ];
+function hasSpecs(car: FleetCar): boolean {
+  return car.specs.length > 0 || car.fuel !== null || car.transmission !== null || Boolean(car.seats);
+}
+
+/** The key facts as tiles, then the table in `SPEC_KEYS` order (`lib/fleet/cars.ts`). */
+function Specs({ car, lang, t }: { car: FleetCar; lang: Lang; t: FleetTexts }) {
+  if (!hasSpecs(car)) {
+    return null;
+  }
+  const rows = car.specs.map((spec) => ({
+    label: t.specs[spec.key],
+    value: UNIT_KEYS.has(spec.key) && /^[\d.,\s]+$/.test(spec.value)
+      ? fill(t.units[spec.key as keyof FleetTexts["units"]], { value: spec.value })
+      : spec.value,
+  }));
   return (
     <Section title={t.specsTitle} id="specs">
-      <dl className="grid text-sm sm:grid-cols-2 sm:gap-x-8">
+      <KeyFacts car={car} lang={lang} t={t} />
+      <dl className="text-sm sm:columns-2 sm:gap-x-8">
         {rows.map((row) => (
-          <div key={row.label} className="flex justify-between gap-4 border-b border-line py-3">
+          <div key={row.label} className="flex break-inside-avoid justify-between gap-4 border-b border-line py-3">
             <dt className="text-muted-dark">{row.label}</dt>
             <dd className="text-right font-semibold text-blue-dark">{row.value}</dd>
           </div>
@@ -500,11 +538,6 @@ async function DetailsUnavailable({ lang, t }: { lang: Lang; t: ReturnType<typeo
       </a>
     </p>
   );
-}
-
-/** "Tak" / "Yes" / "Ja" / "Так": the feature name says enough. */
-function isYes(value: string): boolean {
-  return ["tak", "yes", "ja", "так"].includes(value.trim().toLowerCase());
 }
 
 /** schema.org `Car` with the base daily price as an `Offer`, priced per day. */

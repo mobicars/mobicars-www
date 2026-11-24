@@ -330,7 +330,6 @@
     "eyebrow": "MobiCars-Flotte",
     "title": "Mietwagen",
     "lead": "Vom Stadtauto bis zum 9-Sitzer und Transporter. Zu jedem Modell zeigen wir den Tagespreis und für die Monatsmiete den Monatspreis.",
-    "classNote": "Sie buchen eine Fahrzeugklasse. Das genaue Modell dieser Klasse bestätigen wir vor der Abholung.",
     "breadcrumbHome": "Startseite",
     "breadcrumbFleet": "Flotte",
     "filters": "Filter",
@@ -379,12 +378,6 @@
       "many": "{count} Sitzplätze",
       "other": "{count} Sitzplätze"
     },
-    "doorCount": {
-      "one": "{count} Tür",
-      "few": "{count} Türen",
-      "many": "{count} Türen",
-      "other": "{count} Türen"
-    },
     "luggage": "Koffer: {large} groß, {small} klein",
     "orSimilar": "oder ähnlich",
     "metaTitleFallback": "{name} mieten – {segment} | MobiCars",
@@ -425,10 +418,8 @@
       "doors": "Türen",
       "seats": "Sitzplätze",
       "trunk": "Kofferraum",
-      "year": "Baujahr",
       "transmission": "Getriebe",
-      "fuel": "Kraftstoff",
-      "segment": "Klasse"
+      "fuel": "Kraftstoff"
     },
     "units": {
       "power": "{value} PS",
@@ -438,15 +429,11 @@
     },
     "featuresTitle": "Ausstattung",
     "features": {
-      "airConditioningType": "Klimaanlage",
-      "cruiseControl": "Tempomat",
-      "bluetooth": "Bluetooth",
-      "androidAuto": "Android Auto / Apple CarPlay",
-      "parkingSensors": "Parksensoren",
       "rearCamera": "Rückfahrkamera",
-      "windowType": "Fensterheber",
-      "mirrorType": "Außenspiegel",
-      "centralLock": "Zentralverriegelung"
+      "parkingSensors": "Parksensoren",
+      "airConditioningType": "Klimaanlage",
+      "androidAuto": "Android Auto / Apple CarPlay",
+      "cruiseControl": "Tempomat"
     },
     "descriptionTitle": "Über das Auto",
     "similarTitle": "Ähnliche Fahrzeuge",
@@ -459,9 +446,6 @@
     "previousPhoto": "Vorheriges Foto",
     "nextPhoto": "Nächstes Foto",
     "noPhoto": "Kein Foto",
-    "suitcases": "Koffer",
-    "suitcasesValue": "groß: {large}, klein: {small}",
-    "checkAvailability": "Verfügbarkeit prüfen",
     "allCars": "Gesamte Flotte",
     "breadcrumbLabel": "Brotkrümelnavigation",
     "oneDayPrice": "1 Tag: {price}",
@@ -915,10 +899,6 @@
       "rate_limited": "Zu viele Versuche in kurzer Zeit. Versuchen Sie es in etwa einer Viertelstunde erneut oder rufen Sie an: +48 881 328 328.",
       "server": "Bei uns ist etwas schiefgelaufen. Ihre Auswahl ist gespeichert – versuchen Sie es gleich erneut oder rufen Sie an: +48 881 328 328.",
       "promo": "Der Rabattcode gilt für diesen Zeitraum nicht mehr. Entfernen Sie ihn oder geben Sie einen anderen ein und senden Sie die Buchung erneut."
-    },
-    "afterSubmit": {
-      "confirm": "Die Verfügbarkeit des Autos bestätigen wir per E-Mail: während der Bürozeiten innerhalb von 2 Stunden, außerhalb der Bürozeiten innerhalb von 24 Stunden. Online-Buchungen nehmen wir rund um die Uhr an.",
-      "payment": "Sie zahlen jetzt nichts. Nach der Bestätigung senden wir Ihnen einen Link zur Anzahlung (15 % des Buchungswerts, mindestens 100 PLN). Den Rest zahlen Sie bei Abholung mit Karte."
     }
   },
   "confirmation": {

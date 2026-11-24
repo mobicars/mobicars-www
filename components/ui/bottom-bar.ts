@@ -3,7 +3,7 @@
  * a floating card, two full-width bars with different frames, shadows, paddings and type):
  *
  * - `MobileSummaryBar`: the booking's price and "Dalej";
- * - `StickyBookBar`: the car page's "from" price and "Sprawdź dostępność";
+ * - `StickyBookBar`: the car page's "from" price and "Rezerwuj";
  * - `ResumeBookingBar`: the homepage's "Masz niedokończoną rezerwację".
  *
  * Full width, white (solid: no see-through blur to read through), a 1px `line` frame on top and a soft shadow

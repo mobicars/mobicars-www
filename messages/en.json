@@ -330,7 +330,6 @@
     "eyebrow": "MobiCars fleet",
     "title": "Cars for rent",
     "lead": "From city cars to 9-seat minibuses and cargo vans. Every model shows its daily price, and its monthly price for long-term rental.",
-    "classNote": "You book a car class. We confirm the exact model from that class before pickup.",
     "breadcrumbHome": "Home",
     "breadcrumbFleet": "Fleet",
     "filters": "Filters",
@@ -379,12 +378,6 @@
       "many": "{count} seats",
       "other": "{count} seats"
     },
-    "doorCount": {
-      "one": "{count} door",
-      "few": "{count} doors",
-      "many": "{count} doors",
-      "other": "{count} doors"
-    },
     "luggage": "Suitcases: {large} large, {small} small",
     "orSimilar": "or similar",
     "metaTitleFallback": "{name} rental – {segment} | MobiCars",
@@ -425,10 +418,8 @@
       "doors": "Doors",
       "seats": "Seats",
       "trunk": "Boot",
-      "year": "Year",
       "transmission": "Gearbox",
-      "fuel": "Fuel",
-      "segment": "Class"
+      "fuel": "Fuel"
     },
     "units": {
       "power": "{value} hp",
@@ -438,15 +429,11 @@
     },
     "featuresTitle": "Equipment",
     "features": {
-      "airConditioningType": "Air conditioning",
-      "cruiseControl": "Cruise control",
-      "bluetooth": "Bluetooth",
-      "androidAuto": "Android Auto / Apple CarPlay",
-      "parkingSensors": "Parking sensors",
       "rearCamera": "Reversing camera",
-      "windowType": "Windows",
-      "mirrorType": "Mirrors",
-      "centralLock": "Central locking"
+      "parkingSensors": "Parking sensors",
+      "airConditioningType": "Air conditioning",
+      "androidAuto": "Android Auto / Apple CarPlay",
+      "cruiseControl": "Cruise control"
     },
     "descriptionTitle": "About the car",
     "similarTitle": "Similar cars",
@@ -459,9 +446,6 @@
     "previousPhoto": "Previous photo",
     "nextPhoto": "Next photo",
     "noPhoto": "No photo",
-    "suitcases": "Suitcases",
-    "suitcasesValue": "large: {large}, small: {small}",
-    "checkAvailability": "Check availability",
     "allCars": "Whole fleet",
     "breadcrumbLabel": "Breadcrumb",
     "oneDayPrice": "1 day: {price}",
@@ -915,10 +899,6 @@
       "rate_limited": "Too many attempts in a short time. Try again in a few minutes or call +48 881 328 328.",
       "server": "Something went wrong on our side. Your choices are saved – try again in a moment or call +48 881 328 328.",
       "promo": "The discount code no longer works for these dates. Remove it or enter another one and send your booking again."
-    },
-    "afterSubmit": {
-      "confirm": "We'll confirm the car's availability by email: within 2 hours during office hours, within 24 hours outside them. We accept online bookings around the clock.",
-      "payment": "You pay nothing now. Once confirmed, we'll send a link to pay the advance payment (15% of the booking value, at least PLN 100); you pay the rest by card at pickup."
     }
   },
   "confirmation": {

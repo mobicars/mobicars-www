@@ -30,18 +30,11 @@ const LIST_KEYS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 64, 71, 72, 73, 74, 75, 131];
 /** The list keys plus everything the car page shows, its SEO texts and both descriptions. */
 const DETAIL_KEYS = [
   ...LIST_KEYS,
-  10, 11, 16, 17, 18, 20, 21, 22, 65, 67, 68, 69, 76, 77, 79, 80, 128, 129, 130, 133,
+  10, 11, 16, 17, 20, 21, 22, 67, 77, 79, 80, 128, 129, 130, 133,
 ];
 
 /** Value id of "Automatyczna" on the transmission key (13 is "Manualna"). */
 const AUTOMATIC_TRANSMISSION = 14;
-
-/**
- * "No" / "None" value ids of the equipment select keys (live dictionary,
- * 12 November 2026): air conditioning 12, central lock 66, Bluetooth 90,
- * cruise control 92, Android Auto 167, parking sensors 173, rear camera 176.
- */
-const NO_VALUES = new Set([12, 66, 90, 92, 167, 173, 176]);
 
 export type FleetImage = { src: string; alt: string };
 
@@ -105,20 +98,10 @@ export type SpecKey =
   | "maxSpeed"
   | "body"
   | "doors"
-  | "seats"
-  | "trunk"
-  | "year";
+  | "trunk";
 
-export type FeatureKey =
-  | "airConditioningType"
-  | "cruiseControl"
-  | "bluetooth"
-  | "androidAuto"
-  | "parkingSensors"
-  | "rearCamera"
-  | "windowType"
-  | "mirrorType"
-  | "centralLock";
+/** Equipment select keys shown as tiles over the `details` list, as on the old site. */
+export type FeatureKey = "rearCamera" | "parkingSensors" | "airConditioningType" | "androidAuto" | "cruiseControl";
 
 export type FleetPriceBand = {
   from: number | null;
@@ -131,7 +114,7 @@ export type FleetCar = FleetCard & {
   /** `studio`: the default studio shot on white, shown whole; the car's own photos fill the frame. */
   gallery: { src: string; thumb: string; alt: string; studio: boolean }[];
   specs: FleetSpec[];
-  /** Equipment from select keys, e.g. cruise control "Tak", rear camera "360 °". */
+  /** Equipment select keys as RentCarSoft has them, "Nie" too (the old site showed it), in `FEATURE_KEYS` order. */
   features: { key: FeatureKey; value: string }[];
   /** Free-text equipment lines (`details`). Polish only in the API. */
   equipment: string[];
@@ -418,6 +401,10 @@ function toCard(offer: Offer, monthly: MonthlyFrom | null, now: number): FleetCa
   };
 }
 
+/** The car page's equipment tiles, in this order (the old site's, with air conditioning before Android Auto; 24 November 2026). */
+const FEATURE_KEYS: FeatureKey[] = ["rearCamera", "parkingSensors", "airConditioningType", "androidAuto", "cruiseControl"];
+
+/** The car page's specs table, in this order (24 November 2026). */
 const SPEC_KEYS: SpecKey[] = [
   "engine",
   "power",
@@ -427,21 +414,7 @@ const SPEC_KEYS: SpecKey[] = [
   "maxSpeed",
   "body",
   "doors",
-  "seats",
   "trunk",
-  "year",
-];
-
-const FEATURE_KEYS: FeatureKey[] = [
-  "airConditioningType",
-  "cruiseControl",
-  "bluetooth",
-  "androidAuto",
-  "parkingSensors",
-  "rearCamera",
-  "windowType",
-  "mirrorType",
-  "centralLock",
 ];
 
 function toCar(offer: Offer, lang: Lang, polish: Offer | null, monthly: MonthlyFrom | null, now: number): FleetCar {
@@ -475,12 +448,8 @@ function toCar(offer: Offer, lang: Lang, polish: Offer | null, monthly: MonthlyF
       return value ? [{ key, value }] : [];
     }),
     features: FEATURE_KEYS.flatMap((key) => {
-      const attribute = offer.attributes[key];
-      const value = attribute?.value.trim();
-      if (!attribute || !value || (attribute.valueId !== null && NO_VALUES.has(attribute.valueId))) {
-        return [];
-      }
-      return [{ key, value }];
+      const value = offer.attributes[key]?.value.trim();
+      return value ? [{ key, value }] : [];
     }),
     equipment: offer.details,
     description: description && !isBlankHtml(description) ? description : null,

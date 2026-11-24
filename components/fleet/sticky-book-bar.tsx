@@ -3,18 +3,18 @@
 import { useEffect, useState, type ReactNode } from "react";
 
 import { BOTTOM_BAR, BOTTOM_BAR_ROW } from "@/components/ui/bottom-bar";
-import { buttonClass } from "@/components/ui/button";
 
 /**
  * The car page's bar at the bottom of phones and tablets: the "from" price
- * and a link down to the booking box (`#<targetId>`). It steps aside while
- * the booking box is on screen, so it never covers the form it points to.
+ * and `action` ("Rezerwuj", which opens the search in a dialog). It steps
+ * aside while the booking box (`#<targetId>`) is on screen, so the page never
+ * shows two "Rezerwuj" at once.
  *
  * The site's bottom bar (`BOTTOM_BAR`), as the booking's: `data-mobile-summary-bar`
  * makes `globals.css` keep room for it at the end of the page and lift it above
  * the preview banner.
  */
-export function StickyBookBar({ targetId, label, children }: { targetId: string; label: string; children: ReactNode }) {
+export function StickyBookBar({ targetId, action, children }: { targetId: string; action: ReactNode; children: ReactNode }) {
   const [targetVisible, setTargetVisible] = useState(false);
 
   useEffect(() => {
@@ -39,9 +39,7 @@ export function StickyBookBar({ targetId, label, children }: { targetId: string;
     >
       <div className={BOTTOM_BAR_ROW}>
         <div className="min-w-0">{children}</div>
-        <a href={`#${targetId}`} className={buttonClass("success", "md", "px-4")}>
-          {label}
-        </a>
+        {action}
       </div>
     </div>
   );

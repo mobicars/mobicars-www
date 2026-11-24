@@ -330,7 +330,6 @@
     "eyebrow": "Flota MobiCars",
     "title": "Samochody na wynajem",
     "lead": "Od aut miejskich po 9-osobowe busy i dostawczaki. Przy każdym modelu podajemy cenę za dobę, a dla wynajmu długoterminowego cenę za miesiąc.",
-    "classNote": "Rezerwujesz klasę samochodu. Konkretny model z tej klasy potwierdzimy przed odbiorem.",
     "breadcrumbHome": "Strona główna",
     "breadcrumbFleet": "Flota",
     "filters": "Filtry",
@@ -379,12 +378,6 @@
       "many": "{count} miejsc",
       "other": "{count} miejsca"
     },
-    "doorCount": {
-      "one": "{count} drzwi",
-      "few": "{count} drzwi",
-      "many": "{count} drzwi",
-      "other": "{count} drzwi"
-    },
     "luggage": "Walizki: duże {large}, małe {small}",
     "orSimilar": "lub podobny",
     "metaTitleFallback": "Wynajem {name} – {segment} | MobiCars",
@@ -425,10 +418,8 @@
       "doors": "Drzwi",
       "seats": "Miejsca",
       "trunk": "Bagażnik",
-      "year": "Rocznik",
       "transmission": "Skrzynia biegów",
-      "fuel": "Paliwo",
-      "segment": "Klasa"
+      "fuel": "Paliwo"
     },
     "units": {
       "power": "{value} KM",
@@ -438,15 +429,11 @@
     },
     "featuresTitle": "Wyposażenie",
     "features": {
-      "airConditioningType": "Klimatyzacja",
-      "cruiseControl": "Tempomat",
-      "bluetooth": "Bluetooth",
-      "androidAuto": "Android Auto / Apple CarPlay",
-      "parkingSensors": "Czujniki parkowania",
       "rearCamera": "Kamera cofania",
-      "windowType": "Szyby",
-      "mirrorType": "Lusterka",
-      "centralLock": "Centralny zamek"
+      "parkingSensors": "Czujniki parkowania",
+      "airConditioningType": "Klimatyzacja",
+      "androidAuto": "Android Auto / Apple CarPlay",
+      "cruiseControl": "Tempomat"
     },
     "descriptionTitle": "O samochodzie",
     "similarTitle": "Podobne samochody",
@@ -459,9 +446,6 @@
     "previousPhoto": "Poprzednie zdjęcie",
     "nextPhoto": "Następne zdjęcie",
     "noPhoto": "Brak zdjęcia",
-    "suitcases": "Walizki",
-    "suitcasesValue": "duże: {large}, małe: {small}",
-    "checkAvailability": "Sprawdź dostępność",
     "allCars": "Cała flota",
     "breadcrumbLabel": "Ścieżka nawigacji",
     "oneDayPrice": "1 doba: {price}",
@@ -915,10 +899,6 @@
       "rate_limited": "Za dużo prób w krótkim czasie. Spróbuj ponownie za kilkanaście minut albo zadzwoń: +48 881 328 328.",
       "server": "Coś poszło nie tak po naszej stronie. Twój wybór jest zapisany – spróbuj ponownie za chwilę albo zadzwoń: +48 881 328 328.",
       "promo": "Kod rabatowy nie działa już w tym terminie. Usuń go albo wpisz inny i wyślij rezerwację ponownie."
-    },
-    "afterSubmit": {
-      "confirm": "Dostępność auta potwierdzimy e-mailem: w godzinach pracy biura do 2 godzin, poza nimi do 24 godzin. Rezerwacje online przyjmujemy całą dobę.",
-      "payment": "Teraz nic nie płacisz. Po potwierdzeniu wyślemy link do wpłaty zaliczki (15% wartości rezerwacji, min. 100 zł), a resztę zapłacisz kartą przy odbiorze."
     }
   },
   "confirmation": {

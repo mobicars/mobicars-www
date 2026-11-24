@@ -133,7 +133,7 @@ Product decision (11 November 2026): the list shows every car of the pickup poin
 Why:
 
 - The customer books a class, not a specific car. Every card says "… lub podobny", and in the checked data every car in a segment had the same price.
-- The team confirms the booking after checking the fleet. The daily page says so above the list ("Rezerwujesz klasę auta, a dostępność potwierdzimy e-mailem"), and again under "Wyślij rezerwację" on the last step.
+- The team confirms the booking after checking the fleet. The daily page says so above the list ("Rezerwujesz klasę auta, a dostępność potwierdzimy e-mailem"). The last step no longer repeats it, nor the payment note (removed 24 November 2026).
 - If the shown car is booked, the team gives a similar one. Hiding it would also hide whole classes the team can still serve.
 - The old site worked the same way. It sent no availability flag and filtered nothing.
 
