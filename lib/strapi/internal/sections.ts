@@ -3,7 +3,7 @@ import type { ReservationTerm } from "@/lib/reservation/search";
 
 import { slugWords } from "@/lib/fleet/slug";
 
-import type { BlogCardFragment, BlogSectionFragment, CarClassesSectionFragment, CarCollectionFragment, ExtrasSectionFragment, CarsSectionFragment, PromotionsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
+import type { BlogCardFragment, BlogSectionFragment, CarClassesSectionFragment, CarCollectionFragment, ExtrasSectionFragment, CarsSectionFragment, PromotionsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, SalesSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
 import { parseBlogCard, parseCtas, parseMedia, resolveLink, sectionPostsKey, type BlogPostCard, type Cta, type Media } from "./entities";
 import { parseRichBlocks, richBlocksText, type RichBlocks } from "./rich-blocks";
 import type { PageRoute } from "./routes";
@@ -186,6 +186,24 @@ export type BlogSection = {
   /** `source: all`: every post, shown 12 at a time with "Show more"; otherwise the four newest or picked. */
   listing: boolean;
   layout: "grid" | "featured";
+  ctas: Cta[];
+  background: SectionBackground;
+  width: "full" | "boxed" | "contained";
+  spacing: "small" | "medium" | "large";
+};
+
+/**
+ * Every published car-sale ad (`sale`) as a list with sorting and filters,
+ * like a sales portal; each ad has its own page. The ads are read by the
+ * component (`lib/strapi/modules/sales.ts`), not with the page.
+ */
+export type SalesSection = {
+  type: "sales";
+  id: string;
+  badge: string | null;
+  title: string | null;
+  text: string | null;
+  headerAlign: "start" | "center";
   ctas: Cta[];
   background: SectionBackground;
   width: "full" | "boxed" | "contained";
@@ -412,7 +430,7 @@ export function sectionEdgeTone(section: Section, edge: "top" | "bottom"): Divid
 /** Test page only: the name and note of the variant shown under it. */
 export type VariantLabelSection = { type: "variantLabel"; id: string; title: string; note: string | null };
 
-export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | CarClassesSection | ExtrasSection | PromotionsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
+export type Section = HeroSection | FeaturesSection | TextSection | FaqSection | CardsSection | BlogSection | SocialSection | CarsSection | SalesSection | CarClassesSection | ExtrasSection | PromotionsSection | MapSection | SplitSection | FormSection | ReviewsSection | ImageSection | DividerSection | VariantLabelSection;
 
 type RawSection = NonNullable<NonNullable<PageQuery["page"]>["sections"]>[number];
 
@@ -453,6 +471,8 @@ export function parseSections(
         return [parseSocialSection(section)];
       case "ComponentSectionsCars":
         return [parseCarsSection(section, lang, routes)];
+      case "ComponentSectionsSales":
+        return [parseSalesSection(section, lang, routes)];
       case "ComponentSectionsCarClasses":
         return [parseCarClassesSection(section, lang, routes)];
       case "ComponentSectionsExtras":
@@ -698,6 +718,21 @@ function parseBlogSection(raw: BlogSectionFragment, lang: Lang, routes: readonly
     background: parseBackground(raw.background),
     width: raw.blogWidth,
     spacing: raw.blogSpacing,
+  };
+}
+
+function parseSalesSection(raw: SalesSectionFragment, lang: Lang, routes: readonly PageRoute[]): SalesSection {
+  return {
+    type: "sales",
+    id: raw.id,
+    badge: raw.badge || null,
+    title: raw.salesTitle || null,
+    text: raw.salesText || null,
+    headerAlign: raw.salesHeaderAlign === "start" ? "start" : "center",
+    ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
+    background: parseBackground(raw.background),
+    width: raw.salesWidth,
+    spacing: raw.salesSpacing,
   };
 }
 

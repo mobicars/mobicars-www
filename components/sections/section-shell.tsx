@@ -45,6 +45,11 @@ const TONES: Record<SectionBackground["tone"], string> = {
   image: "bg-blue-dark",
 };
 
+/** The frame's outer margin (`boxed`, `contained`); a full-width section needs none, so no empty wrapper is rendered. */
+export function FrameOuter({ className, children }: { className: string; children: ReactNode }) {
+  return className ? <div className={className}>{children}</div> : children;
+}
+
 export function SectionShell({
   background,
   spacing,
@@ -63,7 +68,7 @@ export function SectionShell({
 }) {
   const frame = FRAME[width];
   return (
-    <div className={frame.outer}>
+    <FrameOuter className={frame.outer}>
       {/* `overflow-clip`, not `hidden`: it still clips the rounded corners and the photo, but makes no scroll container, so `sticky` inside (the FAQ menu) works. */}
       <section aria-labelledby={labelledBy} className={`relative isolate overflow-clip ${TONES[background.tone]} ${SPACING[spacing]} ${frame.box}`}>
         {background.tone === "image" ? <BackgroundPhoto image={background.image} imageMobile={background.imageMobile} sizes={frameSizes(width)} strong={strongOverlay} /> : null}
@@ -71,7 +76,7 @@ export function SectionShell({
         {/* Above the photo and its layer by markup order (no negative z-index, which accessibility checkers misread). */}
         <div className={`relative mx-auto w-full ${frame.inner}`}>{children}</div>
       </section>
-    </div>
+    </FrameOuter>
   );
 }
 

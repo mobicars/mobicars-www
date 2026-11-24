@@ -1,0 +1,51 @@
+# Car-sale ads (`sale`) for the Car sales section and each ad's page. See `modules/sales.ts`.
+# `Body` is CKEditor HTML: its labelled lines ("Rok produkcji: 2022") give the cards their specs.
+
+fragment SaleCard on Sale {
+  documentId
+  Title
+  slug
+  Price
+  createdAt
+  updatedAt
+  Gallery {
+    ...Media
+  }
+  Body
+  Seo {
+    noIndex
+  }
+}
+
+# Every published ad of one language, newest first. A draft without a price or a slug
+# (the editors' template ad) is left out: a required field missing fails the whole query.
+query SaleCards($locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  sales(
+    locale: $locale
+    status: $status
+    filters: { Price: { notNull: true }, slug: { notNull: true } }
+    sort: ["createdAt:desc"]
+    pagination: { limit: 1000 }
+  ) {
+    ...SaleCard
+  }
+}
+
+# One ad by its slug, with what only its page shows.
+query SaleBySlug($slug: String!, $locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  sales(locale: $locale, status: $status, filters: { slug: { eq: $slug } }, pagination: { limit: 1 }) {
+    ...SaleCard
+    vin
+    registrationNumber
+    firstRegistration
+    Seo {
+      metaTitle
+      metaDescription
+      noIndex
+      noFollow
+      shareImage {
+        ...Media
+      }
+    }
+  }
+}

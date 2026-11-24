@@ -287,6 +287,48 @@ export function resolveExtrasPath(
 }
 
 /**
+ * Public URLs of the car-sale ads: the list is the CMS page at the root
+ * (`/pl/sprzedaz-samochodow`, a Car sales section on it); each ad has its own
+ * page, `/pl/sprzedaz-samochodow/mazda-cx-30`, as on the old site. The app
+ * folder is `app/[lang]/sales/[slug]`; `proxy.ts` rewrites only paths with a
+ * slug, so the root stays the CMS page (`resolveExtrasPath` does the same).
+ */
+const SALES_ROOT: Record<Lang, string> = {
+  pl: "sprzedaz-samochodow",
+  en: "cars-for-sale",
+  de: "autos-zu-verkaufen",
+  uk: "prodazh-avto",
+};
+const SALES_INTERNAL = "sales";
+
+/** Public URL of the ad list (a CMS page), or of one ad with its slug. */
+export function salesHref(lang: Lang, slug?: string): string {
+  const path = `/${lang}/${SALES_ROOT[lang]}`;
+  return slug ? `${path}/${encodeURIComponent(slug)}` : path;
+}
+
+/** Resolves an ad's page, like `resolveExtrasPath`: only below the root, which is the CMS list page. */
+export function resolveSalesPath(
+  lang: Lang,
+  pathname: string,
+): { canonical: string; internal: string | null; slug: string | null } | null {
+  const [, pathLang, root, ...rest] = pathname.split("/");
+  if (pathLang !== lang || (root !== SALES_ROOT[lang] && root !== SALES_INTERNAL)) {
+    return null;
+  }
+  const tail = rest.filter(Boolean);
+  if (tail.length === 0) {
+    return root === SALES_INTERNAL ? { canonical: salesHref(lang), internal: null, slug: null } : null;
+  }
+  const suffix = `/${tail.join("/")}`;
+  return {
+    canonical: `/${lang}/${SALES_ROOT[lang]}${suffix}`,
+    internal: `/${lang}/${SALES_INTERNAL}${suffix}`,
+    slug: tail.length === 1 ? tail[0] : null,
+  };
+}
+
+/**
  * The same page in another language, for the language switcher: a reservation
  * page keeps its term and search, a panel page its page and id, a fleet page
  * its car, the thank-you page stays itself. Any other path keeps everything after the language.
@@ -319,6 +361,11 @@ export function switchLangHref(pathname: string, search: string, target: Lang): 
   if (extras) {
     // The id at the end of the slug finds the add-on; its page redirects to the name in that language.
     return withQuery(extrasHref(target, extras.slug ? decodeURIComponent(extras.slug) : undefined));
+  }
+
+  // An ad's slug is per language and ads are rarely translated: the other language's list.
+  if (resolveSalesPath(lang, pathname)) {
+    return salesHref(target);
   }
 
   const account = resolveAccountPath(lang, pathname);

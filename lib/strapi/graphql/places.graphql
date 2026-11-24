@@ -70,6 +70,9 @@ query City($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
       ... on ComponentSectionsCars {
         ...CarsSection
       }
+      ... on ComponentSectionsSales {
+        ...SalesSection
+      }
       ... on ComponentSectionsCarClasses {
         ...CarClassesSection
       }
@@ -145,6 +148,9 @@ query LocalPage($documentId: ID!, $locale: I18NLocaleCode!, $status: Publication
       }
       ... on ComponentSectionsCars {
         ...CarsSection
+      }
+      ... on ComponentSectionsSales {
+        ...SalesSection
       }
       ... on ComponentSectionsCarClasses {
         ...CarClassesSection

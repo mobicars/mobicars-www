@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { langFromPath, preferredLang } from "@/i18n/config";
-import { resolveAccountPath, resolveExtrasPath, resolveFleetPath, resolveReservationPath } from "@/i18n/routes";
+import { resolveAccountPath, resolveExtrasPath, resolveFleetPath, resolveReservationPath, resolveSalesPath } from "@/i18n/routes";
 import { loginPath, safeReturnPath, SESSION_COOKIE } from "@/lib/auth/paths";
 import { decryptSession } from "@/lib/auth/token";
 import { legacyRedirect } from "@/lib/seo/legacy-redirects";
@@ -58,6 +58,16 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(url, 308);
       }
       url.pathname = extras.internal;
+      return NextResponse.rewrite(url);
+    }
+    const sales = resolveSalesPath(found.lang, pathname);
+    if (sales) {
+      const url = request.nextUrl.clone();
+      if (sales.canonical !== pathname || !sales.internal) {
+        url.pathname = sales.canonical;
+        return NextResponse.redirect(url, 308);
+      }
+      url.pathname = sales.internal;
       return NextResponse.rewrite(url);
     }
     const account = resolveAccountPath(found.lang, pathname);

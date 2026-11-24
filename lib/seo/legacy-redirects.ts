@@ -146,10 +146,10 @@ const RULES: readonly Rule[] = [
   },
   // One document (`/pl/dokumenty/{slug}`) has its own route: `app/[lang]/dokumenty/[slug]` redirects to the file.
   {
-    // One car for sale → the sales page.
+    // The old app folder of one car for sale → its page, same slug (`app/[lang]/sales/[slug]`).
     id: "sale",
-    pattern: /^\/pl\/(?:sprzedaz-samochodow|sale)\/[^/]+$/,
-    to: () => "/pl/sprzedaz-samochodow",
+    pattern: /^\/pl\/sale\/([^/]+)$/,
+    to: (match) => `/pl/sprzedaz-samochodow/${match[1]}`,
   },
   {
     // The old app folder name of local pages; the page keeps its slug.

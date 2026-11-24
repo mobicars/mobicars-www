@@ -1039,5 +1039,44 @@
     "related": "Inne dodatki: {group}",
     "metaTitle": "{name} – dodatek do wynajmu auta",
     "metaDescription": "{name} ({group}) w MobiCars: opis i cena. Dodaj do rezerwacji auta na dni lub na miesiące."
+  },
+  "sales": {
+    "count": {
+      "one": "{count} auto na sprzedaż",
+      "few": "{count} auta na sprzedaż",
+      "many": "{count} aut na sprzedaż",
+      "other": "{count} auta na sprzedaż"
+    },
+    "sort": "Sortuj",
+    "sortNewest": "Najnowsze",
+    "sortPriceAsc": "Cena: od najniższej",
+    "sortPriceDesc": "Cena: od najwyższej",
+    "sortYear": "Rocznik: od najnowszego",
+    "sortMileage": "Przebieg: od najniższego",
+    "filters": "Filtry",
+    "clear": "Wyczyść filtry",
+    "none": "Żadne auto nie pasuje do wybranych filtrów.",
+    "empty": "Nie mamy teraz aut na sprzedaż. Zajrzyj wkrótce.",
+    "gross": "brutto",
+    "priceOnRequest": "Cena do uzgodnienia",
+    "details": "Szczegóły",
+    "photos": "{count} zdjęć",
+    "call": "Zadzwoń",
+    "write": "Napisz e-mail",
+    "descriptionTitle": "Opis",
+    "otherTitle": "Inne auta na sprzedaż",
+    "allAds": "Wszystkie ogłoszenia",
+    "list": "Sprzedaż samochodów",
+    "contactTitle": "Zainteresowany?",
+    "contactLead": "Zadzwoń lub napisz – umówimy oględziny i jazdę próbną.",
+    "price": "Cena",
+    "metaDescription": "{name} na sprzedaż od MobiCars: {details}. Auto z naszej floty, serwisowane na bieżąco.",
+    "specs": {
+      "year": "Rok produkcji",
+      "fuel": "Paliwo",
+      "gearbox": "Skrzynia biegów",
+      "mileage": "Przebieg",
+      "body": "Typ nadwozia"
+    }
   }
 }

@@ -53,6 +53,8 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
     contact {
       phone
       email
+      salesPhone
+      salesEmail
       address
       openingHours
       availabilityNote

@@ -55,6 +55,9 @@ query BlogPost($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationS
       ... on ComponentSectionsCars {
         ...CarsSection
       }
+      ... on ComponentSectionsSales {
+        ...SalesSection
+      }
       ... on ComponentSectionsCarClasses {
         ...CarClassesSection
       }

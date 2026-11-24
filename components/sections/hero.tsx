@@ -9,7 +9,7 @@ import { toPickupPlace } from "@/lib/reservation/places";
 import type { HeroSection, Media } from "@/lib/strapi";
 
 import { HeroVideo } from "./hero-video";
-import { FRAME, SECTION_CTA_SIZE, SPACING } from "./section-shell";
+import { FRAME, FrameOuter, SECTION_CTA_SIZE, SPACING } from "./section-shell";
 import { frameSizes } from "./image-sizes";
 
 
@@ -58,7 +58,7 @@ export function Hero({ section, lang, priority, pickupId }: { section: HeroSecti
   const overlay = OVERLAYS[search ? "search" : "plain"][section.overlay];
 
   return (
-    <div className={frame.outer}>
+    <FrameOuter className={frame.outer}>
       <section className={`relative isolate overflow-hidden bg-blue-dark ${frame.box}`}>
         {section.image ? <Background image={section.image} imageMobile={section.imageMobile} priority={priority} sizes={frameSizes(section.width)} /> : null}
         {section.video ? <HeroVideo desktop={clip(section.video)} mobile={section.videoMobile ? clip(section.videoMobile) : null} /> : null}
@@ -103,7 +103,7 @@ export function Hero({ section, lang, priority, pickupId }: { section: HeroSecti
           ) : null}
         </div>
       </section>
-    </div>
+    </FrameOuter>
   );
 }
 

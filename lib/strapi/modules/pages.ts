@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
 
-import { PageDocument } from "../generated/graphql";
+import { NotFoundPageDocument, PageDocument } from "../generated/graphql";
 import { contentStatus } from "../internal/config";
 import type { Page } from "../internal/entities";
 import { strapiRequest } from "../internal/http";
@@ -42,4 +42,25 @@ async function loadPage(lang: Lang, documentId: string): Promise<Page | null> {
     listPageRoutes(lang),
   ]);
   return own.page ? readPageBody(own.page, lang, routes) : null;
+}
+
+/**
+ * The not-found page's copy: the CMS page with slug `404` in `lang` (it has no
+ * URL, `buildRoutes` leaves it out), or `null` when there is none.
+ */
+export async function getNotFoundPage(lang: Lang): Promise<Page | null> {
+  const documentId = await (cacheEnabled() ? findCachedNotFound(lang) : findNotFound(lang));
+  return documentId ? getPage(lang, documentId) : null;
+}
+
+async function findCachedNotFound(lang: Lang): Promise<string | null> {
+  "use cache";
+  cacheLife("max");
+  cacheTag(CACHE_TAGS.all, CACHE_TAGS.type("page"));
+  return findNotFound(lang);
+}
+
+async function findNotFound(lang: Lang): Promise<string | null> {
+  const { pages } = await strapiRequest(NotFoundPageDocument, { locale: lang, status: contentStatus() });
+  return pages[0]?.documentId ?? null;
 }

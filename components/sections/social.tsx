@@ -50,7 +50,7 @@ export async function Social({ section, lang }: { section: SocialSection; lang: 
       // Always one row on desktops (wrapping on phones); in `split` larger and spread evenly across its half.
       <ul className={`flex flex-wrap gap-4 sm:gap-6 ${split ? "lg:flex-nowrap lg:justify-evenly" : "justify-center"}`}>
         {social.map((link) => (
-          <li key={link.url}>
+          <li key={link.platform}>
             <a
               href={link.url}
               target="_blank"

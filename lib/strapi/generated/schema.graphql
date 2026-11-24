@@ -87,7 +87,7 @@ type BlogRelationResponseCollection {
   nodes: [Blog!]!
 }
 
-union BlogSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
+union BlogSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSales | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
 
 scalar BlogSectionsDynamicZoneInput
 
@@ -260,7 +260,7 @@ type CityRelationResponseCollection {
   nodes: [City!]!
 }
 
-union CitySectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
+union CitySectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSales | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
 
 scalar CitySectionsDynamicZoneInput
 
@@ -728,6 +728,18 @@ type ComponentSectionsReviews {
   width: ENUM_COMPONENTSECTIONSREVIEWS_WIDTH!
 }
 
+type ComponentSectionsSales {
+  background: ComponentPartsBackground
+  badge: String
+  ctas(filters: ComponentPartsCtaFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsCta]
+  headerAlign: ENUM_COMPONENTSECTIONSSALES_HEADERALIGN!
+  id: ID!
+  spacing: ENUM_COMPONENTSECTIONSSALES_SPACING!
+  text: String
+  title: String
+  width: ENUM_COMPONENTSECTIONSSALES_WIDTH!
+}
+
 type ComponentSectionsSocial {
   background: ComponentPartsBackground
   badge: String
@@ -1055,6 +1067,8 @@ type ComponentSiteContact {
   openingHours: String
   phone: String!
   regon: String
+  salesEmail: String!
+  salesPhone: String!
   whatsapp: String
 }
 
@@ -1072,6 +1086,8 @@ input ComponentSiteContactInput {
   openingHours: String
   phone: String
   regon: String
+  salesEmail: String
+  salesPhone: String
   whatsapp: String
 }
 
@@ -1635,6 +1651,23 @@ enum ENUM_COMPONENTSECTIONSREVIEWS_WIDTH {
   full
 }
 
+enum ENUM_COMPONENTSECTIONSSALES_HEADERALIGN {
+  center
+  start
+}
+
+enum ENUM_COMPONENTSECTIONSSALES_SPACING {
+  large
+  medium
+  small
+}
+
+enum ENUM_COMPONENTSECTIONSSALES_WIDTH {
+  boxed
+  contained
+  full
+}
+
 enum ENUM_COMPONENTSECTIONSSOCIAL_LAYOUT {
   centered
   split
@@ -1836,7 +1869,7 @@ type FooterRelationResponseCollection {
   nodes: [Footer!]!
 }
 
-union GenericMorph = Announcement | Blog | CarCollection | City | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCollectionCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentPartsOpeningHours | ComponentPartsSeo | ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | Site | Social | UploadFile | UploadFolder | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
+union GenericMorph = Announcement | Blog | CarCollection | City | ComponentMenuGroup | ComponentMenuItem | ComponentPartsBackground | ComponentPartsCard | ComponentPartsCollectionCard | ComponentPartsCta | ComponentPartsFaqGroup | ComponentPartsFaqItem | ComponentPartsFeatureItem | ComponentPartsLink | ComponentPartsOpeningHours | ComponentPartsSeo | ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSales | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | ComponentSharedBasicText | ComponentSharedBlogShow | ComponentSharedBoxes | ComponentSharedButtons | ComponentSharedCard | ComponentSharedCardGroup | ComponentSharedCarsShow | ComponentSharedContact | ComponentSharedCta | ComponentSharedDivider | ComponentSharedFaq | ComponentSharedFaqItem | ComponentSharedHero | ComponentSharedHeroPage | ComponentSharedImage | ComponentSharedLink | ComponentSharedLinkGroup | ComponentSharedMap | ComponentSharedOpinions | ComponentSharedPointDetails | ComponentSharedPromoBox | ComponentSharedPromoShow | ComponentSharedReservationCalc | ComponentSharedSocialMedia | ComponentSharedSocialUrl | ComponentSharedText | ComponentSharedTextHeading | ComponentSharedTextWithImage | ComponentSiteContact | ComponentSitePaymentMethod | ComponentSiteSocialLink | ComponentSystemDictionary | ComponentSystemRedirects | Dictionary | Footer | Global | I18NLocale | Infobar | Layout | LocalPage | Navigation | Page | Rating | Regulation | ReviewWorkflowsWorkflow | ReviewWorkflowsWorkflowStage | Sale | Site | Social | UploadFile | UploadFolder | UsersPermissionsPermission | UsersPermissionsRole | UsersPermissionsUser
 
 type Global {
   createdAt: DateTime
@@ -2087,7 +2120,7 @@ type LocalPageRelationResponseCollection {
   nodes: [LocalPage!]!
 }
 
-union LocalPageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
+union LocalPageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSales | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
 
 scalar LocalPageSectionsDynamicZoneInput
 
@@ -2483,7 +2516,7 @@ type PageRelationResponseCollection {
   nodes: [Page!]!
 }
 
-union PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
+union PageSectionsDynamicZone = ComponentSectionsBlog | ComponentSectionsCarClasses | ComponentSectionsCards | ComponentSectionsCars | ComponentSectionsDivider | ComponentSectionsExtras | ComponentSectionsFaq | ComponentSectionsFeatures | ComponentSectionsForm | ComponentSectionsHero | ComponentSectionsImage | ComponentSectionsMap | ComponentSectionsPromotions | ComponentSectionsReviews | ComponentSectionsSales | ComponentSectionsSocial | ComponentSectionsSplit | ComponentSectionsText | ComponentSectionsVariantLabel | Error
 
 scalar PageSectionsDynamicZoneInput
 
@@ -3029,20 +3062,23 @@ type ReviewWorkflowsWorkflowStageRelationResponseCollection {
 }
 
 type Sale {
-  Body: JSON
+  Body: String
   Gallery(filters: UploadFileFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [UploadFile]!
   Gallery_connection(filters: UploadFileFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): UploadFileRelationResponseCollection!
   Price: Float!
-  Seo(filters: ComponentPartsSeoFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsSeo]
+  Seo: ComponentPartsSeo
   Title: String!
   createdAt: DateTime
   documentId: ID!
+  firstRegistration: Date!
   locale: String
   localizations(filters: SaleFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [Sale]!
   localizations_connection(filters: SaleFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): SaleRelationResponseCollection
   publishedAt: DateTime
+  registrationNumber: String!
   slug: String
   updatedAt: DateTime
+  vin: String!
 }
 
 type SaleEntityResponseCollection {
@@ -3051,30 +3087,36 @@ type SaleEntityResponseCollection {
 }
 
 input SaleFiltersInput {
-  Body: JSONFilterInput
+  Body: StringFilterInput
   Price: FloatFilterInput
   Seo: ComponentPartsSeoFiltersInput
   Title: StringFilterInput
   and: [SaleFiltersInput]
   createdAt: DateTimeFilterInput
   documentId: IDFilterInput
+  firstRegistration: DateFilterInput
   locale: StringFilterInput
   localizations: SaleFiltersInput
   not: SaleFiltersInput
   or: [SaleFiltersInput]
   publishedAt: DateTimeFilterInput
+  registrationNumber: StringFilterInput
   slug: StringFilterInput
   updatedAt: DateTimeFilterInput
+  vin: StringFilterInput
 }
 
 input SaleInput {
-  Body: JSON
+  Body: String
   Gallery: [ID]
   Price: Float
-  Seo: [ComponentPartsSeoInput]
+  Seo: ComponentPartsSeoInput
   Title: String
+  firstRegistration: Date
   publishedAt: DateTime
+  registrationNumber: String
   slug: String
+  vin: String
 }
 
 type SaleRelationResponseCollection {

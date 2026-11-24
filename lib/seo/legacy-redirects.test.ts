@@ -103,7 +103,8 @@ describe("legacy redirects", () => {
   it("maps sales and old folder names, and leaves single documents to their route", () => {
     assert.equal(target("/pl/dokumenty/regulamin-rezerwacji"), null);
     assert.equal(target("/en/documents/terms"), null);
-    assert.equal(target("/pl/sprzedaz-samochodow/toyota-yaris"), "/pl/sprzedaz-samochodow");
+    assert.equal(target("/pl/sprzedaz-samochodow/toyota-yaris"), null);
+    assert.equal(target("/pl/sale/toyota-yaris"), "/pl/sprzedaz-samochodow/toyota-yaris");
     assert.equal(target("/pl/cargo"), "/pl/wynajem-samochodow-dostawczych");
     assert.equal(target("/en/ev"), "/en/electric-vehicles-rental");
     assert.equal(target("/pl/local-car-rental/warszawa-bemowo"), "/pl/lokalna-wypozyczalnia-samochodow/warszawa-bemowo");

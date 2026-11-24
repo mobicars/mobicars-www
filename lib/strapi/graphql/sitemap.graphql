@@ -1,0 +1,60 @@
+# Everything `app/sitemap.ts` needs from one language, in one request per page of
+# results: each type's URL parts, change date and `noIndex`, no content.
+# See `modules/sitemap.ts`.
+query Sitemap($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: Int!, $pageSize: Int!) {
+  pages_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+      parentPage {
+        documentId
+      }
+      seo {
+        noIndex
+      }
+    }
+    pageInfo {
+      pageCount
+    }
+  }
+  blogs_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+      seo {
+        noIndex
+      }
+    }
+    pageInfo {
+      pageCount
+    }
+  }
+  cities_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+      seo {
+        noIndex
+      }
+    }
+    pageInfo {
+      pageCount
+    }
+  }
+  localPages_connection(locale: $locale, status: $status, sort: "id", pagination: { page: $page, pageSize: $pageSize }) {
+    nodes {
+      documentId
+      slug
+      updatedAt
+      seo {
+        noIndex
+      }
+    }
+    pageInfo {
+      pageCount
+    }
+  }
+}

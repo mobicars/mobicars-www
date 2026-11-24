@@ -24,7 +24,7 @@ Server environment, never `NEXT_PUBLIC_`:
 The URL of a page is its `slug` under its `parentPage` chain. One small list per language answers whether a URL exists, so an unknown URL costs no content query. The same list builds `generateStaticParams`, hreflang and links between pages.
 
 - `homepage` is the page at `/{lang}`. Its children sit at the root.
-- `404` is not routable.
+- `404` is not routable: it is the copy of the not-found page (`getNotFoundPage`, rendered by `app/[lang]/not-found.tsx` in the URL's language; the built-in copy stands in when the language has no such page).
 - A page whose parent is missing, unroutable or in a cycle has no URL. In production that includes a published child of an unpublished parent.
 - Matching ignores letter case; the page redirects to the stored spelling.
 - All language versions share the `documentId` (Strapi 5), which is how hreflang finds the page in other languages. The CMS has `pl` and `en`; `de` and `uk` have no pages yet.
@@ -59,6 +59,10 @@ Adding a section type:
 1. Add the fragment to `graphql/page.graphql` (and the same selection to `blog.graphql` and `places.graphql`) and run `npm run codegen` against a CMS that has the component.
 2. Add the record to `Section` and a case to `parseSections` in `internal/sections.ts`.
 3. Add the component and a case in `components/sections/sections.tsx`.
+
+## Car-sale ads
+
+`sale` entries are listed by the Car sales section (`sections.sales`, `components/sections/sales.tsx`: count, sort, filters) and each has a page at `/pl/sprzedaz-samochodow/{slug}` (`app/[lang]/sales/[slug]`, rewritten by `proxy.ts`). `modules/sales.ts` reads them (`listSales`, `findSale`, cached under `cms:sale`). The specs stay in the ad's text (`Body`, CKEditor HTML), one labelled line each; `saleSpecs` reads them for the cards, sorting and filters without changing the text. Only the VIN, registration number and first registration are fields. The sales line and mailbox are `site.contact.salesPhone` / `salesEmail`; the ad's page has `Car` / `Offer` structured data.
 
 ## Header, footer and site settings
 

@@ -312,6 +312,8 @@ describe("chrome parsing", () => {
       contact: {
         phone: "+48 881 328 328",
         email: "biuro@mobicars.pl",
+        salesPhone: "+48 730 194 190",
+        salesEmail: "samochody@mobicars.pl",
         address: null,
         openingHours: " ",
         availabilityNote: null,
@@ -662,5 +664,29 @@ describe("fleet collections", () => {
     // The landing page has no version in this language: no route, so the fleet.
     assert.equal(fleetCollectionHref("uk", { slug: "dlia-simei", landing: "p1" }, []), "/uk/avtopark?collection=dlia-simei");
     assert.equal(fleetCollectionHref("pl", { slug: "dla-rodzin", landing: null }, routes), "/pl/flota?collection=dla-rodzin");
+  });
+});
+
+describe("car-sale specs", () => {
+  it("reads the labelled lines of an ad's text, numbers as numbers", async () => {
+    const { saleSpecs } = await import("./internal/sales");
+    const html =
+      "<p><strong>Silnik: </strong>2.0 mHEV <strong><br>Rok produkcji: </strong>2021 r.<br><strong>Moc: </strong>150 KM<br><strong>Paliwo:</strong> benzyna<br>" +
+      "<strong>Skrzynia biegów: </strong>Automatyczna<br><strong>Przebieg:</strong> 198&nbsp;000 km<br><strong>Typ nadwozia:</strong> suv</p><p>Opis i wyposażenie</p>";
+    assert.deepEqual(saleSpecs(html), {
+      engine: "2.0 mHEV",
+      year: 2021,
+      power: "150 KM",
+      fuel: "Benzyna",
+      gearbox: "Automatyczna",
+      mileage: 198000,
+      body: "SUV",
+    });
+  });
+
+  it("leaves out what the ad does not say", async () => {
+    const { saleSpecs } = await import("./internal/sales");
+    assert.deepEqual(saleSpecs("<p>Tylko opis.</p>"), { engine: null, year: null, power: null, fuel: null, gearbox: null, mileage: null, body: null });
+    assert.equal(saleSpecs(null).year, null);
   });
 });

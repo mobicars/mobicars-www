@@ -39,6 +39,9 @@ query Page($documentId: ID!, $locale: I18NLocaleCode!, $status: PublicationStatu
       ... on ComponentSectionsCars {
         ...CarsSection
       }
+      ... on ComponentSectionsSales {
+        ...SalesSection
+      }
       ... on ComponentSectionsCarClasses {
         ...CarClassesSection
       }
@@ -555,6 +558,23 @@ fragment PartCard on ComponentPartsCard {
     ...Media
   }
   pattern
+}
+
+# `sections.sales`. Fields other sections have with other types are aliased.
+fragment SalesSection on ComponentSectionsSales {
+  id
+  badge
+  salesTitle: title
+  salesText: text
+  salesHeaderAlign: headerAlign
+  ctas {
+    ...PartCta
+  }
+  background {
+    ...SectionBackground
+  }
+  salesWidth: width
+  salesSpacing: spacing
 }
 
 # `parts.cta` and `parts.link`: the buttons and links of the sections, menus, layout and announcement.

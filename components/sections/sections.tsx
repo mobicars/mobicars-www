@@ -14,6 +14,7 @@ import { Hero } from "./hero";
 import { ImageBlock } from "./image";
 import { MapBlock } from "./map";
 import { Reviews } from "./reviews";
+import { Sales } from "./sales";
 import { Social } from "./social";
 import { FormBlock } from "./form";
 import { Split } from "./split";
@@ -66,6 +67,8 @@ export function Sections({
             return <Social key={`social-${section.id}`} section={section} lang={lang} />;
           case "cars":
             return <Cars key={`cars-${section.id}`} section={section} lang={lang} pickupId={pickupId} />;
+          case "sales":
+            return <Sales key={`sales-${section.id}`} section={section} lang={lang} />;
           case "extras":
             return <Extras key={`extras-${section.id}`} section={section} lang={lang} />;
           case "promotions":

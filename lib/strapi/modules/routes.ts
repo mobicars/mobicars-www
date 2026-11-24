@@ -28,7 +28,7 @@ export async function listPageRoutes(lang: Lang): Promise<PageRoute[]> {
 }
 
 /** Marks pages whose URL an app folder answers (`proxy.ts` rewrites it), e.g. the CMS `flota` page. */
-function markServedByApp(lang: Lang, routes: PageRoute[]): PageRoute[] {
+export function markServedByApp(lang: Lang, routes: PageRoute[]): PageRoute[] {
   return routes.map((route) => {
     const path = pageHref(lang, route.segments);
     const app = resolveFleetPath(lang, path) ?? resolveReservationPath(lang, path) ?? resolveAccountPath(lang, path);

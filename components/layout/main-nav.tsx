@@ -250,7 +250,9 @@ function Submenu({
         {label}
         <Chevron open={isExpanded} />
       </Button>
-      <DisclosurePanel className="absolute inset-x-0 top-full border-t border-muted bg-white shadow-lg">
+      {/* The frame and shadow only while open: a closed panel is `hidden="until-found"`, and its empty box would
+          still draw the top line under the header (white on the blue bar). */}
+      <DisclosurePanel className={`absolute inset-x-0 top-full bg-white ${isExpanded ? "border-t border-muted shadow-lg" : ""}`}>
         <div className="mx-auto max-h-[calc(100dvh-8rem)] w-full max-w-7xl overflow-y-auto px-6 py-8">{children}</div>
       </DisclosurePanel>
     </div>

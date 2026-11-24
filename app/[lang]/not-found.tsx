@@ -1,17 +1,42 @@
-"use client";
-
 import { CalendarDays, Car, MessageCircle, Phone } from "lucide-react";
 import Link from "next/link";
+import { lang as rootLang } from "next/root-params";
 
 import { buttonClass } from "@/components/ui/button";
 import { Container, Section } from "@/components/ui/section";
-import { useLang } from "@/i18n/lang-context";
+import { Sections } from "@/components/sections/sections";
+import { defaultLang, isLang, type Lang } from "@/i18n/config";
 import { fleetHref, reservationHref } from "@/i18n/routes";
 import { HOTLINE, systemCopy } from "@/i18n/system-copy";
+import { getNotFoundPage, type Page } from "@/lib/strapi";
 
-/** "Page not found" in the site's language, inside the header and footer. */
-export default function NotFound() {
-  const lang = useLang();
+/**
+ * "Page not found" in the URL's language (`next/root-params`), inside the
+ * header and footer, still answered with 404: the sections of the CMS page
+ * with slug `404`, as on the old site. Without that page, with none of its
+ * sections, or with the CMS down, the copy below stands in, so a 404 is never blank.
+ */
+export default async function NotFound() {
+  const value = await rootLang();
+  const lang: Lang = isLang(value) ? value : defaultLang;
+  const page = await getNotFoundPage(lang).catch((error: unknown) => {
+    console.error(`[strapi] not-found page (${lang}) unavailable, showing the built-in copy`, error);
+    return null;
+  });
+  return page && page.sections.length > 0 ? <CmsNotFound page={page} lang={lang} /> : <BuiltInNotFound lang={lang} />;
+}
+
+function CmsNotFound({ page, lang }: { page: Page; lang: Lang }) {
+  return (
+    <main className="flex flex-1 flex-col">
+      {/* React hoists it into <head>: a not-found page has no metadata of its own. */}
+      <title>{page.seo.title ?? `${page.title} | MobiCars`}</title>
+      <Sections sections={page.sections} lang={lang} title={page.title} pickupId={null} />
+    </main>
+  );
+}
+
+function BuiltInNotFound({ lang }: { lang: Lang }) {
   const t = systemCopy(lang).notFound;
   return (
     <main className="flex flex-1 flex-col">

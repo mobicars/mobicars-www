@@ -1039,5 +1039,44 @@
     "related": "Weitere Extras: {group}",
     "metaTitle": "{name} – Extra zur Automiete",
     "metaDescription": "{name} ({group}) bei MobiCars: Beschreibung und Preis. Zur Automiete nach Tagen oder Monaten hinzufügen."
+  },
+  "sales": {
+    "count": {
+      "one": "{count} Auto zu verkaufen",
+      "few": "{count} Autos zu verkaufen",
+      "many": "{count} Autos zu verkaufen",
+      "other": "{count} Autos zu verkaufen"
+    },
+    "sort": "Sortieren",
+    "sortNewest": "Neueste",
+    "sortPriceAsc": "Preis: aufsteigend",
+    "sortPriceDesc": "Preis: absteigend",
+    "sortYear": "Baujahr: neueste zuerst",
+    "sortMileage": "Kilometerstand: niedrigster zuerst",
+    "filters": "Filter",
+    "clear": "Filter zurücksetzen",
+    "none": "Kein Auto passt zu den Filtern.",
+    "empty": "Zurzeit haben wir keine Autos zu verkaufen. Schauen Sie bald wieder vorbei.",
+    "gross": "brutto",
+    "priceOnRequest": "Preis auf Anfrage",
+    "details": "Details",
+    "photos": "{count} Fotos",
+    "call": "Anrufen",
+    "write": "E-Mail schreiben",
+    "descriptionTitle": "Beschreibung",
+    "otherTitle": "Weitere Autos zu verkaufen",
+    "allAds": "Alle Angebote",
+    "list": "Autos zu verkaufen",
+    "contactTitle": "Interessiert?",
+    "contactLead": "Rufen Sie an oder schreiben Sie – wir vereinbaren eine Besichtigung und Probefahrt.",
+    "price": "Preis",
+    "metaDescription": "{name} zu verkaufen von MobiCars: {details}. Ein Auto aus unserer Flotte, regelmäßig gewartet.",
+    "specs": {
+      "year": "Baujahr",
+      "fuel": "Kraftstoff",
+      "gearbox": "Getriebe",
+      "mileage": "Kilometerstand",
+      "body": "Karosserie"
+    }
   }
 }

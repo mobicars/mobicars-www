@@ -125,7 +125,10 @@ function inlines(children: RichInline[]): ReactNode[] {
         </Link>
       );
     }
-    let node: ReactNode = child.text;
+    // A line break inside a paragraph (`<br>` in CKEditor, kept as "\n" by the parser).
+    let node: ReactNode = child.text.includes("\n")
+      ? child.text.split("\n").flatMap((line, lineIndex) => (lineIndex === 0 ? [line] : [<br key={lineIndex} />, line]))
+      : child.text;
     if (child.code) node = <code className="rounded bg-surface px-1 text-[0.9em]">{node}</code>;
     if (child.bold) node = <strong className="font-semibold">{node}</strong>;
     if (child.italic) node = <em>{node}</em>;

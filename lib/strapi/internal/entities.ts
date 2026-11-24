@@ -209,6 +209,10 @@ export type Contact = {
   /** `tel:+48881328328` */
   phoneHref: string;
   email: string;
+  /** The car-sales line and mailbox (the Car sales section and each ad's page, its `Offer` seller). */
+  salesPhone: string;
+  salesPhoneHref: string;
+  salesEmail: string;
   address: string | null;
   /** Phone line hours, as the editor writes them ("pn–pt 7:00–20:00, …"). */
   openingHours: string | null;
@@ -373,6 +377,9 @@ export function parseChrome(raw: ChromeQuery, lang: Lang, routes: readonly PageR
           phone: contact.phone.trim(),
           phoneHref: phoneHref(contact.phone),
           email: contact.email.trim(),
+          salesPhone: contact.salesPhone.trim(),
+          salesPhoneHref: phoneHref(contact.salesPhone),
+          salesEmail: contact.salesEmail.trim(),
           address: contact.address?.trim() || null,
           openingHours: contact.openingHours?.trim() || null,
           availabilityNote: contact.availabilityNote?.trim() || null,

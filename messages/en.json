@@ -1039,5 +1039,44 @@
     "related": "More add-ons: {group}",
     "metaTitle": "{name} – car rental add-on",
     "metaDescription": "{name} ({group}) at MobiCars: description and price. Add it to a daily or monthly car rental."
+  },
+  "sales": {
+    "count": {
+      "one": "{count} car for sale",
+      "few": "{count} cars for sale",
+      "many": "{count} cars for sale",
+      "other": "{count} cars for sale"
+    },
+    "sort": "Sort",
+    "sortNewest": "Newest",
+    "sortPriceAsc": "Price: lowest first",
+    "sortPriceDesc": "Price: highest first",
+    "sortYear": "Year: newest first",
+    "sortMileage": "Mileage: lowest first",
+    "filters": "Filters",
+    "clear": "Clear filters",
+    "none": "No car matches the filters.",
+    "empty": "We have no cars for sale right now. Check back soon.",
+    "gross": "gross",
+    "priceOnRequest": "Price on request",
+    "details": "Details",
+    "photos": "{count} photos",
+    "call": "Call",
+    "write": "Send an e-mail",
+    "descriptionTitle": "Description",
+    "otherTitle": "Other cars for sale",
+    "allAds": "All ads",
+    "list": "Cars for sale",
+    "contactTitle": "Interested?",
+    "contactLead": "Call or write – we will arrange a viewing and a test drive.",
+    "price": "Price",
+    "metaDescription": "{name} for sale from MobiCars: {details}. A car from our fleet, serviced regularly.",
+    "specs": {
+      "year": "Year",
+      "fuel": "Fuel",
+      "gearbox": "Gearbox",
+      "mileage": "Mileage",
+      "body": "Body type"
+    }
   }
 }

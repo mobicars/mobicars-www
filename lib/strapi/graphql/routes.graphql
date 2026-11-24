@@ -20,3 +20,10 @@ query PageRoutes($locale: I18NLocaleCode!, $status: PublicationStatus!, $page: I
     }
   }
 }
+
+# The page with slug `404`, the copy of the not-found page (it has no URL of its own). See `modules/pages.ts`.
+query NotFoundPage($locale: I18NLocaleCode!, $status: PublicationStatus!) {
+  pages(locale: $locale, status: $status, filters: { slug: { eq: "404" } }, pagination: { limit: 1 }) {
+    documentId
+  }
+}

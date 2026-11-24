@@ -1,21 +1,13 @@
 import type { MetadataRoute } from "next";
+import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 
 import { defaultLang, langs, type Lang } from "@/i18n/config";
 import { fleetHref } from "@/i18n/routes";
+import { cacheEnabled } from "@/lib/cache";
 import { listFleetCars } from "@/lib/fleet/cars";
 import { absoluteUrl } from "@/lib/fleet/seo";
-import {
-  blogHref,
-  getBlogPost,
-  getPage,
-  getPlacePage,
-  listBlogRoutes,
-  listPageRoutes,
-  listPlaceRoutes,
-  pageHref,
-  type Page,
-  type PageRoute,
-} from "@/lib/strapi";
+import { listSales, listSitemapUrls } from "@/lib/strapi";
 
 /**
  * `/sitemap.xml`: one file for every language. The site has a few hundred URLs,
@@ -24,33 +16,44 @@ import {
  *
  * Listed, each with hreflang for the languages it exists in and `x-default`
  * (Polish) when there is a Polish version:
- * - CMS pages (`app/[lang]/page.tsx`, `app/[lang]/[...slug]`), only in the
- *   languages that have the page, and only when its SEO is not `noIndex`.
- * - the fleet list and every car page (`app/[lang]/fleet/**`).
+ * - CMS pages, blog posts, cities and local pages, from one light query per
+ *   language (`listSitemapUrls`): only the languages that have the document,
+ *   and only versions whose SEO is not `noIndex` (neither listed nor an alternate);
+ * - the fleet list and every car page (`app/[lang]/fleet/**`);
+ * - every car-sale ad (`app/[lang]/sales/[slug]`) not marked `noIndex`.
  *
  * Left out: the reservation flow and the customer panel (`noindex`, blocked in
- * `app/robots.ts`) and Route Handlers. Blog posts (`app/[lang]/blog/[slug]`),
- * cities and local pages are listed like CMS pages.
+ * `app/robots.ts`) and Route Handlers.
  *
- * CMS pages carry `lastModified` from Strapi's `updatedAt` per language
- * (`listPageRoutes`); the fleet has none, RentCarSoft gives no change date.
+ * CMS entries carry `lastModified` from Strapi's `updatedAt` per language;
+ * the fleet has none, RentCarSoft gives no change date.
  *
- * Caching: every read below is cached and tagged by its source (`cms`,
- * `cms:page`, `rcs`, `rcs:catalog`) while `CACHE_ENABLED` is on, so the
- * sitemap is prerendered and expires with the same tags as the pages
- * (`POST /api/revalidate`). With the cache off it is built per request, drafts
- * included, like every other page; `app/robots.ts` closes that site to crawlers.
- * A failed read fails the sitemap instead of caching a partial one.
+ * Caching: with `CACHE_ENABLED` on the whole sitemap is one cached entry, kept
+ * until a page, post, city, local page or the car catalog changes (the tags
+ * `POST /api/revalidate` expires), so it is built once, not per request. With
+ * the cache off it is built per request, drafts included; `app/robots.ts`
+ * closes that site to crawlers. A failed read fails the sitemap instead of
+ * caching a partial one.
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [pages, cities, locals, posts, cars] = await Promise.all([
-    cmsEntries(listPageRoutes, getPage),
-    cmsEntries((lang) => listPlaceRoutes("city", lang), (lang, id) => getPlacePage("city", lang, id)),
-    cmsEntries((lang) => listPlaceRoutes("local", lang), (lang, id) => getPlacePage("local", lang, id)),
-    cmsEntries(listBlogRoutes, async (lang, id) => (await getBlogPost(lang, id))?.page ?? null, (lang, segments) => blogHref(lang, segments[0])),
-    fleetEntries(),
-  ]);
-  return [...pages, ...cities, ...locals, ...posts, ...cars];
+  if (cacheEnabled()) {
+    return cachedSitemap();
+  }
+  await connection();
+  return buildSitemap();
+}
+
+async function cachedSitemap(): Promise<MetadataRoute.Sitemap> {
+  "use cache";
+  cacheLife("max");
+  // The CMS lists and the car catalog below tag this entry too.
+  cacheTag("sitemap");
+  return buildSitemap();
+}
+
+async function buildSitemap(): Promise<MetadataRoute.Sitemap> {
+  const [cms, cars, sales] = await Promise.all([cmsEntries(), fleetEntries(), salesEntries()]);
+  return [...cms, ...cars, ...sales];
 }
 
 type Localized = Partial<Record<Lang, string>>;
@@ -74,45 +77,42 @@ function entries(
   );
 }
 
-/**
- * CMS pages, city or local pages (`lib/strapi/modules/places.ts`) or blog posts, grouped
- * by `documentId`, shared by every language version (Strapi 5). A version
- * with `seo.noIndex` is neither listed nor an alternate.
- */
-async function cmsEntries(
-  listRoutes: (lang: Lang) => Promise<PageRoute[]>,
-  readPage: (lang: Lang, documentId: string) => Promise<Page | null>,
-  href: (lang: Lang, segments: readonly string[]) => string = pageHref,
-): Promise<MetadataRoute.Sitemap> {
-  const perLang = await Promise.all(
-    langs.map(async (lang) => {
-      // `servedByApp`: an app folder answers the URL. The fleet page shows its CMS page and is
-      // listed like one; the CMS copies the reservation and account folders never show are left out.
-      const routes = (await listRoutes(lang)).filter(
-        (route) => !route.servedByApp || href(lang, route.segments) === fleetHref(lang),
-      );
-      const indexable = await Promise.all(
-        routes.map(async (route) => {
-          const page = await readPage(lang, route.documentId);
-          return page && !page.seo.noIndex ? route : null;
-        }),
-      );
-      return { lang, routes: indexable.filter((route) => route !== null) };
-    }),
-  );
-
+/** Every language's CMS URLs, grouped by document (type and `documentId`, shared by its language versions in Strapi 5). */
+async function cmsEntries(): Promise<MetadataRoute.Sitemap> {
+  const perLang = await Promise.all(langs.map(async (lang) => ({ lang, urls: await listSitemapUrls(lang) })));
   const documents = new Map<string, { versions: Localized; modified: Localized }>();
-  for (const { lang, routes } of perLang) {
-    for (const route of routes) {
-      const document = documents.get(route.documentId) ?? { versions: {}, modified: {} };
-      document.versions[lang] = href(lang, route.segments);
-      document.modified[lang] = route.updatedAt;
-      documents.set(route.documentId, document);
+  for (const { lang, urls } of perLang) {
+    for (const url of urls) {
+      const document = documents.get(url.key) ?? { versions: {}, modified: {} };
+      document.versions[lang] = url.href;
+      if (url.updatedAt) {
+        document.modified[lang] = url.updatedAt;
+      }
+      documents.set(url.key, document);
     }
   }
   return [...documents.values()].flatMap(({ versions, modified }) => entries(versions, {}, modified));
 }
 
+/** The car-sale ads of every language, grouped by document like the CMS pages. */
+async function salesEntries(): Promise<MetadataRoute.Sitemap> {
+  const perLang = await Promise.all(langs.map(async (lang) => ({ lang, sales: await listSales(lang) })));
+  const documents = new Map<string, { versions: Localized; modified: Localized }>();
+  for (const { lang, sales } of perLang) {
+    for (const sale of sales) {
+      if (sale.noIndex) {
+        continue;
+      }
+      const document = documents.get(sale.id) ?? { versions: {}, modified: {} };
+      document.versions[lang] = sale.href;
+      if (sale.updatedAt) {
+        document.modified[lang] = sale.updatedAt;
+      }
+      documents.set(sale.id, document);
+    }
+  }
+  return [...documents.values()].flatMap(({ versions, modified }) => entries(versions, {}, modified));
+}
 
 /**
  * The fleet list in every language and each car of the daily catalog in the
