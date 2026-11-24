@@ -41,7 +41,7 @@ type Blog {
   localizations_connection(filters: BlogFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): BlogRelationResponseCollection
   publishedAt: DateTime
   sections: [BlogSectionsDynamicZone]
-  seo: ComponentSharedSeo
+  seo: ComponentPartsSeo
   slug: String!
   title: String!
   updatedAt: DateTime
@@ -66,7 +66,7 @@ input BlogFiltersInput {
   not: BlogFiltersInput
   or: [BlogFiltersInput]
   publishedAt: DateTimeFilterInput
-  seo: ComponentSharedSeoFiltersInput
+  seo: ComponentPartsSeoFiltersInput
   slug: StringFilterInput
   title: StringFilterInput
   updatedAt: DateTimeFilterInput
@@ -78,7 +78,7 @@ input BlogInput {
   excerpt: String
   publishedAt: DateTime
   sections: [BlogSectionsDynamicZoneInput!]
-  seo: ComponentSharedSeoInput
+  seo: ComponentPartsSeoInput
   slug: String
   title: String
 }
@@ -208,7 +208,7 @@ type City {
   pickupPoint: Int
   publishedAt: DateTime
   sections: [CitySectionsDynamicZone]
-  seo: ComponentSharedSeo
+  seo: ComponentPartsSeo
   shortName: String
   slug: String!
   title: String!
@@ -236,7 +236,7 @@ input CityFiltersInput {
   or: [CityFiltersInput]
   pickupPoint: IntFilterInput
   publishedAt: DateTimeFilterInput
-  seo: ComponentSharedSeoFiltersInput
+  seo: ComponentPartsSeoFiltersInput
   shortName: StringFilterInput
   slug: StringFilterInput
   title: StringFilterInput
@@ -250,7 +250,7 @@ input CityInput {
   pickupPoint: Int
   publishedAt: DateTime
   sections: [CitySectionsDynamicZoneInput!]
-  seo: ComponentSharedSeoInput
+  seo: ComponentPartsSeoInput
   shortName: String
   slug: String
   title: String
@@ -493,6 +493,17 @@ type ComponentPartsSeo {
   noFollow: Boolean!
   noIndex: Boolean!
   shareImage: UploadFile
+}
+
+input ComponentPartsSeoFiltersInput {
+  and: [ComponentPartsSeoFiltersInput]
+  metaDescription: StringFilterInput
+  metaKeywords: StringFilterInput
+  metaTitle: StringFilterInput
+  noFollow: BooleanFilterInput
+  noIndex: BooleanFilterInput
+  not: ComponentPartsSeoFiltersInput
+  or: [ComponentPartsSeoFiltersInput]
 }
 
 input ComponentPartsSeoInput {
@@ -992,27 +1003,6 @@ type ComponentSharedSeo {
   noFollow: Boolean
   noIndex: Boolean
   shareImage: UploadFile
-}
-
-input ComponentSharedSeoFiltersInput {
-  and: [ComponentSharedSeoFiltersInput]
-  metaDescription: StringFilterInput
-  metaKewords: StringFilterInput
-  metaTitle: StringFilterInput
-  noFollow: BooleanFilterInput
-  noIndex: BooleanFilterInput
-  not: ComponentSharedSeoFiltersInput
-  or: [ComponentSharedSeoFiltersInput]
-}
-
-input ComponentSharedSeoInput {
-  id: ID
-  metaDescription: String
-  metaKewords: String
-  metaTitle: String
-  noFollow: Boolean
-  noIndex: Boolean
-  shareImage: ID
 }
 
 type ComponentSharedSocialMedia {
@@ -1860,7 +1850,7 @@ union GenericMorph = Announcement | Blog | CarCollection | City | ComponentMenuG
 
 type Global {
   createdAt: DateTime
-  defaultSeo: ComponentSharedSeo
+  defaultSeo: ComponentPartsSeo
   documentId: ID!
   locale: String
   localizations: [Global]!
@@ -1870,7 +1860,7 @@ type Global {
 }
 
 input GlobalInput {
-  defaultSeo: ComponentSharedSeoInput
+  defaultSeo: ComponentPartsSeoInput
   publishedAt: DateTime
 }
 
@@ -2060,7 +2050,7 @@ type LocalPage {
   pickupPoint: Int
   publishedAt: DateTime
   sections: [LocalPageSectionsDynamicZone]
-  seo: ComponentSharedSeo
+  seo: ComponentPartsSeo
   shortName: String
   slug: String
   updatedAt: DateTime
@@ -2086,7 +2076,7 @@ input LocalPageFiltersInput {
   or: [LocalPageFiltersInput]
   pickupPoint: IntFilterInput
   publishedAt: DateTimeFilterInput
-  seo: ComponentSharedSeoFiltersInput
+  seo: ComponentPartsSeoFiltersInput
   shortName: StringFilterInput
   slug: StringFilterInput
   updatedAt: DateTimeFilterInput
@@ -2098,7 +2088,7 @@ input LocalPageInput {
   pickupPoint: Int
   publishedAt: DateTime
   sections: [LocalPageSectionsDynamicZoneInput!]
-  seo: ComponentSharedSeoInput
+  seo: ComponentPartsSeoInput
   shortName: String
   slug: String
 }
@@ -2451,7 +2441,7 @@ type Page {
   parentPage: Page
   publishedAt: DateTime
   sections: [PageSectionsDynamicZone]
-  seo: ComponentSharedSeo
+  seo: ComponentPartsSeo
   slug: String!
   title: String!
   updatedAt: DateTime
@@ -2481,7 +2471,7 @@ input PageFiltersInput {
   or: [PageFiltersInput]
   parentPage: PageFiltersInput
   publishedAt: DateTimeFilterInput
-  seo: ComponentSharedSeoFiltersInput
+  seo: ComponentPartsSeoFiltersInput
   slug: StringFilterInput
   title: StringFilterInput
   updatedAt: DateTimeFilterInput
@@ -2494,7 +2484,7 @@ input PageInput {
   parentPage: ID
   publishedAt: DateTime
   sections: [PageSectionsDynamicZoneInput!]
-  seo: ComponentSharedSeoInput
+  seo: ComponentPartsSeoInput
   slug: String
   title: String
 }
@@ -3053,7 +3043,7 @@ type Sale {
   Gallery(filters: UploadFileFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [UploadFile]!
   Gallery_connection(filters: UploadFileFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): UploadFileRelationResponseCollection!
   Price: Float!
-  Seo(filters: ComponentSharedSeoFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentSharedSeo]
+  Seo(filters: ComponentPartsSeoFiltersInput, pagination: PaginationArg = {}, sort: [String] = []): [ComponentPartsSeo]
   Title: String!
   createdAt: DateTime
   documentId: ID!
@@ -3073,7 +3063,7 @@ type SaleEntityResponseCollection {
 input SaleFiltersInput {
   Body: JSONFilterInput
   Price: FloatFilterInput
-  Seo: ComponentSharedSeoFiltersInput
+  Seo: ComponentPartsSeoFiltersInput
   Title: StringFilterInput
   and: [SaleFiltersInput]
   createdAt: DateTimeFilterInput
@@ -3091,7 +3081,7 @@ input SaleInput {
   Body: JSON
   Gallery: [ID]
   Price: Float
-  Seo: [ComponentSharedSeoInput]
+  Seo: [ComponentPartsSeoInput]
   Title: String
   publishedAt: DateTime
   slug: String
