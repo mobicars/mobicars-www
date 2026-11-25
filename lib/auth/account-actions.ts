@@ -2,12 +2,9 @@
 
 import { timingSafeEqual } from "node:crypto";
 
-import { refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { accountHref } from "@/i18n/routes";
 import {
-  changeClientPassword,
   CLIENT_BANNED_KEY_ID,
   clientEmailExists,
   completePasswordRecovery,
@@ -18,11 +15,8 @@ import {
   loginClient,
   RentCarSoftError,
   startPasswordRecovery,
-  updateClient,
 } from "@/lib/rentcarsoft";
-import { rawKeys } from "@/lib/account/details";
 import { toRentCarSoftPhone } from "@/lib/account/phone";
-import { CONSENT_FIELDS, DETAIL_KEY_IDS, TEXT_FIELDS } from "@/lib/account/fields";
 
 import {
   checkNewPassword,
@@ -30,7 +24,6 @@ import {
   formPassword,
   formText,
   isEmail,
-  MAX_PASSWORD_LENGTH,
   type PasswordProblem,
 } from "./form";
 import { loginPath } from "./paths";
@@ -41,73 +34,13 @@ import {
   requestIp,
   type LimitKey,
 } from "./rate-limit";
-import { createSession, readSession } from "./session";
+import { createSession } from "./session";
 
 /** Client key ids used by the account forms. */
 const KEY = { firstName: 1, lastName: 2, phone: 4, email: 5, vatNumber: 7, companyName: 9, companyAddress: 11, companyCity: 13, companyPostalCode: 14 } as const;
 
 function logFailure(label: string, error: unknown) {
   console.error(label, error instanceof RentCarSoftError ? error.code : error);
-}
-
-// --- Password change inside the panel -------------------------------------
-
-export type ChangePasswordState =
-  | { done: true }
-  | { error: PasswordProblem | "wrong_current" | "same" | "rate_limited" | "unavailable" }
-  | null;
-
-export async function changePassword(
-  _previous: ChangePasswordState,
-  formData: FormData,
-): Promise<ChangePasswordState> {
-  const lang = formLang(formData);
-  const session = await readSession();
-  if (!session) {
-    redirect(loginPath(lang, accountHref(lang, "security")));
-  }
-
-  const current = formPassword(formData, "current");
-  const password = formPassword(formData, "password");
-  const problem = checkNewPassword(password, formPassword(formData, "confirm"));
-  if (problem) {
-    return { error: problem };
-  }
-  if (password === current) {
-    return { error: "same" };
-  }
-
-  const keys: LimitKey[] = [{ key: `change:${session.clientId}`, max: 5 }];
-  if (isRateLimited(keys)) {
-    return { error: "rate_limited" };
-  }
-
-  try {
-    const client = await getClient(session.clientId, { keyIds: [KEY.email] });
-    const email = client.attributes.email?.value?.trim();
-    if (!email) {
-      return { error: "unavailable" };
-    }
-    // The current password is checked by RentCarSoft itself.
-    try {
-      await loginClient({ email, password: current.slice(0, MAX_PASSWORD_LENGTH) });
-    } catch (error) {
-      if (error instanceof RentCarSoftError && error.code !== "timeout" && error.code !== "network" && error.code !== "api") {
-        recordFailure(keys);
-        return { error: "wrong_current" };
-      }
-      throw error;
-    }
-    await changeClientPassword(session.clientId, password);
-  } catch (error) {
-    logFailure("Password change failed", error);
-    return { error: "unavailable" };
-  }
-
-  clearFailures(keys);
-  // A fresh cookie: the session now dates from the password change.
-  await createSession(session.clientId, session.method);
-  return { done: true };
 }
 
 // --- Password recovery -----------------------------------------------------
@@ -268,7 +201,8 @@ export async function resetPassword(
     redirect(loginPath(lang));
   }
   await createSession(clientId, "password");
-  redirect(accountHref(lang));
+  // The client panel is external (CMS `site.clientPanelUrl`): signed in, back to the site.
+  redirect(`/${lang}`);
 }
 
 // --- Registration ------------------------------------------------------------
@@ -374,128 +308,6 @@ export async function register(
   }
 
   await createSession(clientId, "password");
-  redirect(accountHref(lang));
-}
-
-// --- Account details ---------------------------------------------------------
-
-/** What the form sent, so it can show it again after React resets the form. */
-type SubmittedDetails = { values: Record<string, string>; checked: Record<string, boolean> };
-
-export type UpdateDetailsState =
-  | ({ done: true; changed: number } & SubmittedDetails)
-  | ({
-      error: "missing" | "invalid_phone" | "invalid_vat" | "not_saved" | "rate_limited" | "unavailable";
-      fields: string[];
-    } & SubmittedDetails)
-  | null;
-
-/**
- * Saves the whitelisted fields from `lib/account/fields.ts` that changed.
- * The client is read back afterwards: the write format is not verified on the
- * live API, so a request RentCarSoft accepts but ignores is reported, not
- * shown as saved.
- */
-export async function updateDetails(
-  _previous: UpdateDetailsState,
-  formData: FormData,
-): Promise<UpdateDetailsState> {
-  const lang = formLang(formData);
-  const session = await readSession();
-  if (!session) {
-    redirect(loginPath(lang, accountHref(lang, "details")));
-  }
-
-  const submitted: SubmittedDetails = {
-    values: Object.fromEntries(
-      TEXT_FIELDS.map((field) => [field.name, formText(formData, field.name, field.maxLength)]),
-    ),
-    checked: Object.fromEntries(
-      CONSENT_FIELDS.map((field) => [field.name, formData.get(field.name) === "on"]),
-    ),
-  };
-  const fail = (
-    error: Extract<UpdateDetailsState, { error: string }>["error"],
-    fields: string[] = [],
-  ): UpdateDetailsState => ({ error, fields, ...submitted });
-
-  const keys: LimitKey[] = [{ key: `details:${session.clientId}`, max: 10 }];
-  if (isRateLimited(keys)) {
-    return fail("rate_limited");
-  }
-
-  let current: Map<number, string>;
-  let isCompany: boolean;
-  try {
-    const client = await getClient(session.clientId, { keyIds: DETAIL_KEY_IDS });
-    current = rawKeys(client);
-    isCompany = client.company === true;
-  } catch (error) {
-    logFailure("Details read failed", error);
-    return fail("unavailable");
-  }
-
-  const changes: Record<number, string> = {};
-  const missing: string[] = [];
-  for (const field of TEXT_FIELDS) {
-    if (field.companyOnly && !isCompany) {
-      continue;
-    }
-    let value = submitted.values[field.name];
-    if (field.required && !value) {
-      missing.push(field.name);
-    }
-    if (field.name === "phone" && value) {
-      const phone = toRentCarSoftPhone(value);
-      if (!phone) {
-        return fail("invalid_phone", ["phone"]);
-      }
-      value = phone;
-    }
-    if (value !== (current.get(field.keyId) ?? "")) {
-      changes[field.keyId] = value;
-    }
-  }
-  for (const field of CONSENT_FIELDS) {
-    if (field.companyOnly && !isCompany) {
-      continue;
-    }
-    const value = submitted.checked[field.name] ? field.yes : field.no;
-    const was = current.get(field.keyId);
-    // An unset select counts as “no”: do not write “no” over nothing.
-    if (value !== was && !(value === field.no && !was)) {
-      changes[field.keyId] = value;
-    }
-  }
-
-  if (missing.length > 0) {
-    return fail("missing", missing);
-  }
-  const vat = changes[7];
-  if (vat !== undefined && vat.replace(/[\s-]/g, "").length < 8) {
-    return fail("invalid_vat", ["vatNumber"]);
-  }
-  if (Object.keys(changes).length === 0) {
-    return { done: true, changed: 0, ...submitted };
-  }
-
-  recordFailure(keys);
-  try {
-    await updateClient(session.clientId, changes);
-    const saved = rawKeys(await getClient(session.clientId, { keyIds: DETAIL_KEY_IDS }));
-    const notSaved = Object.entries(changes).filter(
-      ([id, value]) => (saved.get(Number(id)) ?? "") !== value,
-    );
-    if (notSaved.length > 0) {
-      console.error("Details not saved for key ids", notSaved.map(([id]) => id));
-      return fail("not_saved");
-    }
-  } catch (error) {
-    logFailure("Details update failed", error);
-    return fail("unavailable");
-  }
-
-  // The overview and the greeting read the same client: show the new data.
-  refresh();
-  return { done: true, changed: Object.keys(changes).length, ...submitted };
+  // The client panel is external (CMS `site.clientPanelUrl`): signed in, back to the site.
+  redirect(`/${lang}`);
 }

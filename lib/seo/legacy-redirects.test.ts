@@ -82,7 +82,7 @@ describe("legacy redirects", () => {
     assert.equal(target("/en/reservation-2"), "/en/reservation");
     assert.equal(target("/en/cars"), "/en/fleet");
     assert.equal(target("/pl/regulations"), "/pl/dokumenty");
-    assert.equal(target("/panel_klienta"), "/pl/konto");
+    assert.equal(target("/panel_klienta"), "/pl/konto/logowanie");
     assert.equal(target("/typy-samochodow-hybrydowych"), "/pl/blog/typy-samochodow-hybrydowych");
     assert.equal(target("/pl/abs-co-to-takiego"), "/pl/blog/abs-co-to-takiego");
     assert.equal(target("/pl/blog/szukaj/tagi/hybryda"), "/pl/blog");

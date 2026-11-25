@@ -8,7 +8,6 @@ import { Logo } from "@/components/layout/logo";
 import { Container } from "@/components/ui/section";
 import type { Lang } from "@/i18n/config";
 import { fill, getMessages } from "@/i18n/messages";
-import { accountHref } from "@/i18n/routes";
 import { formatOpeningHours, getChrome, listPlaceLinks, type Contact, type MenuItem, type NavLink } from "@/lib/strapi";
 
 import { AnnouncementBar } from "./announcement-bar";
@@ -82,10 +81,9 @@ export function SiteHeader({ lang }: { lang: Lang }) {
               <TopBarLinks lang={lang} />
             </Suspense>
             <div className="ml-auto flex items-center gap-2">
-              <Link href={accountHref(lang, "reservations")} className={TOP_BAR_PILL}>
-                <UserRound className="size-3.5 shrink-0" aria-hidden />
-                {t.login}
-              </Link>
+              <Suspense fallback={null}>
+                <PanelLink lang={lang} />
+              </Suspense>
               <LanguageSwitcher lang={lang} />
             </div>
           </Container>
@@ -117,11 +115,11 @@ async function Announcement({ lang }: { lang: Lang }) {
 async function HeaderMenu({ lang }: { lang: Lang }) {
   // No "Zarezerwuj" in the header (decided 21 November 2026): the hotline is its one button; the booking starts from the
   // pages' search. `layout.headerCta` stays in the CMS, unused.
-  const { header, contact, topLinks } = await getChrome(lang);
+  const { header, contact, topLinks, clientPanelUrl } = await getChrome(lang);
   return (
     <MainNav
       entries={header.map((item) => toEntry(item, lang))}
-      menuFooter={<MenuFooter lang={lang} contact={contact} links={topLinks} />}
+      menuFooter={<MenuFooter lang={lang} contact={contact} links={topLinks} panelUrl={clientPanelUrl} />}
       actions={contact ? <HotlineButton lang={lang} contact={contact} /> : null}
     />
   );
@@ -130,6 +128,20 @@ async function HeaderMenu({ lang }: { lang: Lang }) {
 /** The top bar's right side: "Zaloguj się" and (`LanguageSwitcher`) the language, white-framed pills on the navy. */
 const TOP_BAR_PILL =
   "flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border border-white/60 px-3 text-xs font-semibold text-white outline-none transition-colors duration-200 ease-out hover:border-white hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-blue-dark motion-reduce:transition-none";
+
+/** "Zaloguj się": the external client panel (CMS `site.clientPanelUrl`); nothing while it is not set. */
+async function PanelLink({ lang }: { lang: Lang }) {
+  const { clientPanelUrl } = await getChrome(lang);
+  if (!clientPanelUrl) {
+    return null;
+  }
+  return (
+    <a href={clientPanelUrl} className={TOP_BAR_PILL}>
+      <UserRound className="size-3.5 shrink-0" aria-hidden />
+      {getMessages(lang).layout.login}
+    </a>
+  );
+}
 
 /** The top bar's left side: the social links (green circles, CMS `site`), then the CMS top links from `md` (`layout.topLinks`). */
 async function TopBarLinks({ lang }: { lang: Lang }) {
@@ -203,7 +215,7 @@ function hoursLines(contact: Contact, lang: Lang): string[] {
 }
 
 /** Bottom of the phone menu: the top bar's links (hidden there below `md`), hotline with its hours, the customer's bookings, the language. */
-function MenuFooter({ lang, contact, links }: { lang: Lang; contact: Contact | null; links: NavLink[] }) {
+function MenuFooter({ lang, contact, links, panelUrl }: { lang: Lang; contact: Contact | null; links: NavLink[]; panelUrl: string | null }) {
   const t = getMessages(lang).layout;
   const rowClass =
     "flex min-h-12 items-center gap-3 rounded-control px-3 py-2 text-base font-bold text-blue-dark outline-none hover:bg-blue-dark/[0.04] focus-visible:ring-2 focus-visible:ring-blue-medium";
@@ -231,10 +243,12 @@ function MenuFooter({ lang, contact, links }: { lang: Lang; contact: Contact | n
           </span>
         </a>
       ) : null}
-      <Link href={accountHref(lang, "reservations")} className={rowClass}>
-        <CalendarCheck className="size-5 shrink-0 text-blue-medium" aria-hidden />
-        {t.myReservations}
-      </Link>
+      {panelUrl ? (
+        <a href={panelUrl} className={rowClass}>
+          <CalendarCheck className="size-5 shrink-0 text-blue-medium" aria-hidden />
+          {t.myReservations}
+        </a>
+      ) : null}
       <LanguageSwitcher lang={lang} variant="menu" />
     </div>
   );

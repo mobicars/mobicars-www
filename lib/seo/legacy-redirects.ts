@@ -53,7 +53,7 @@ const EXACT: Readonly<Record<string, string>> = {
   "/pl/cennik": "/pl/wynajem-na-dni",
 
   // The customer panel moved from panel.mobicars.pl into the site.
-  "/panel_klienta": accountHref("pl"),
+  "/panel_klienta": accountHref("pl", "login"),
 
   // Car sales: the old site rewrote these spellings to the same page.
   "/samochody-na-sprzedaż": "/pl/sprzedaz-samochodow",

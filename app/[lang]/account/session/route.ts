@@ -1,7 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import { isLang } from "@/i18n/config";
-import { accountHref } from "@/i18n/routes";
 import { loginPath } from "@/lib/auth/paths";
 import { deleteSession, readSession } from "@/lib/auth/session";
 import {
@@ -34,7 +33,7 @@ export async function GET(
     try {
       const client = await getClient(session.clientId, { keyIds: [CLIENT_BANNED_KEY_ID] });
       if (!isClientBanned(client)) {
-        return to(accountHref(lang));
+        return to(`/${lang}`);
       }
     } catch (error) {
       if (!(error instanceof RentCarSoftError && error.code === "not_found")) {

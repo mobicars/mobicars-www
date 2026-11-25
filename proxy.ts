@@ -94,6 +94,10 @@ export async function proxy(request: NextRequest, event: NextFetchEvent) {
       url.pathname = account.canonical;
       return NextResponse.redirect(url, 308);
     }
+    if (!account.page) {
+      // The old panel's pages: the panel is external now (CMS `site.clientPanelUrl`).
+      return notFound(request, found.lang);
+    }
     const token = request.cookies.get(SESSION_COOKIE)?.value;
     // A signed-in client has nothing to do on the sign-in pages. The token is
     // decrypted here so a stale cookie cannot bounce between login and panel.

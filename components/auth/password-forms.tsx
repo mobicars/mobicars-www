@@ -10,12 +10,10 @@ import { useAuthFormsCopy } from "@/i18n/auth-forms";
 import type { Lang } from "@/i18n/config";
 import { accountHref } from "@/i18n/routes";
 import {
-  changePassword,
   requestPasswordReset,
   resendPasswordResetCode,
   resetPassword,
   verifyResetCode,
-  type ChangePasswordState,
   type RecoveryRequestResult,
   type ResetPasswordState,
   type VerifyCodeState,
@@ -310,38 +308,5 @@ function PasswordStep({
         <SubmitButton pending={pending} label={t.submit} pendingLabel={forms.common.saving} />
       </form>
     </>
-  );
-}
-
-export function ChangePasswordForm({ lang }: { lang: Lang }) {
-  const { login, forms, errorText } = useCopy();
-  const t = forms.security;
-  const [state, action, pending] = useActionState<ChangePasswordState, FormData>(changePassword, null);
-  const error = state && "error" in state ? state.error : null;
-
-  return (
-    <form action={action} className="flex flex-col gap-4">
-      <input type="hidden" name="lang" value={lang} />
-      <PasswordField
-        label={t.current}
-        name="current"
-        autoComplete="current-password"
-        required
-        maxLength={256}
-        invalid={error === "wrong_current"}
-        showLabel={login.showPassword}
-        hideLabel={login.hidePassword}
-      />
-      <NewPasswordFields
-        invalid={error === "too_short" || error === "mismatch" || error === "same"}
-      />
-      {state && "done" in state ? <FormAlert tone="success">{t.done}</FormAlert> : null}
-      {error ? (
-        <FormAlert tone="error">
-          {error === "wrong_current" ? t.wrong_current : error === "same" ? t.same : errorText(error)}
-        </FormAlert>
-      ) : null}
-      <SubmitButton pending={pending} label={t.submit} pendingLabel={forms.common.saving} />
-    </form>
   );
 }

@@ -344,6 +344,7 @@ describe("chrome parsing", () => {
       },
       appStoreUrl: "https://apps.apple.com/pl/app/mobicars",
       googlePlayUrl: "javascript:alert(1)",
+      clientPanelUrl: "https://panel.mobicars.pl",
       social: [
         { platform: "x" as const, url: "javascript:alert(1)" },
         { platform: "facebook" as const, url: "https://facebook.com/mobicars" },
@@ -381,6 +382,7 @@ describe("chrome parsing", () => {
     assert.equal(chrome.contact?.mapUrl, null);
     assert.deepEqual(chrome.contact?.company, { legalName: "MobiCars Sp. z o.o. Sp. k.", nip: "5272887600", regon: null, krs: null });
     assert.equal(chrome.appStoreUrl, "https://apps.apple.com/pl/app/mobicars");
+    assert.equal(chrome.clientPanelUrl, "https://panel.mobicars.pl");
     assert.equal(chrome.googlePlayUrl, null);
     assert.deepEqual(chrome.social, [
       { platform: "facebook", url: "https://facebook.com/mobicars" },

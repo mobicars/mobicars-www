@@ -74,6 +74,7 @@ query Chrome($locale: I18NLocaleCode!, $status: PublicationStatus!) {
     }
     appStoreUrl
     googlePlayUrl
+    clientPanelUrl
     social {
       platform
       url

@@ -1,7 +1,8 @@
 import { langFromPath, type Lang } from "./config";
 
 /**
- * Public URL segments of the customer panel, in each language. Ukrainian is
+ * Public URL segments of the sign-in pages, in each language. The client
+ * panel itself is external (CMS `site.clientPanelUrl`). Ukrainian is
  * transliterated to Latin letters, so every URL stays ASCII.
  * The app folders use the English segment (`app/[lang]/account/...`);
  * `proxy.ts` rewrites the localized URL to that folder and redirects any mix.
@@ -15,23 +16,17 @@ const ACCOUNT_PAGES = {
   forgotPassword: { pl: "odzyskaj-haslo", en: "forgot-password", de: "passwort-vergessen", uk: "vidnovyty-parol" },
   /** Route Handler that ends a session the panel can no longer serve. */
   session: { pl: "sesja", en: "session", de: "sitzung", uk: "sesiya" },
-  reservations: { pl: "rezerwacje", en: "reservations", de: "buchungen", uk: "bronyuvannya" },
-  payments: { pl: "platnosci", en: "payments", de: "zahlungen", uk: "platezhi" },
-  details: { pl: "dane", en: "details", de: "daten", uk: "dani" },
-  drivers: { pl: "kierowcy", en: "drivers", de: "fahrer", uk: "vodii" },
-  security: { pl: "bezpieczenstwo", en: "security", de: "sicherheit", uk: "bezpeka" },
-  contact: { pl: "kontakt", en: "contact", de: "kontakt", uk: "kontakty" },
 } as const satisfies Record<string, Record<Lang, string>>;
 
 export type AccountPage = keyof typeof ACCOUNT_PAGES;
 
-/** Pages for signed-out visitors. A signed-in client is sent to the panel. */
+/** Pages for signed-out visitors. A signed-in client is sent to the home page. */
 const GUEST_PAGES: readonly AccountPage[] = ["login", "register", "forgotPassword"];
 
 /** Pages that do not need a session. */
 const PUBLIC_PAGES: readonly AccountPage[] = [...GUEST_PAGES, "session"];
 
-/** Public URL of a panel page, e.g. `accountHref("pl", "reservations", "12")`. */
+/** Public URL of a sign-in page, e.g. `accountHref("pl", "login")`. */
 export function accountHref(
   lang: Lang,
   page?: AccountPage,
@@ -50,18 +45,18 @@ export type AccountRoute = {
   canonical: string;
   /** The app route that renders it. Rewrite when it differs. */
   internal: string;
-  /** `null` for the overview at the panel root, or an unknown segment. */
+  /** `null` for the root (redirected to sign-in) or an unknown segment. */
   page: AccountPage | null;
   isPublic: boolean;
-  /** Sign-in pages: a signed-in client is redirected to the panel. */
+  /** Sign-in pages: a signed-in client is redirected to the home page. */
   isGuestOnly: boolean;
 };
 
 /**
- * Resolves a path inside the panel for one language.
+ * Resolves a path below the account root for one language.
  * Accepts the localized and the internal (English) spelling of each segment,
- * so `/pl/account/reservations` resolves with canonical `/pl/konto/rezerwacje`.
- * Returns `null` for paths outside the panel.
+ * so `/pl/account/login` resolves with canonical `/pl/konto/logowanie`.
+ * Returns `null` for paths outside it.
  */
 export function resolveAccountPath(
   lang: Lang,
@@ -76,8 +71,9 @@ export function resolveAccountPath(
   }
 
   if (segment === undefined || segment === "") {
+    // The panel's old overview: the panel is external now, so the root signs in.
     return {
-      canonical: accountHref(lang),
+      canonical: accountHref(lang, "login"),
       internal: `/${lang}/${INTERNAL_ROOT}`,
       page: null,
       isPublic: false,
@@ -91,12 +87,13 @@ export function resolveAccountPath(
   const tail = rest.length > 0 ? `/${rest.join("/")}` : "";
 
   if (!page) {
-    // Unknown segment: let the app answer 404 under the internal path.
+    // Unknown segment, the old panel's pages among them: a 404 under the
+    // internal path, without asking to sign in first.
     return {
       canonical: `/${lang}/${ACCOUNT_ROOT[lang]}/${segment}${tail}`,
       internal: `/${lang}/${INTERNAL_ROOT}/${segment}${tail}`,
       page: null,
-      isPublic: false,
+      isPublic: true,
       isGuestOnly: false,
     };
   }

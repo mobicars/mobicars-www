@@ -11,7 +11,8 @@ import { QuoteLines } from "@/components/reservation/quote-lines";
 import { buttonClass } from "@/components/ui/button";
 import type { Lang } from "@/i18n/config";
 import { getMessages } from "@/i18n/messages";
-import { accountHref, reservationHref } from "@/i18n/routes";
+import { reservationHref } from "@/i18n/routes";
+import { getChrome } from "@/lib/strapi";
 import { readReceipt } from "@/lib/reservation/receipt";
 
 /**
@@ -21,7 +22,7 @@ import { readReceipt } from "@/lib/reservation/receipt";
  * thank for, so the visitor goes to the reservation page.
  */
 export async function ReservationConfirmation({ lang }: { lang: Lang }) {
-  const receipt = await readReceipt();
+  const [receipt, { clientPanelUrl }] = await Promise.all([readReceipt(), getChrome(lang)]);
   if (!receipt) {
     redirect(reservationHref(lang));
   }
@@ -164,14 +165,14 @@ export async function ReservationConfirmation({ lang }: { lang: Lang }) {
         </div>
       ) : null}
 
-      <p className="text-center text-sm text-muted-dark">{t.accountNotice}</p>
-      <div className="-mt-3 flex flex-col justify-center gap-3 sm:flex-row">
-        <Link
-          href={receipt.signedIn ? accountHref(lang, "reservations") : accountHref(lang, "login")}
-          className={buttonClass("primary", "md", "px-6")}
-        >
-          {receipt.signedIn ? t.myReservations : t.loginToPanel}
-        </Link>
+      {clientPanelUrl ? <p className="text-center text-sm text-muted-dark">{t.accountNotice}</p> : null}
+      <div className={`flex flex-col justify-center gap-3 sm:flex-row ${clientPanelUrl ? "-mt-3" : ""}`}>
+        {clientPanelUrl ? (
+          // The external client panel (CMS `site.clientPanelUrl`).
+          <a href={clientPanelUrl} className={buttonClass("primary", "md", "px-6")}>
+            {receipt.signedIn ? t.myReservations : t.loginToPanel}
+          </a>
+        ) : null}
         <Link
           href={reservationHref(lang)}
           className={buttonClass("secondary", "md", "px-6")}

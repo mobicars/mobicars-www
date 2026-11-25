@@ -287,6 +287,8 @@ export type Chrome = {
   /** The app's store pages (https); `null` while not set. */
   appStoreUrl: string | null;
   googlePlayUrl: string | null;
+  /** The external client panel (https); `null` hides the links to it. */
+  clientPanelUrl: string | null;
 };
 
 /** Chrome with nothing from the CMS: the site still has its logo, language and booking. */
@@ -308,6 +310,7 @@ export const EMPTY_CHROME: Chrome = {
   seo: null,
   appStoreUrl: null,
   googlePlayUrl: null,
+  clientPanelUrl: null,
 };
 
 export type PostTeaser = {
@@ -408,6 +411,7 @@ export function parseChrome(raw: ChromeQuery, lang: Lang, routes: readonly PageR
     seo: raw.site?.seo ? parseSeo(raw.site.seo) : null,
     appStoreUrl: httpsUrl(raw.site?.appStoreUrl),
     googlePlayUrl: httpsUrl(raw.site?.googlePlayUrl),
+    clientPanelUrl: httpsUrl(raw.site?.clientPanelUrl),
   };
 }
 

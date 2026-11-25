@@ -11,7 +11,7 @@ import {
 } from "@/lib/rentcarsoft";
 
 import { formLang, MAX_EMAIL_LENGTH, MAX_PASSWORD_LENGTH } from "./form";
-import { loginPath, safeReturnPath } from "./paths";
+import { safeReturnPath } from "./paths";
 import { hasPendingReset } from "./recovery";
 import {
   clearFailures,
@@ -123,9 +123,4 @@ export async function loginInPlace(
 /** Sign-out from the booking form; the page refreshes itself afterwards. */
 export async function logoutInPlace(): Promise<void> {
   await deleteSession();
-}
-
-export async function logout(formData: FormData): Promise<void> {
-  await deleteSession();
-  redirect(loginPath(formLang(formData)));
 }

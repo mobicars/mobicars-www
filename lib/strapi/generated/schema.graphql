@@ -3125,6 +3125,7 @@ type SaleRelationResponseCollection {
 
 type Site {
   appStoreUrl: String
+  clientPanelUrl: String
   contact: ComponentSiteContact
   createdAt: DateTime
   documentId: ID!
@@ -3140,6 +3141,7 @@ type Site {
 
 input SiteInput {
   appStoreUrl: String
+  clientPanelUrl: String
   contact: ComponentSiteContactInput
   googlePlayUrl: String
   publishedAt: DateTime

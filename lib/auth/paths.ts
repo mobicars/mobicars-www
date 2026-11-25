@@ -1,5 +1,5 @@
 import type { Lang } from "@/i18n/config";
-import { accountHref, resolveAccountPath, resolveReservationPath } from "@/i18n/routes";
+import { accountHref, resolveReservationPath } from "@/i18n/routes";
 
 /**
  * Cookie that holds the encrypted session.
@@ -15,23 +15,17 @@ export function loginPath(lang: Lang, returnTo?: string): string {
 }
 
 /**
- * Where to go after login. Only canonical, non-public panel URLs and the
- * reservation pages of this language are accepted (the booking form sends a
- * guest to log in and back), so `next` cannot send the user to another site.
+ * Where to go after login. Only the canonical reservation pages of this
+ * language are accepted (the booking form sends a guest to log in and back),
+ * so `next` cannot send the user to another site; anything else goes home.
+ * The client panel is external (CMS `site.clientPanelUrl`).
  */
 export function safeReturnPath(lang: Lang, value: unknown): string {
-  const fallback = accountHref(lang);
+  const fallback = `/${lang}`;
   if (typeof value !== "string" || !value.startsWith("/") || /[\\\s]/.test(value)) {
     return fallback;
   }
   const pathname = value.split(/[?#]/)[0];
   const reservation = resolveReservationPath(lang, pathname);
-  if (reservation) {
-    return reservation.term !== null && reservation.canonical === pathname ? value : fallback;
-  }
-  const route = resolveAccountPath(lang, pathname);
-  if (!route || route.isPublic || route.canonical !== pathname) {
-    return fallback;
-  }
-  return value;
+  return reservation && reservation.term !== null && reservation.canonical === pathname ? value : fallback;
 }

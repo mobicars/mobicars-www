@@ -15,33 +15,37 @@ import {
 describe("account routes", () => {
   it("builds localized public URLs", () => {
     assert.equal(accountHref("pl"), "/pl/konto");
-    assert.equal(accountHref("pl", "reservations", 12), "/pl/konto/rezerwacje/12");
-    assert.equal(accountHref("en", "reservations", 12), "/en/account/reservations/12");
+    assert.equal(accountHref("pl", "register"), "/pl/konto/rejestracja");
+    assert.equal(accountHref("en", "register"), "/en/account/register");
     assert.equal(loginPath("pl", "/pl/konto"), "/pl/konto/logowanie?next=%2Fpl%2Fkonto");
   });
 
   it("rewrites Polish URLs to the English app folders", () => {
-    assert.deepEqual(resolveAccountPath("pl", "/pl/konto/rezerwacje/12"), {
-      canonical: "/pl/konto/rezerwacje/12",
-      internal: "/pl/account/reservations/12",
-      page: "reservations",
-      isPublic: false,
-      isGuestOnly: false,
+    assert.deepEqual(resolveAccountPath("pl", "/pl/konto/rejestracja"), {
+      canonical: "/pl/konto/rejestracja",
+      internal: "/pl/account/register",
+      page: "register",
+      isPublic: true,
+      isGuestOnly: true,
     });
     assert.equal(resolveAccountPath("en", "/en/account")?.internal, "/en/account");
   });
 
   it("points mixed or internal spellings at the canonical URL", () => {
-    assert.equal(resolveAccountPath("pl", "/pl/account/reservations")?.canonical, "/pl/konto/rezerwacje");
-    assert.equal(resolveAccountPath("pl", "/pl/konto/reservations")?.canonical, "/pl/konto/rezerwacje");
+    assert.equal(resolveAccountPath("pl", "/pl/account/login")?.canonical, "/pl/konto/logowanie");
+    assert.equal(resolveAccountPath("pl", "/pl/konto/login")?.canonical, "/pl/konto/logowanie");
+    // The old panel's overview: the panel is external, the root signs in.
+    assert.equal(resolveAccountPath("pl", "/pl/konto")?.canonical, "/pl/konto/logowanie");
+    assert.equal(resolveAccountPath("pl", "/pl/konto/rezerwacje")?.page, null);
     assert.equal(resolveAccountPath("en", "/en/konto")?.canonical, undefined);
   });
 
-  it("marks only sign-in pages as public", () => {
+  it("marks sign-in and unknown pages as public", () => {
     assert.equal(resolveAccountPath("pl", "/pl/konto/logowanie")?.isPublic, true);
     assert.equal(resolveAccountPath("en", "/en/account/forgot-password")?.isPublic, true);
     assert.equal(resolveAccountPath("pl", "/pl/konto")?.isPublic, false);
-    assert.equal(resolveAccountPath("pl", "/pl/konto/cokolwiek")?.isPublic, false);
+    // Unknown pages (the old panel's too) answer 404 without a sign-in first.
+    assert.equal(resolveAccountPath("pl", "/pl/konto/cokolwiek")?.isPublic, true);
     assert.equal(resolveAccountPath("pl", "/pl/oferta"), null);
   });
 
@@ -90,7 +94,7 @@ describe("reservation routes", () => {
       term: null,
     });
     assert.equal(resolveReservationPath("pl", "/pl/reservation/confirmation")?.canonical, "/pl/rezerwacja/potwierdzenie");
-    assert.equal(safeReturnPath("pl", "/pl/rezerwacja/potwierdzenie"), "/pl/konto");
+    assert.equal(safeReturnPath("pl", "/pl/rezerwacja/potwierdzenie"), "/pl");
   });
 
   it("leaves unknown pages to the 404", () => {
@@ -108,16 +112,11 @@ describe("safeReturnPath", () => {
       safeReturnPath("pl", "/pl/rezerwacja?pickup=479&step=details"),
       "/pl/rezerwacja?pickup=479&step=details",
     );
-    assert.equal(safeReturnPath("pl", "/pl/reservation?pickup=479"), "/pl/konto");
-    assert.equal(safeReturnPath("pl", "/pl/rezerwacja/cokolwiek"), "/pl/konto");
+    assert.equal(safeReturnPath("pl", "/pl/reservation?pickup=479"), "/pl");
+    assert.equal(safeReturnPath("pl", "/pl/rezerwacja/cokolwiek"), "/pl");
   });
 
-  it("keeps canonical panel URLs of the same language", () => {
-    assert.equal(safeReturnPath("pl", "/pl/konto/rezerwacje/12"), "/pl/konto/rezerwacje/12");
-    assert.equal(safeReturnPath("en", "/en/account?tab=1"), "/en/account?tab=1");
-  });
-
-  it("falls back to the panel for anything else", () => {
+  it("falls back to the home page for anything else, the old panel included", () => {
     for (const value of [
       "https://evil.example/pl/konto",
       "//evil.example/pl/konto",
@@ -126,9 +125,10 @@ describe("safeReturnPath", () => {
       "/en/account",
       "/pl/oferta",
       "/pl/account/reservations",
+      "/pl/konto/rezerwacje/12",
       null,
     ]) {
-      assert.equal(safeReturnPath("pl", value), "/pl/konto", String(value));
+      assert.equal(safeReturnPath("pl", value), "/pl", String(value));
     }
   });
 });
@@ -144,8 +144,7 @@ describe("switchLangHref", () => {
     assert.equal(switchLangHref("/pl/rezerwacja/potwierdzenie", "", "uk"), "/uk/bronyuvannya/pidtverdzhennya");
   });
 
-  it("keeps the panel page and its id", () => {
-    assert.equal(switchLangHref("/pl/konto/rezerwacje/12", "", "en"), "/en/account/reservations/12");
+  it("keeps the sign-in page and its query", () => {
     assert.equal(switchLangHref("/pl/konto/logowanie", "?next=%2Fpl%2Fkonto", "en"), "/en/account/login?next=%2Fpl%2Fkonto");
     assert.equal(switchLangHref("/en/account", "", "pl"), "/pl/konto");
   });
@@ -195,11 +194,11 @@ describe("fleet routes", () => {
 
 describe("German and Ukrainian segments", () => {
   it("builds localized panel and reservation URLs, Ukrainian in Latin letters", () => {
-    assert.equal(accountHref("de", "reservations", 12), "/de/konto/buchungen/12");
+    assert.equal(accountHref("de", "register"), "/de/konto/registrieren");
     assert.equal(accountHref("uk", "forgotPassword"), "/uk/kabinet/vidnovyty-parol");
     assert.equal(reservationHref("uk", "long"), "/uk/bronyuvannya/dovhostrokova");
     for (const lang of ["de", "uk"] as const) {
-      assert.match(accountHref(lang, "security"), /^[a-z0-9/-]+$/);
+      assert.match(accountHref(lang, "forgotPassword"), /^[a-z0-9/-]+$/);
     }
   });
 
@@ -207,13 +206,13 @@ describe("German and Ukrainian segments", () => {
     const route = resolveAccountPath("de", "/de/account/login");
     assert.equal(route?.canonical, "/de/konto/anmelden");
     assert.equal(route?.internal, "/de/account/login");
-    assert.equal(resolveAccountPath("uk", "/uk/kabinet/dani")?.internal, "/uk/account/details");
+    assert.equal(resolveAccountPath("uk", "/uk/kabinet/reyestratsiya")?.internal, "/uk/account/register");
     assert.equal(resolveReservationPath("de", "/de/buchung/bestaetigung")?.internal, "/de/reservation/confirmation");
   });
 
   it("switches between languages keeping the page", () => {
-    assert.equal(switchLangHref("/pl/konto/rezerwacje/12", "", "uk"), "/uk/kabinet/bronyuvannya/12");
-    assert.equal(switchLangHref("/de/konto/daten", "", "pl"), "/pl/konto/dane");
+    assert.equal(switchLangHref("/pl/konto/rejestracja", "", "uk"), "/uk/kabinet/reyestratsiya");
+    assert.equal(switchLangHref("/de/konto/anmelden", "", "pl"), "/pl/konto/logowanie");
     assert.equal(switchLangHref("/uk/bronyuvannya", "?pickup=3", "de"), "/de/buchung?pickup=3");
   });
 });
