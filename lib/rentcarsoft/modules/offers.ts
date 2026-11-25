@@ -1,7 +1,7 @@
 import { cacheLife, cacheTag } from "next/cache";
 
 import { parseOffer, parseOffers, type Offer } from "../internal/entities";
-import { RentCarSoftError } from "../internal/errors";
+import { RentCarSoftError, type RentCarSoftErrorCode } from "../internal/errors";
 import { rentCarSoftRequest } from "../internal/http";
 import { CACHE_TAGS, SEARCH_CACHE_LIFE } from "../internal/labels";
 import {
@@ -64,32 +64,86 @@ export async function getOffer(
 }
 
 async function loadCachedOffers(query: QueryParams): Promise<Offer[]> {
+  return outcome(await cachedOffers(query));
+}
+
+async function cachedOffers(query: QueryParams): Promise<Outcome<Offer[]>> {
   "use cache";
-  cacheLife("hours");
   cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
-  return loadOffers(query);
+  return settle(() => loadOffers(query), "hours");
 }
 
 async function loadCachedOffer(id: number, query: QueryParams): Promise<Offer> {
+  return outcome(await cachedOffer(id, query));
+}
+
+async function cachedOffer(id: number, query: QueryParams): Promise<Outcome<Offer>> {
   "use cache";
-  cacheLife("hours");
   cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
-  return loadOffer(id, query);
+  return settle(() => loadOffer(id, query), "hours");
 }
 
 /** Dates, a code, availability or a long-term quote: `SEARCH_CACHE_LIFE`. */
 async function loadSearchedOffers(query: QueryParams): Promise<Offer[]> {
+  return outcome(await searchedOffers(query));
+}
+
+async function searchedOffers(query: QueryParams): Promise<Outcome<Offer[]>> {
   "use cache";
-  cacheLife(SEARCH_CACHE_LIFE);
   cacheTag(CACHE_TAGS.all, CACHE_TAGS.search);
-  return loadOffers(query);
+  return settle(() => loadOffers(query), SEARCH_CACHE_LIFE);
 }
 
 async function loadSearchedOffer(id: number, query: QueryParams): Promise<Offer> {
+  return outcome(await searchedOffer(id, query));
+}
+
+async function searchedOffer(id: number, query: QueryParams): Promise<Outcome<Offer>> {
   "use cache";
-  cacheLife(SEARCH_CACHE_LIFE);
   cacheTag(CACHE_TAGS.all, CACHE_TAGS.search);
-  return loadOffer(id, query);
+  return settle(() => loadOffer(id, query), SEARCH_CACHE_LIFE);
+}
+
+/**
+ * What a cached read hands back. An error thrown inside `use cache` reaches
+ * the caller as a plain `Error`, without the `RentCarSoftError` class or
+ * code, so callers could not tell an unknown id from an outage. The cached
+ * scope returns the code and `outcome` throws the error again outside it.
+ */
+type Outcome<T> = { value: T } | { error: RentCarSoftErrorCode; status?: number };
+
+/**
+ * Runs a read inside a cached scope with `life` for a result. A RentCarSoft
+ * error is kept briefly: an unknown id for minutes, so repeated visits do not
+ * ask again, any other failure for seconds. Other errors are not cached.
+ */
+async function settle<T>(read: () => Promise<T>, life: "hours" | typeof SEARCH_CACHE_LIFE): Promise<Outcome<T>> {
+  try {
+    const value = await read();
+    if (life === "hours") {
+      cacheLife("hours");
+    } else {
+      cacheLife(life);
+    }
+    return { value };
+  } catch (error) {
+    if (!(error instanceof RentCarSoftError)) {
+      throw error;
+    }
+    if (error.code === "not_found") {
+      cacheLife("minutes");
+    } else {
+      cacheLife("seconds");
+    }
+    return { error: error.code, ...(error.status !== undefined ? { status: error.status } : {}) };
+  }
+}
+
+function outcome<T>(result: Outcome<T>): T {
+  if ("error" in result) {
+    throw new RentCarSoftError(result.error, result.status);
+  }
+  return result.value;
 }
 
 async function loadOffers(query: QueryParams): Promise<Offer[]> {

@@ -6,7 +6,7 @@ import { connection } from "next/server";
 
 import type { Lang } from "@/i18n/config";
 import { cacheEnabled } from "@/lib/cache";
-import { CACHE_TAGS, getOffer, listAllOffers, RentCarSoftError, type Offer, type OfferImage } from "@/lib/rentcarsoft";
+import { CACHE_TAGS, getOffer, listAllOffers, RentCarSoftError, type Offer, type OfferImage, type RentCarSoftErrorCode } from "@/lib/rentcarsoft";
 import { reservationConfig } from "@/lib/reservation/config";
 import { OFFER_CATEGORIES, type OfferCategory } from "@/lib/reservation/offers";
 import { toRentCarSoftDateTime } from "@/lib/reservation/search";
@@ -279,11 +279,38 @@ export function partialFleetCar(card: FleetCard): FleetCar {
 }
 
 async function cachedFleetCar(lang: Lang, id: number): Promise<FleetCar> {
+  const result = await cachedFleetCarResult(lang, id);
+  if ("error" in result) {
+    throw new RentCarSoftError(result.error);
+  }
+  return result.car;
+}
+
+/**
+ * An error thrown inside `use cache` reaches the caller as a plain `Error`,
+ * without the `RentCarSoftError` class or code, so `withCatalogFallback`
+ * could not tell an unknown id (404) from an outage. The cached scope
+ * returns the code instead: an unknown id is kept for minutes, so repeated
+ * visits do not ask RentCarSoft again; any other failure only for seconds.
+ */
+async function cachedFleetCarResult(lang: Lang, id: number): Promise<{ car: FleetCar } | { error: RentCarSoftErrorCode }> {
   "use cache";
   cacheTag(CACHE_TAGS.all, CACHE_TAGS.catalog);
-  const { car, changesAt } = await buildFleetCar(lang, id);
-  setPriceLife(changesAt);
-  return car;
+  try {
+    const { car, changesAt } = await buildFleetCar(lang, id);
+    setPriceLife(changesAt);
+    return { car };
+  } catch (error) {
+    if (!(error instanceof RentCarSoftError)) {
+      throw error;
+    }
+    if (error.code === "not_found") {
+      cacheLife("minutes");
+    } else {
+      cacheLife("seconds");
+    }
+    return { error: error.code };
+  }
 }
 
 async function loadFleetCar(lang: Lang, id: number): Promise<FleetCar> {
