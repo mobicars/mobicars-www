@@ -1,12 +1,15 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
-import { langFromPath, preferredLang } from "@/i18n/config";
+import { langFromPath, preferredLang, type Lang } from "@/i18n/config";
 import { resolveAccountPath, resolveExtrasPath, resolveFleetPath, resolveReservationPath, resolveSalesPath } from "@/i18n/routes";
 import { loginPath, safeReturnPath, SESSION_COOKIE } from "@/lib/auth/paths";
 import { decryptSession } from "@/lib/auth/token";
+import { contentPreview } from "@/lib/cache";
+import { offerIdFromSlug } from "@/lib/fleet/slug";
 import { legacyRedirect } from "@/lib/seo/legacy-redirects";
+import { checkBlog, checkPage, checkSale, routeLookup, type RouteLookup, type Verdict } from "@/lib/seo/route-index";
 
-export async function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest, event: NextFetchEvent) {
   const { pathname } = request.nextUrl;
 
   // Old site addresses (redesign/redirects-map.md) go first, in one 308 hop,
@@ -44,6 +47,10 @@ export async function proxy(request: NextRequest) {
         url.pathname = fleet.canonical;
         return NextResponse.redirect(url, 308);
       }
+      // The page finds a car by the offer id at the end of the slug; without one there is nothing to find.
+      if (fleet.slug && offerIdFromSlug(fleet.slug) === null) {
+        return notFound(request, found.lang);
+      }
       if (fleet.internal !== pathname) {
         url.pathname = fleet.internal;
         return NextResponse.rewrite(url);
@@ -57,6 +64,9 @@ export async function proxy(request: NextRequest) {
         url.pathname = extras.canonical;
         return NextResponse.redirect(url, 308);
       }
+      if (extras.slug && offerIdFromSlug(extras.slug) === null) {
+        return notFound(request, found.lang);
+      }
       url.pathname = extras.internal;
       return NextResponse.rewrite(url);
     }
@@ -67,12 +77,17 @@ export async function proxy(request: NextRequest) {
         url.pathname = sales.canonical;
         return NextResponse.redirect(url, 308);
       }
+      const { slug } = sales;
+      const settled = slug ? await settle(request, event, found.lang, (lookup) => checkSale(lookup, slug), () => sales.canonical) : null;
+      if (settled) {
+        return settled;
+      }
       url.pathname = sales.internal;
       return NextResponse.rewrite(url);
     }
     const account = resolveAccountPath(found.lang, pathname);
     if (!account) {
-      return NextResponse.next();
+      return (await settleContentPath(request, event, found.lang, pathname)) ?? NextResponse.next();
     }
     if (account.canonical !== pathname) {
       const url = request.nextUrl.clone();
@@ -112,6 +127,67 @@ export async function proxy(request: NextRequest) {
   url.pathname = pathname === "/" ? `/${lang}` : `/${lang}${pathname}`;
   // 307: the target depends on Accept-Language, so it must not be cached as permanent.
   return NextResponse.redirect(url, 307);
+}
+
+/**
+ * A real 404 or 308 for a path below the language that no resolver above
+ * took: a blog post, or a CMS page, city or local page (`app/[lang]/[...slug]`).
+ * The home page and the legal documents (route handlers, their own 404) pass.
+ */
+function settleContentPath(request: NextRequest, event: NextFetchEvent, lang: Lang, pathname: string): Promise<NextResponse | null> | null {
+  const segments = pathname.split("/").slice(2);
+  if (segments.length === 0 || segments[0] === NOT_FOUND_PAGE) {
+    return null;
+  }
+  if (segments.length === 2 && (segments[0] === "dokumenty" || segments[0] === "documents")) {
+    return null;
+  }
+  if (segments.length === 2 && segments[0] === "blog") {
+    return settle(request, event, lang, (lookup) => checkBlog(lookup, segments[1]), ([slug]) => path(lang, ["blog", slug]));
+  }
+  return settle(request, event, lang, (lookup) => checkPage(lookup, segments), (canonical) => path(lang, canonical));
+}
+
+/** `app/[lang]/not-found-page`: prerendered as a 404, so a rewrite there answers 404. */
+const NOT_FOUND_PAGE = "not-found-page";
+
+/**
+ * Asks the route index (`lib/seo/route-index.ts`) before the page renders,
+ * where a 404 or a redirect can still set the status: `null` lets the
+ * request go on, as it does when the index cannot be read. Not in a content
+ * preview: it shows drafts the moment they are saved, and crawlers are kept
+ * out of it anyway (`app/robots.ts`).
+ */
+async function settle(
+  request: NextRequest,
+  event: NextFetchEvent,
+  lang: Lang,
+  check: (lookup: RouteLookup) => Verdict,
+  href: (segments: string[]) => string,
+): Promise<NextResponse | null> {
+  if (contentPreview()) {
+    return null;
+  }
+  const verdict = await routeLookup(request.nextUrl.origin, lang, check, (promise) => event.waitUntil(promise));
+  if (verdict.kind === "ok") {
+    return null;
+  }
+  if (verdict.kind === "redirect") {
+    const url = request.nextUrl.clone();
+    url.pathname = href(verdict.segments);
+    return NextResponse.redirect(url, 308);
+  }
+  return notFound(request, lang);
+}
+
+function notFound(request: NextRequest, lang: Lang): NextResponse {
+  const url = request.nextUrl.clone();
+  url.pathname = `/${lang}/${NOT_FOUND_PAGE}`;
+  return NextResponse.rewrite(url);
+}
+
+function path(lang: Lang, segments: readonly string[]): string {
+  return `/${[lang, ...segments.map(encodeURIComponent)].join("/")}`;
 }
 
 export const config = {
