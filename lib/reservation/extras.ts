@@ -10,9 +10,10 @@ import { richText } from "./text";
  *   one zone makes sense, so they are a single choice here.
  * - accessories (`listAccessories`): a quantity, 0 to `MAX_QUANTITY`.
  *
- * Prices are the API's. A one-time extra costs its `price` once (the quote
- * charges it once, while the list's `calculatedPrice` multiplies it by the
- * days); a per-day extra costs `calculatedPrice` for the period.
+ * Prices are the API's. A one-time extra costs its `price` once, as the quote
+ * charges it (since API 1.0.12 the list's `calculatedPrice` equals it; before,
+ * it multiplied the fee by the days); a per-day extra costs `calculatedPrice`
+ * for the period.
  */
 
 export const MAX_QUANTITY = 5;

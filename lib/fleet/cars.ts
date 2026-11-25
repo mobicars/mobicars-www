@@ -385,8 +385,8 @@ function imageUrl(image: OfferImage | undefined): string | null {
 }
 
 function toCard(offer: Offer, monthly: MonthlyFrom | null, now: number): FleetCard {
-  // The live list swaps make and model, so the name comes from key 1 when set.
-  const name = text(offer, "name") ?? [offer.model, offer.brand].filter(Boolean).join(" ");
+  // The full name is key 1 when it is set; otherwise make and model.
+  const name = text(offer, "name") ?? [offer.brand, offer.model].filter(Boolean).join(" ");
   const main = offer.gallery.find((item) => item.main) ?? offer.gallery.find((item) => item.cover) ?? offer.gallery[0];
   const src = imageUrl(main);
   const transmission = offer.attributes.transmission ?? null;

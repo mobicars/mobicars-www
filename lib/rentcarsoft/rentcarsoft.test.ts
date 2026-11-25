@@ -164,7 +164,7 @@ describe("offer and reservation parameters", () => {
     assert.equal("mileageLimit" in query, false);
   });
 
-  it("sends accessory quantity as ilosc on calculate and under both keys on create", () => {
+  it("sends accessory quantity as quantity on calculate and under both keys on create", () => {
     const accessories = [{ id: 8, quantity: 2 }];
     const calculate = buildCalculateQuery({
       offerId: 1,
@@ -174,10 +174,10 @@ describe("offer and reservation parameters", () => {
       returnDate: "2026-11-23 10:00",
       accessories,
     });
-    assert.deepEqual(calculate.accessories, [{ id: 8, ilosc: 2 }]);
+    assert.deepEqual(calculate.accessories, [{ id: 8, quantity: 2 }]);
     const encoded = serializeQuery(calculate);
-    assert.match(encoded, /ilosc/);
-    assert.equal(encoded.includes("quantity"), false);
+    assert.match(encoded, /quantity/);
+    assert.equal(encoded.includes("ilosc"), false);
 
     const body = buildReservationBody({
       offerId: 1,

@@ -1,6 +1,6 @@
 # API coverage
 
-Baseline: RentCarSoft OpenAPI 1.0.11 (reviewed 24 November 2026; previous baselines 1.0.10 and 1.0.8; copies in `tmp-spec/` next to the repositories). Only operations this bridge implements are listed as implemented. “Later” means the spec has them and the current MobiCars site does not need them yet. “Out of scope” means they stay out of this package.
+Baseline: RentCarSoft OpenAPI 1.0.12 (reviewed 25 November 2026; previous baselines 1.0.11, 1.0.10 and 1.0.8; copies in `tmp-spec/` next to the repositories). Only operations this bridge implements are listed as implemented. “Later” means the spec has them and the current MobiCars site does not need them yet. “Out of scope” means they stay out of this package.
 
 | Method | Path | Status | Bridge |
 | --- | --- | --- | --- |
@@ -54,6 +54,16 @@ Baseline: RentCarSoft OpenAPI 1.0.11 (reviewed 24 November 2026; previous baseli
 | DELETE | `/vehicle_blockade/{id}.json` | out of scope | — |
 
 Cache column for the implemented reads is in `caching.md`.
+
+## Changes from 1.0.11 to 1.0.12
+
+No new or removed operation. The API changed together with the spec; `quirks.md` ("Verified on 25 November 2026") has the live check.
+
+- `/offers.json`: `mark` is the make and `model` the model on the live API now. `order` is a string (default `price_asc`). `longTermKalukator`, `okresLongTerm` and `limitLongTerm` are documented. `onlyAvailable=true` without both dates returns HTTP 400. The bridge sends `order=default` and refuses `onlyAvailable` without dates itself, unchanged; the name fallbacks on the reservation and fleet pages now put the make first.
+- `/addons.json`, `/accessories.json`: both take `longTerm` and `loadLongTerm`, which filter on the panel's long-term field (with a monthly price). For `oneTimeFee: true`, `calculatedPrice` / `discountedCalculatedPrice` equal `price` / `priceDiscounted`. The bridge sends the flag only as `true`; the site already showed `price` for one-time extras.
+- `/reservation_calculate.json`: accessory quantity as `quantity` (preferred) or `ilosc`; line `id` is the item id; the long-term response fields are documented; `longTerm=1` without `iloscMiesiecy` returns HTTP 400. The bridge now sends `quantity` and always sends the month count with `longTerm`.
+- `/reservation.json` (create): accessories take `quantity` or `ilosc`. The bridge sends both, unchanged.
+- `/verification_promocode.json`: the `{ success: "false", kod: null }` body is documented.
 
 ## Changes from 1.0.10 to 1.0.11
 

@@ -2,7 +2,7 @@
 
 Server-only client for the MobiCars Next.js application. Application code imports `@/lib/rentcarsoft` and does not build RentCarSoft HTTP requests itself. Capability functions live in `modules/`. HTTP, configuration, query building, and parsers live in `internal/` and are not a public import path.
 
-The contract is the RentCarSoft API (OpenAPI 1.0.10, reviewed 22 October 2026; the 1.0.8 → 1.0.10 changes are listed in `docs/api-coverage.md` and do not affect the bridge) plus live behavior recorded in `docs/quirks.md`. The vendor specification file is not part of this repository. Legacy `mobicars-pl` is migration reference only. This package does not wrap the whole RentCarSoft API.
+The contract is the RentCarSoft API (OpenAPI 1.0.12, reviewed 25 November 2026; earlier changes are listed in `docs/api-coverage.md`) plus live behavior recorded in `docs/quirks.md`. The vendor specification file is not part of this repository. Legacy `mobicars-pl` is migration reference only. This package does not wrap the whole RentCarSoft API.
 
 ## Configuration
 
@@ -117,10 +117,10 @@ Mutations are not retried.
 - `Offer.priceList` is the short-term `cennik` of the offer's segment: `deposit` (`kaucja`), `monthlyFrom` (`monthly_price`) and `bands` (`czasy`: `from`, `to`, `price`, `promotionalPrice`), sorted by `from`. It is the base price list the undated catalog and `getOffer` carry; `getOffer` has no `segmentId`, so its single `cennik` entry is used. A dated list applies the bands itself (`calculatedPrice`), so do not price a window from them. Null on the long-term list.
 - `Offer.minPrice` / `maxPrice` are the lowest and highest band price per day. `Offer.details` are the equipment lines (`details`), trimmed; object items use `nazwa`. The fleet pages (`lib/fleet/README.md`) use all three.
 - `Offer.monthlyPrice` is `cennik.cena_miesieczna` from the long-term list (`longTermQuote`). Short-term lists and `getOffer` leave it `null`; they price through `dailyPrice` and `calculatedPrice` (the whole searched period).
-- `Offer.brand` and `Offer.model` map `mark` and `model` as the spec names them, but the live list fills them the other way round (`mark: "Aygo"`, `model: "Toyota"`). Show `attributes.name` (key 1) when it is set. See `docs/quirks.md`.
-- Long-term catalogs: addons use `longTerm`, accessories `loadLongTerm` (live API, 12 November 2026; see `docs/quirks.md`).
+- `Offer.brand` and `Offer.model` map `mark` and `model`. Before API 1.0.12 the live list filled them the other way round. Show `attributes.name` (key 1) when it is set, else brand and model. See `docs/quirks.md`.
+- Long-term catalogs: addons use `longTerm`, accessories `loadLongTerm`, sent only as `true` (since API 1.0.12 the flag filters on the RentCarSoft panel's long-term field, and `false` is not "short-term"; see `docs/quirks.md`).
 - `Extra.type` is `additionalType`; `1` is insurance. On a dated addon list `Extra.price` is the per-day price for that day count and `Extra.calculatedPrice` the window total. The calculate addon line matched it (see `docs/quirks.md`).
-- Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `ilosc`. Create sends both `quantity` and `ilosc` until a live create shows which one it reads (the old site sent `ilosc`). Do not match a selected accessory by `QuoteLine.id`: on the live short quote that id equalled the line price.
+- Reservation accessories are `{ id, quantity }` in the domain. Calculate sends `quantity` (read since API 1.0.12). Create sends both `quantity` and `ilosc` until a live create shows which one it reads (the old site sent `ilosc`). `QuoteLine.id` is the item id since 1.0.12; before, it equalled the line price.
 - `createReservation` does not set `paymentMethod` or `statusRez` unless the caller passes `paymentMethodId` or `forcedStatusId`.
 - Login, password-recovery start, and password replacement use a JSON body. The recovery token read uses a query string.
 - `GET /client/{id}` accepts one object or an array of exactly one object. Any other shape is `malformed_response`. The successful live shape is still UNVERIFIED.

@@ -163,10 +163,11 @@ export function buildCalculateQuery(
     query.addons = input.addonIds;
   }
   if (input.accessories?.length) {
-    // Live calculate prices `ilosc` and leaves `quantity` at a zero line.
+    // `quantity` is the spec name; calculate reads it since API 1.0.12
+    // (before that only `ilosc`, which still works as an alias).
     query.accessories = input.accessories.map((item) => ({
       id: item.id,
-      ilosc: item.quantity,
+      quantity: item.quantity,
     }));
   }
   if (input.longTerm) {
@@ -203,9 +204,9 @@ export type CreateReservationInput = {
   addonIds?: number[];
   /**
    * Domain quantity. The create body sends it under both keys: `quantity`
-   * (OpenAPI) and `ilosc` (what the old site sent on create and what calculate
-   * prices). Which one create reads is UNVERIFIED; drop the other once a live
-   * create has been read back (see `docs/quirks.md`).
+   * (OpenAPI) and `ilosc` (what the old site sent). The API author confirmed
+   * for 1.0.12 that create reads both and prefers `quantity`; `ilosc` stays
+   * until a live create has been read back (see `docs/quirks.md`).
    */
   accessories?: ReservationAccessory[];
   flightNumber?: string;
@@ -308,9 +309,10 @@ export function buildExtrasQuery(
     query.priceSegments = input.priceSegmentIds;
   }
   if (input.longTerm) {
-    // Live API, 12 November 2026: addons answer only to `longTerm`
-    // (`loadLongTerm` returned none), accessories only to `loadLongTerm`.
-    // The old site sent the same pair.
+    // Only `true` is sent: since API 1.0.12 the flag filters on the panel's
+    // long-term field, and `false` returns only the items marked "no" that
+    // have a monthly price. Both lists accept both names; these are the
+    // ones the old site sent.
     if (clientParam === "clients") {
       query.longTerm = true;
     } else {

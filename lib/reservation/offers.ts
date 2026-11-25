@@ -83,9 +83,8 @@ export function toOfferCards(offers: Offer[]): OfferCard[] {
 
 function toOfferCard(offer: Offer): OfferCard {
   const attribute = (key: string) => offer.attributes[key]?.value.trim() || null;
-  // The live list returns the model in `mark` and the make in `model`,
-  // so the full name comes from the `name` key when it is set.
-  const name = attribute("name") ?? [offer.model, offer.brand].filter(Boolean).join(" ");
+  // The full name is key 1 when it is set; otherwise make and model.
+  const name = attribute("name") ?? [offer.brand, offer.model].filter(Boolean).join(" ");
   // The main photo, as on the old site; then a cover photo; then the first one.
   const image =
     offer.gallery.find((item) => item.main) ??
