@@ -42,9 +42,9 @@ export function Divider({ section, above, below }: { section: DividerSection; ab
 
 /** The same scale as one side of a section's spacing (`SPACING`). */
 const HEIGHT: Record<DividerSection["size"], string> = {
-  small: "h-8 sm:h-12",
-  medium: "h-14 sm:h-24",
-  large: "h-20 sm:h-32",
+  small: "h-section-sm",
+  medium: "h-section",
+  large: "h-section-lg",
 };
 
 const BACKGROUND: Record<DividerTone, string> = {

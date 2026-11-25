@@ -55,9 +55,15 @@
   --text-eyebrow--letter-spacing: 0.08em;
   --text-eyebrow--font-weight: 700;
 
-  /* Section rhythm (`py-section`, `py-section-sm`) and the page gutter (`px-gutter`). */
-  --spacing-section: clamp(3.5rem, 2.25rem + 5vw, 7rem);
-  --spacing-section-sm: clamp(2.5rem, 1.75rem + 3vw, 4.5rem);
+  /* Section rhythm, one scale for the CMS sections (`SPACING`: small, medium,
+     large), the Divider and the app's own sections (`py-section-sm`,
+     `py-section`, `py-section-lg`), and the page gutter (`px-gutter`).
+     A section's padding is half the gap between two sections, since two
+     neighbours add up. Phone values here, tablet and desktop below the theme:
+     small 32/40/48, medium 48/56/72, large 64/80/96 px. */
+  --spacing-section-sm: 2rem;
+  --spacing-section: 3rem;
+  --spacing-section-lg: 4rem;
   --spacing-gutter: clamp(1rem, 0.5rem + 2vw, 2rem);
   /* Content width plus both gutters, so `max-w-page px-gutter` leaves 80rem of content. */
   --container-page: calc(80rem + 2 * var(--spacing-gutter));
@@ -72,6 +78,22 @@
 
   /* Motion: `ease-out-soft` with `duration-150` (state changes) or `duration-250` (entrances). Tailwind has no duration tokens. */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* The section scale on tablets (from 640 px) and desktops (from 1024 px). */
+@media (width >= 40rem) {
+  :root {
+    --spacing-section-sm: 2.5rem;
+    --spacing-section: 3.5rem;
+    --spacing-section-lg: 5rem;
+  }
+}
+@media (width >= 64rem) {
+  :root {
+    --spacing-section-sm: 3rem;
+    --spacing-section: 4.5rem;
+    --spacing-section-lg: 6rem;
+  }
 }
 
 @theme inline {

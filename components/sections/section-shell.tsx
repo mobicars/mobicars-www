@@ -9,13 +9,14 @@ import { ShortTextView } from "@/components/sections/rich-blocks";
 
 /**
  * What the new sections share: the inside space (one CMS value for top and
- * bottom, smaller on phones), the background (`parts.background`) and the
- * heading. The hero uses `SPACING` too, so the page keeps one rhythm.
+ * bottom), the background (`parts.background`) and the heading. The space is
+ * the site's one scale (`--spacing-section-*` in `globals.css`), so the
+ * hero, the Divider and the app's own sections keep the same rhythm.
  */
 export const SPACING: Record<"small" | "medium" | "large", string> = {
-  small: "py-8 sm:py-12",
-  medium: "py-14 sm:py-24",
-  large: "py-20 sm:py-32",
+  small: "py-section-sm",
+  medium: "py-section",
+  large: "py-section-lg",
 };
 
 /** One button size for every new section (the hero's): `lg`, 56 px. */
@@ -140,7 +141,7 @@ export function SectionHeading({
     ? `bg-white ${background.tone === "green" ? "text-go-strong" : "text-blue-medium"}`
     : `${background.tone === "white" ? "bg-tint" : "bg-white"} text-blue-medium`;
   return (
-    <div className={`mb-10 flex max-w-3xl flex-col gap-4 sm:mb-12 ${align === "center" ? "mx-auto items-center text-center" : ""}`}>
+    <div className={`mb-8 flex max-w-3xl flex-col gap-4 lg:mb-10 ${align === "center" ? "mx-auto items-center text-center" : ""}`}>
       {badge ? <p className={`w-fit rounded-full px-3 py-1 text-eyebrow uppercase ${pill}`}>{badge}</p> : null}
       {title ? (
         <h2 id={id} className={`text-title text-balance ${dark ? "text-white" : "text-blue-dark"}`}>
