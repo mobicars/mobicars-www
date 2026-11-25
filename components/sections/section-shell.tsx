@@ -1,10 +1,11 @@
 import { getImageProps } from "next/image";
 import type { ReactNode } from "react";
 
-import { isDarkBackground, type SectionBackground } from "@/lib/strapi";
+import { isDarkBackground, type SectionBackground, type ShortText } from "@/lib/strapi";
 
 import { frameSizes } from "./image-sizes";
 import { Pattern } from "./pattern";
+import { ShortTextView } from "@/components/sections/rich-blocks";
 
 /**
  * What the new sections share: the inside space (one CMS value for top and
@@ -126,7 +127,7 @@ export function SectionHeading({
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   align: "center" | "start";
   background: SectionBackground;
   children?: ReactNode;
@@ -146,7 +147,7 @@ export function SectionHeading({
           {title}
         </h2>
       ) : null}
-      {text ? <p className={`text-pretty ${dark ? "text-xl font-bold text-white" : "text-lead text-blue-dark/80"}`}>{text}</p> : null}
+      {text ? <ShortTextView text={text} className={`text-pretty ${dark ? "text-xl font-bold text-white" : "text-lead text-blue-dark/80"}`} /> : null}
       {children}
     </div>
   );

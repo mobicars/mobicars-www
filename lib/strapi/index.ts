@@ -47,6 +47,7 @@ export type {
   RichTable,
   RichListItem,
   RichText,
+  ShortText,
 } from "./internal/rich-blocks";
 
 export { getChrome, getSiteSeo, listLatestPosts } from "./modules/chrome";

@@ -9,6 +9,7 @@ import { Pattern } from "./pattern";
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
 import { LazyCarousel as Carousel } from "./lazy";
 import { cardSizes } from "./image-sizes";
+import { ShortTextView } from "@/components/sections/rich-blocks";
 
 type Heading = "h2" | "h3";
 
@@ -158,7 +159,7 @@ export function CardItem({
             card.title
           )}
         </Title>
-        {card.text ? <p className={`text-sm leading-relaxed text-pretty text-white ${fill ? "" : "sm:text-base"}`}>{card.text}</p> : null}
+        {card.text ? <ShortTextView text={card.text} className={`text-sm leading-relaxed text-pretty text-white ${fill ? "" : "sm:text-base"}`} /> : null}
       </div>
 
       {/* Click-through: the stretched link underneath takes the click. */}

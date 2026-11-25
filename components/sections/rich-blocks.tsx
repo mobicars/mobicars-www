@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import type { RichBlock, RichBlocks, RichInline, RichList, RichTable } from "@/lib/strapi";
+import type { RichBlock, RichBlocks, RichInline, RichList, RichTable, ShortText } from "@/lib/strapi";
 
 /**
  * Renders Strapi rich text on the server, as React elements (no HTML string).
@@ -18,6 +18,27 @@ export function RichBlocksView({ blocks, baseLevel = 3 }: { blocks: RichBlocks; 
     </div>
   );
 }
+
+/**
+ * A short text (`mobicarsBasic`: a section's text, the hero's subtitle, a card
+ * or feature text) in the type of its place: `className` sets the size and
+ * colour, links and lists take the text's colour, so they read on dark
+ * backgrounds too. One paragraph stays a single `<p>`, as the plain text was.
+ */
+export function ShortTextView({ text, className }: { text: ShortText; className?: string }) {
+  if (text.length === 1 && text[0].type === "paragraph") {
+    return <p className={className}>{inlines(text[0].children, SHORT_LINK)}</p>;
+  }
+  return (
+    <div className={`flex flex-col gap-2 ${className ?? ""}`}>
+      {text.map((block, index) =>
+        block.type === "list" ? <ListView key={index} list={block} linkClassName={SHORT_LINK} /> : <p key={index}>{inlines(block.children, SHORT_LINK)}</p>,
+      )}
+    </div>
+  );
+}
+
+const SHORT_LINK = "font-semibold underline underline-offset-2 hover:no-underline";
 
 /** CKEditor's alignment of a paragraph or heading. */
 const ALIGN: Record<NonNullable<Extract<RichBlock, { type: "paragraph" }>["align"]>, string> = {
@@ -82,7 +103,7 @@ function TableView({ table }: { table: RichTable }) {
 }
 
 /** A list; a nested list sits between items, as Strapi stores it, and is drawn inside the item before it. */
-function ListView({ list }: { list: RichList }) {
+function ListView({ list, linkClassName }: { list: RichList; linkClassName?: string }) {
   const List = list.format === "ordered" ? "ol" : "ul";
   const items: { content: ReactNode[]; nested: RichList[] }[] = [];
   for (const child of list.children) {
@@ -93,7 +114,7 @@ function ListView({ list }: { list: RichList }) {
         items.push({ content: [], nested: [child] });
       }
     } else {
-      items.push({ content: inlines(child.children), nested: [] });
+      items.push({ content: inlines(child.children, linkClassName), nested: [] });
     }
   }
   return (
@@ -102,7 +123,7 @@ function ListView({ list }: { list: RichList }) {
         <li key={index}>
           {item.content}
           {item.nested.map((nested, nestedIndex) => (
-            <ListView key={nestedIndex} list={nested} />
+            <ListView key={nestedIndex} list={nested} linkClassName={linkClassName} />
           ))}
         </li>
       ))}
@@ -110,11 +131,11 @@ function ListView({ list }: { list: RichList }) {
   );
 }
 
-function inlines(children: RichInline[]): ReactNode[] {
+function inlines(children: RichInline[], linkClassName = "font-semibold text-blue-medium underline underline-offset-2 hover:text-blue-dark"): ReactNode[] {
   return children.map((child, index) => {
     if (child.type === "link") {
       const content = inlines(child.children);
-      const className = "font-semibold text-blue-medium underline underline-offset-2 hover:text-blue-dark";
+      const className = linkClassName;
       return /^(https?:|mailto:|tel:)/i.test(child.href) ? (
         <a key={index} href={child.href} className={className} {...(/^https?:/i.test(child.href) ? { rel: "noopener noreferrer" } : {})}>
           {content}

@@ -5,7 +5,7 @@ import { slugWords } from "@/lib/fleet/slug";
 
 import type { BlogCardFragment, BlogSectionFragment, CarClassesSectionFragment, CarCollectionFragment, ExtrasSectionFragment, CarsSectionFragment, PromotionsSectionFragment, ImageSectionFragment, MapSectionFragment, ReviewsSectionFragment, SectionReviewFragment, SplitSectionFragment, FormSectionFragment, PartCardFragment, SocialSectionFragment, SalesSectionFragment, CardsSectionFragment, FaqSectionFragment, FeaturesSectionFragment, HeroSectionFragment, PageQuery, SectionBackgroundFragment, TextSectionFragment } from "../generated/graphql";
 import { parseBlogCard, parseCtas, parseMedia, resolveLink, sectionPostsKey, type BlogPostCard, type Cta, type Media } from "./entities";
-import { parseRichBlocks, richBlocksText, type RichBlocks } from "./rich-blocks";
+import { parseRichBlocks, parseShortText, richBlocksText, type RichBlocks, type ShortText } from "./rich-blocks";
 import type { PageRoute } from "./routes";
 
 /**
@@ -25,7 +25,7 @@ export type HeroSection = {
   id: string;
   badge: string | null;
   title: string;
-  subtitle: string | null;
+  subtitle: ShortText | null;
   ctas: Cta[];
   /** Optional: without it (and without a video) the section is navy. */
   image: Media | null;
@@ -72,9 +72,9 @@ export type FeaturesSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "center" | "start";
-  items: { icon: string | null; title: string; text: string | null }[];
+  items: { icon: string | null; title: string; text: ShortText | null }[];
   variant: "inline" | "cards" | "statements" | "steps";
   display: "grid" | "carousel";
   ctas: Cta[];
@@ -116,7 +116,7 @@ export type FaqSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   groups: FaqGroup[];
   /** The "Search questions" field over the list. */
@@ -149,7 +149,7 @@ export type CardsSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   cards: Card[];
   display: "grid" | "carousel";
@@ -163,7 +163,7 @@ export type CardsSection = {
 export type Card = {
   icon: string | null;
   title: string;
-  text: string | null;
+  text: ShortText | null;
   /** Where the whole card leads; `null`: not a link (no arrow, no hover). */
   link: { href: string; newTab: boolean } | null;
   /** The card's own colour or photo, with the colour's pattern unless turned off. */
@@ -180,7 +180,7 @@ export type BlogSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   posts: BlogPostCard[];
   /** `source: all`: every post, shown 12 at a time with "Show more"; otherwise the four newest or picked. */
@@ -202,7 +202,7 @@ export type SalesSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   ctas: Cta[];
   background: SectionBackground;
@@ -220,7 +220,7 @@ export type SocialSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   layout: "split" | "centered";
   showContact: boolean;
   background: SectionBackground;
@@ -240,7 +240,7 @@ export type CarsSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   source: "all" | "category" | "classes" | "cars" | "collection";
   category: "passenger" | "delivery" | "popular";
@@ -265,7 +265,7 @@ export type MapSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   /** A searchable list of the points beside the map (above it on phones). */
   showList: boolean;
@@ -301,10 +301,10 @@ export type SplitSection = {
     | { kind: "map"; legend: boolean };
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   content:
     | { kind: "text"; body: RichBlocks }
-    | { kind: "features"; items: { icon: string | null; title: string; text: string | null }[] }
+    | { kind: "features"; items: { icon: string | null; title: string; text: ShortText | null }[] }
     | { kind: "faq"; items: { question: string; answer: RichBlocks; answerText: string }[]; structuredData: boolean }
     /** The contact form (the Form section's), in one column. */
     | { kind: "form" }
@@ -323,7 +323,7 @@ export type FormSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   /** For now only the contact form (the old site's fields). */
   form: "contact";
@@ -346,7 +346,7 @@ export type ReviewsSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   /** Never empty. */
   reviews: SectionReview[];
@@ -529,7 +529,7 @@ function parseHeroSection(raw: HeroSectionFragment, lang: Lang, routes: readonly
     id: raw.id,
     badge: raw.badge || null,
     title: raw.title,
-    subtitle: raw.subtitle || null,
+    subtitle: parseShortText(raw.subtitle),
     ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
     image: raw.image?.url ? parseMedia(raw.image) : null,
     imageMobile: raw.imageMobile?.url ? parseMedia(raw.imageMobile) : null,
@@ -544,7 +544,7 @@ function parseHeroSection(raw: HeroSectionFragment, lang: Lang, routes: readonly
 }
 
 function parseFeaturesSection(raw: FeaturesSectionFragment, lang: Lang, routes: readonly PageRoute[]): FeaturesSection | null {
-  const items = (raw.items ?? []).flatMap((item) => (item?.title ? [{ icon: item.icon || null, title: item.title, text: item.text || null }] : [])).slice(0, 8);
+  const items = (raw.items ?? []).flatMap((item) => (item?.title ? [{ icon: item.icon || null, title: item.title, text: parseShortText(item.text) }] : [])).slice(0, 8);
   // A section with no features left is not drawn.
   if (items.length === 0) {
     return null;
@@ -554,7 +554,7 @@ function parseFeaturesSection(raw: FeaturesSectionFragment, lang: Lang, routes: 
     id: raw.id,
     badge: raw.badge || null,
     title: raw.featuresTitle || null,
-    text: raw.text || null,
+    text: parseShortText(raw.text),
     headerAlign: raw.headerAlign === "start" ? "start" : "center",
     items,
     variant: raw.variant,
@@ -636,7 +636,7 @@ function parseFaqSection(raw: FaqSectionFragment, lang: Lang, routes: readonly P
     id: raw.id,
     badge: raw.badge || null,
     title: raw.faqTitle || null,
-    text: raw.faqText || null,
+    text: parseShortText(raw.faqText),
     headerAlign: raw.faqHeaderAlign === "start" ? "start" : "center",
     groups,
     search: raw.faqSearch === true,
@@ -660,7 +660,7 @@ function parseCard(card: PartCardFragment, lang: Lang, routes: readonly PageRout
   return {
     icon: card.icon || null,
     title,
-    text: card.text?.trim() || null,
+    text: parseShortText(card.text),
     link: target ? { href: target.href, newTab: target.newTab } : null,
     background:
       card.tone === "image" && card.image?.url
@@ -683,7 +683,7 @@ function parseCardsSection(raw: CardsSectionFragment, lang: Lang, routes: readon
     id: raw.id,
     badge: raw.badge || null,
     title: raw.cardsTitle || null,
-    text: raw.cardsText || null,
+    text: parseShortText(raw.cardsText),
     headerAlign: raw.cardsHeaderAlign === "start" ? "start" : "center",
     cards,
     display: raw.cardsDisplay === "carousel" ? "carousel" : "grid",
@@ -709,7 +709,7 @@ function parseBlogSection(raw: BlogSectionFragment, lang: Lang, routes: readonly
     id: raw.id,
     badge: raw.badge || null,
     title: raw.blogTitle || null,
-    text: raw.blogText || null,
+    text: parseShortText(raw.blogText),
     headerAlign: raw.blogHeaderAlign === "start" ? "start" : "center",
     posts,
     listing,
@@ -727,7 +727,7 @@ function parseSalesSection(raw: SalesSectionFragment, lang: Lang, routes: readon
     id: raw.id,
     badge: raw.badge || null,
     title: raw.salesTitle || null,
-    text: raw.salesText || null,
+    text: parseShortText(raw.salesText),
     headerAlign: raw.salesHeaderAlign === "start" ? "start" : "center",
     ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
     background: parseBackground(raw.background),
@@ -742,7 +742,7 @@ function parseSocialSection(raw: SocialSectionFragment): SocialSection {
     id: raw.id,
     badge: raw.badge || null,
     title: raw.socialTitle || null,
-    text: raw.socialText || null,
+    text: parseShortText(raw.socialText),
     layout: raw.socialLayout === "centered" ? "centered" : "split",
     showContact: raw.showContact !== false,
     background: parseBackground(raw.background),
@@ -763,7 +763,7 @@ export type CarClassesSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   /**
    * `classes`: RentCarSoft's classes, the `categories` picked (in that order)
@@ -791,7 +791,7 @@ export type ExtrasSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   group: "all" | "protection" | "border" | "kids" | "multimedia" | "other";
   ctas: Cta[];
@@ -808,7 +808,7 @@ function parseExtrasSection(raw: ExtrasSectionFragment, lang: Lang, routes: read
     id: raw.id,
     badge: raw.badge || null,
     title: raw.extrasTitle || null,
-    text: raw.extrasText || null,
+    text: parseShortText(raw.extrasText),
     headerAlign: raw.extrasHeaderAlign === "start" ? "start" : "center",
     group: EXTRAS_GROUPS.find((group) => group === raw.extrasGroup) ?? "all",
     ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
@@ -830,7 +830,7 @@ export type PromotionsSection = {
   id: string;
   badge: string | null;
   title: string | null;
-  text: string | null;
+  text: ShortText | null;
   headerAlign: "start" | "center";
   emptyTitle: string | null;
   emptyText: string | null;
@@ -847,7 +847,7 @@ function parsePromotionsSection(raw: PromotionsSectionFragment, lang: Lang, rout
     id: raw.id,
     badge: raw.badge || null,
     title: raw.promotionsTitle || null,
-    text: raw.promotionsText || null,
+    text: parseShortText(raw.promotionsText),
     headerAlign: raw.promotionsHeaderAlign === "start" ? "start" : "center",
     emptyTitle: raw.emptyTitle?.trim() || null,
     emptyText: raw.emptyText?.trim() || null,
@@ -911,7 +911,7 @@ function parseCarsSection(raw: CarsSectionFragment, lang: Lang, routes: readonly
     id: raw.id,
     badge: raw.badge || null,
     title: raw.carsTitle || null,
-    text: raw.carsText || null,
+    text: parseShortText(raw.carsText),
     headerAlign: raw.carsHeaderAlign === "start" ? "start" : "center",
     source: raw.carsSource,
     category: raw.carsCategory === "delivery" || raw.carsCategory === "popular" ? raw.carsCategory : "passenger",
@@ -934,7 +934,7 @@ function parseCarClassesSection(raw: CarClassesSectionFragment, lang: Lang, rout
     id: raw.id,
     badge: raw.badge || null,
     title: raw.carClassesTitle || null,
-    text: raw.carClassesText || null,
+    text: parseShortText(raw.carClassesText),
     headerAlign: raw.carClassesHeaderAlign === "start" ? "start" : "center",
     source: raw.carClassesSource === "collections" ? "collections" : "classes",
     // In the order picked, unlike a collection's categories (a set).
@@ -961,7 +961,7 @@ function parseMapSection(raw: MapSectionFragment, lang: Lang, routes: readonly P
     id: raw.id,
     badge: raw.badge || null,
     title: raw.mapTitle || null,
-    text: raw.mapText || null,
+    text: parseShortText(raw.mapText),
     headerAlign: raw.mapHeaderAlign === "start" ? "start" : "center",
     showList: raw.showList === true,
     fullBleed: raw.fullBleed === true,
@@ -978,7 +978,7 @@ function parseSplitContent(raw: SplitSectionFragment): SplitSection["content"] {
     return { kind: "form" };
   }
   if (raw.content === "features") {
-    const items = (raw.features ?? []).flatMap((item) => (item?.title ? [{ icon: item.icon || null, title: item.title, text: item.text || null }] : [])).slice(0, 6);
+    const items = (raw.features ?? []).flatMap((item) => (item?.title ? [{ icon: item.icon || null, title: item.title, text: parseShortText(item.text) }] : [])).slice(0, 6);
     return items.length > 0 ? { kind: "features", items } : null;
   }
   if (raw.content === "faq") {
@@ -999,7 +999,7 @@ function parseFormSection(raw: FormSectionFragment): FormSection {
     id: raw.id,
     badge: raw.badge || null,
     title: raw.formTitle || null,
-    text: raw.formText || null,
+    text: parseShortText(raw.formText),
     headerAlign: raw.formHeaderAlign === "center" ? "center" : "start",
     form: "contact",
     formWidth: raw.formWidth === "wide" ? "wide" : "narrow",
@@ -1039,7 +1039,7 @@ function parseSplitSection(raw: SplitSectionFragment, lang: Lang, routes: readon
     media,
     badge: raw.badge || null,
     title: raw.splitTitle || null,
-    text: raw.splitText || null,
+    text: parseShortText(raw.splitText),
     content: parseSplitContent(raw),
     mediaSide: raw.mediaSide === "end" ? "end" : "start",
     ctas: parseCtas(raw.ctas ?? [], lang, routes).slice(0, 2),
@@ -1079,7 +1079,7 @@ function parseReviewsSection(
     id: raw.id,
     badge: raw.badge || null,
     title: raw.reviewsTitle || null,
-    text: raw.reviewsText || null,
+    text: parseShortText(raw.reviewsText),
     headerAlign: raw.reviewsHeaderAlign === "start" ? "start" : "center",
     reviews,
     layout: raw.reviewsLayout === "spotlight" ? "spotlight" : "carousel",

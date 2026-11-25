@@ -16,7 +16,7 @@ import {
   type OpeningHours,
 } from "./internal/entities";
 import { formatDays, formatOpeningHours, openingHoursSpecification } from "./internal/opening-hours";
-import { parseRichBlocks, richBlocksText } from "./internal/rich-blocks";
+import { parseRichBlocks, parseShortText, richBlocksText } from "./internal/rich-blocks";
 import { buildRoutes, findRoute, pageHref, type RouteNode } from "./internal/routes";
 import { tagsForWebhook } from "./internal/tags";
 import { sectionEdgeTone, type TextSection } from "./internal/sections";
@@ -135,6 +135,17 @@ describe("rich text from CKEditor", () => {
       },
     ]);
     assert.equal(richBlocksText(parseRichBlocks(html)), "Klasa Cena B od 89 zł");
+  });
+
+  it("reads a short text: plain text as one paragraph, HTML as paragraphs and lists", () => {
+    assert.deepEqual(parseShortText("Bez kaucji\ni limitu"), [{ type: "paragraph", children: [{ type: "text", text: "Bez kaucji i limitu" }] }]);
+    assert.deepEqual(parseShortText('<h2 style="text-align:center">Tytuł</h2><p><s>Stara</s> cena</p><ol><li>Raz</li></ol><table><tr><td>x</td></tr></table>'), [
+      { type: "paragraph", children: [{ type: "text", text: "Tytuł" }] },
+      { type: "paragraph", children: [{ type: "text", text: "Stara", strikethrough: true }, { type: "text", text: " cena" }] },
+      { type: "list", format: "ordered", children: [{ type: "list-item", children: [{ type: "text", text: "Raz" }] }] },
+    ]);
+    assert.equal(parseShortText("<p>&nbsp;</p>"), null);
+    assert.equal(parseShortText(null), null);
   });
 
   it("keeps only the text of unsafe links and drops scripts and unknown tags", () => {

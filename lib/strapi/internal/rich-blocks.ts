@@ -153,6 +153,24 @@ export function parseRichBlocks(value: unknown): RichBlocks {
   });
 }
 
+/**
+ * A short text from the CKEditor preset `mobicarsBasic`: paragraphs and lists
+ * with bold, italic, underline, strikethrough and links. Anything else the
+ * HTML holds (a heading, a quote) reads as a paragraph, a table is dropped.
+ * Plain text saved before the field became rich reads as one paragraph.
+ */
+export type ShortText = (Extract<RichBlock, { type: "paragraph" }> | RichList)[];
+
+export function parseShortText(value: string | null | undefined): ShortText | null {
+  const blocks = parseRichBlocks(value ?? "").flatMap((block): ShortText => {
+    if (block.type === "list") {
+      return [block];
+    }
+    return block.type === "table" ? [] : [{ type: "paragraph", children: block.children }];
+  });
+  return blocks.length > 0 ? blocks : null;
+}
+
 /** Plain text of parsed blocks, one space between blocks and list items: for JSON-LD and meta text. */
 export function richBlocksText(blocks: readonly (RichBlock | RichListItem)[]): string {
   const inlineText = (children: RichInline[]) =>

@@ -5,6 +5,7 @@ import { isDarkBackground, type FeaturesSection } from "@/lib/strapi";
 
 import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell";
 import { LazyCarousel as Carousel } from "./lazy";
+import { ShortTextView } from "@/components/sections/rich-blocks";
 
 type Item = FeaturesSection["items"][number];
 type Heading = "h2" | "h3";
@@ -188,7 +189,7 @@ export function InlineItem({ item, heading: Title, colours }: { item: Item; head
       </span>
       <div className="flex min-w-0 flex-col gap-1">
         <Title className={`text-lg leading-snug font-bold text-balance ${colours.title === "text-white" ? "text-white" : "text-blue-medium"}`}>{item.title}</Title>
-        {item.text ? <p className={`text-pretty ${colours.text}`}>{item.text}</p> : null}
+        {item.text ? <ShortTextView text={item.text} className={`text-pretty ${colours.text}`} /> : null}
       </div>
     </div>
   );
@@ -213,7 +214,7 @@ function CardItem({ item, heading: Title, background, row }: { item: Item; headi
           className={`flex min-w-0 flex-1 flex-col gap-1 sm:gap-3 sm:rounded-card sm:px-6 sm:pt-8 sm:pb-14 sm:text-center sm:[mask-image:radial-gradient(circle_at_50%_100%,transparent_2.25rem,#000_calc(2.25rem+0.5px))] ${desk}`}
         >
           <Title className="text-lg leading-snug font-bold text-balance text-blue-dark sm:text-subtitle">{item.title}</Title>
-          {item.text ? <p className="text-pretty text-blue-dark/75">{item.text}</p> : null}
+          {item.text ? <ShortTextView text={item.text} className="text-pretty text-blue-dark/75" /> : null}
         </div>
         <span
           aria-hidden
@@ -228,7 +229,7 @@ function CardItem({ item, heading: Title, background, row }: { item: Item; headi
     <div className="relative flex w-full flex-col pb-7">
       <div style={CUT_OUT} className={`flex flex-1 flex-col gap-3 rounded-card px-6 pt-8 pb-14 text-center ${card}`}>
         <Title className="text-subtitle font-bold text-balance text-blue-dark">{item.title}</Title>
-        {item.text ? <p className="text-pretty text-blue-dark/75">{item.text}</p> : null}
+        {item.text ? <ShortTextView text={item.text} className="text-pretty text-blue-dark/75" /> : null}
       </div>
       <span
         aria-hidden
@@ -251,7 +252,7 @@ function StatementItem({ item, heading: Title, colours, first }: { item: Item; h
         </span>
         {item.text ? <Title className={`text-sm font-semibold ${colours.title === "text-white" ? "text-white/80" : "text-muted-dark"}`}>{item.title}</Title> : null}
       </div>
-      {item.text ? <p className={big}>{item.text}</p> : <Title className={big}>{item.title}</Title>}
+      {item.text ? <ShortTextView text={item.text} className={big} /> : <Title className={big}>{item.title}</Title>}
     </div>
   );
 }
@@ -304,7 +305,7 @@ function StepItem({
           </span>
           {item.title}
         </Title>
-        {item.text ? <p className={`text-pretty ${colours.text}`}>{item.text}</p> : null}
+        {item.text ? <ShortTextView text={item.text} className={`text-pretty ${colours.text}`} /> : null}
       </div>
     </div>
   );

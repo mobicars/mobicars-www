@@ -11,6 +11,7 @@ import type { HeroSection, Media } from "@/lib/strapi";
 import { HeroVideo } from "./hero-video";
 import { FRAME, FrameOuter, SECTION_CTA_SIZE, SPACING } from "./section-shell";
 import { frameSizes } from "./image-sizes";
+import { ShortTextView } from "@/components/sections/rich-blocks";
 
 
 /**
@@ -80,7 +81,7 @@ export function Hero({ section, lang, priority, pickupId }: { section: HeroSecti
           >
             {section.badge ? <p className="w-fit rounded-full bg-white/95 px-3 py-1 text-eyebrow text-blue-medium uppercase">{section.badge}</p> : null}
             <Heading className="max-w-4xl text-display text-balance break-words hyphens-auto">{section.title}</Heading>
-            {section.subtitle ? <p className="max-w-3xl text-lead text-pretty text-white/90">{section.subtitle}</p> : null}
+            {section.subtitle ? <ShortTextView text={section.subtitle} className="max-w-3xl text-lead text-pretty text-white/90" /> : null}
             {section.ctas.length > 0 ? (
               <div className={`mt-2 flex flex-col gap-3 sm:flex-row ${centred ? "sm:justify-center" : ""}`}>
                 {section.ctas.map((cta) => (
