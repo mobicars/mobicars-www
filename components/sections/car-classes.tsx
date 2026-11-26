@@ -21,9 +21,10 @@ import { SECTION_CTA_SIZE, SectionHeading, SectionShell } from "./section-shell"
 
 /** As many cards in a row as fit: two on a phone, all five or six on a desktop. */
 const GRID = "grid grid-cols-[repeat(auto-fit,minmax(min(100%,9.5rem),1fr))] gap-4 sm:grid-cols-[repeat(auto-fit,minmax(11rem,1fr))] sm:gap-6";
-/** Carousel slides: two and a bit on a phone, three on a tablet, five on a desktop. */
-const SLIDE = "flex w-[45%] shrink-0 snap-start sm:w-[calc((100%-3rem)/3)] lg:w-[calc((100%-6rem)/5)]";
-const PHOTO_SIZES = "(min-width: 1024px) 240px, (min-width: 640px) 33vw, 50vw";
+/** Carousel slides as in the other sections' carousels: one (85%) on phones, two on tablets; four on desktops. */
+const SLIDE = "flex w-[85%] shrink-0 snap-center sm:w-[calc((100%-1.5rem)/2)] lg:w-[calc((100%-4.5rem)/4)]";
+const GRID_SIZES = "(min-width: 1024px) 240px, (min-width: 640px) 33vw, 50vw";
+const SLIDE_SIZES = "(min-width: 1024px) 300px, (min-width: 640px) 50vw, 85vw";
 
 /**
  * Car classes (`sections.car-classes`): one card per RentCarSoft class with
@@ -45,9 +46,10 @@ export async function CarClasses({ section, lang, pickupId }: { section: CarClas
   }
   const headingId = `car-classes-${section.id}`;
   const heading = section.title ? "h3" : "h2";
-  const more = section.moreCard ? <CardItem card={section.moreCard} heading={heading} sizes={PHOTO_SIZES} banner={false} fill /> : null;
+  const sizes = section.layout === "carousel" ? SLIDE_SIZES : GRID_SIZES;
+  const more = section.moreCard ? <CardItem card={section.moreCard} heading={heading} sizes={sizes} banner={false} fill /> : null;
   const card = (item: ClassItem) => (
-    <ClassCard item={item} lang={lang} heading={heading} texts={{ from: t.fleet.from, perDay: t.fleet.perDay, more: t.fleet.seeCars }} />
+    <ClassCard item={item} lang={lang} heading={heading} sizes={sizes} texts={{ from: t.fleet.from, perDay: t.fleet.perDay, more: t.fleet.seeCars }} />
   );
 
   return (
@@ -58,7 +60,8 @@ export async function CarClasses({ section, lang, pickupId }: { section: CarClas
           label={section.title ?? t.fleet.title}
           count={items.length + (more ? 1 : 0)}
           tone={isDarkBackground(section.background) ? "dark" : "light"}
-          align="start"
+          align="center"
+          spotlight
           bleed
           className="snap-x snap-mandatory overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
@@ -123,11 +126,13 @@ function ClassCard({
   item: { href, newTab, label, car },
   lang,
   heading: Heading,
+  sizes,
   texts,
 }: {
   item: ClassItem;
   lang: Lang;
   heading: "h2" | "h3";
+  sizes: string;
   texts: { from: string; perDay: string; more: string };
 }) {
   return (
@@ -138,7 +143,7 @@ function ClassCard({
             src={car.image.src}
             alt=""
             fill
-            sizes={PHOTO_SIZES}
+            sizes={sizes}
             className={PRODUCT_IMAGE}
           />
         ) : (
